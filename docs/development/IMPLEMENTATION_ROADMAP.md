@@ -224,20 +224,20 @@ Deliverable:
 
 ## Phase 06 — Realtime Location
 
-Status: `NOT_STARTED`
+Status: `COMPLETED`
 
 Goal: Add live driver/passenger/admin tracking without overloading PostgreSQL.
 
 Tasks:
 
-- [ ] Implement location update ingestion API.
-- [ ] Validate freshness, accuracy, speed, and impossible jumps.
-- [ ] Store latest active trip location in Redis.
-- [ ] Persist selected/auditable samples to PostgreSQL.
-- [ ] Publish location events to Redpanda/Kafka.
-- [ ] Implement WebSocket/STOMP updates.
-- [ ] Implement passenger live trip state.
-- [ ] Implement admin live trip feed.
+- [x] Implement location update ingestion API.
+- [x] Validate freshness, accuracy, speed, and impossible jumps.
+- [x] Store latest active trip location in Redis.
+- [x] Persist selected/auditable samples to PostgreSQL.
+- [x] Publish location events to Redpanda/Kafka.
+- [x] Implement WebSocket/STOMP updates.
+- [x] Implement passenger live trip state.
+- [x] Implement admin live trip feed.
 
 Deliverable:
 

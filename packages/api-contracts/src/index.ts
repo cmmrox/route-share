@@ -366,6 +366,10 @@ export const driverApiEndpoints = [
   },
   {
     "method": "POST",
+    "path": "/api/v1/driver/trips/{tripId}/location-updates"
+  },
+  {
+    "method": "POST",
     "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/board"
   },
   {

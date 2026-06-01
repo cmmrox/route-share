@@ -3893,6 +3893,41 @@
           }
         }
       }
+    },
+    "/api/v1/driver/trips/{tripId}/location-updates": {
+      "post": {
+        "summary": "Submit active trip driver location update",
+        "operationId": "submitDriverTripLocation",
+        "tags": [
+          "Realtime Location"
+        ],
+        "parameters": [
+          {
+            "name": "tripId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DriverLocationUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Location accepted"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4929,6 +4964,117 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "DriverLocationUpdateRequest": {
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude",
+          "deviceRecordedAt"
+        ],
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "format": "double"
+          },
+          "speedMps": {
+            "type": "number",
+            "format": "double"
+          },
+          "bearingDegrees": {
+            "type": "number",
+            "format": "double"
+          },
+          "deviceRecordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "devicePlatform": {
+            "type": "string"
+          },
+          "batteryPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "networkType": {
+            "type": "string"
+          }
+        }
+      },
+      "LocationSnapshotResponse": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "driverProfileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "format": "double"
+          },
+          "speedMps": {
+            "type": "number",
+            "format": "double"
+          },
+          "bearingDegrees": {
+            "type": "number",
+            "format": "double"
+          },
+          "deviceRecordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "serverReceivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stale": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LocationUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          },
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "driverProfileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "serverReceivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latestLocation": {
+            "$ref": "#/components/schemas/LocationSnapshotResponse"
           }
         }
       }

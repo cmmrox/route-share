@@ -1264,54 +1264,11 @@
     },
     "/api/v1/passenger/trips/{tripId}/live-state": {
       "get": {
+        "summary": "Get live state for passenger trip tracking",
+        "operationId": "getPassengerTripLiveState",
         "tags": [
-          "Trips"
+          "Realtime Location"
         ],
-        "summary": "Get trip live state",
-        "operationId": "TripsGetTripLiveState",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TripLiveState"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
         "parameters": [
           {
             "name": "tripId",
@@ -1322,7 +1279,12 @@
               "format": "int64"
             }
           }
-        ]
+        ],
+        "responses": {
+          "200": {
+            "description": "Live trip state"
+          }
+        }
       }
     },
     "/api/v1/passenger/bookings/{bookingId}/share-link": {
@@ -3938,6 +3900,78 @@
               "type": "object",
               "additionalProperties": true
             }
+          }
+        }
+      },
+      "LocationSnapshotResponse": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "driverProfileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "format": "double"
+          },
+          "speedMps": {
+            "type": "number",
+            "format": "double"
+          },
+          "bearingDegrees": {
+            "type": "number",
+            "format": "double"
+          },
+          "deviceRecordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "serverReceivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stale": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PassengerLiveTripStateResponse": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tripStatus": {
+            "type": "string"
+          },
+          "originLabel": {
+            "type": "string"
+          },
+          "destinationLabel": {
+            "type": "string"
+          },
+          "departureTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latestDriverLocation": {
+            "$ref": "#/components/schemas/LocationSnapshotResponse"
+          },
+          "locationAvailable": {
+            "type": "boolean"
           }
         }
       }

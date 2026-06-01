@@ -17,6 +17,10 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  data:
+    redis:
+      host: ${ROUTESHARE_REDIS_HOST:localhost}
+      port: ${ROUTESHARE_REDIS_PORT:6379}
   security:
     oauth2:
       resourceserver:

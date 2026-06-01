@@ -61,7 +61,7 @@ The backend foundation is verified, but the full product backend still needs sev
 
 - Upload/storage integration for KYC/document binaries.
 - Deeper route matching integration/performance tests with realistic volumes.
-- Realtime WebSocket updates and event streaming/outbox are Phase 06.
+- Realtime WebSocket updates and location event outbox foundation are implemented in Phase 06.
 - Notifications/support/SOS, advanced admin management/reporting APIs, and real provider payout batches are later product/hardening phases.
 - Integration/security tests.
 
@@ -71,7 +71,7 @@ Impact:
 
 Recommended Action:
 
-- Phase 05 booking/trip/fare/payment lifecycle is complete for the Phase 06 gate. Continue with Phase 06 realtime/event work next; add realistic-volume route matching performance tests before scale claims.
+- Phase 06 realtime/event foundation is complete. Add realistic-volume route matching and realtime fanout performance tests before scale claims.
 
 ---
 
