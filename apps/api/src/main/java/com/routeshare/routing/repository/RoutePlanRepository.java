@@ -56,10 +56,11 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
       ), candidate_routes AS (
         SELECT
           r.route_plan_id AS "routePlanId",
+          o.route_occurrence_id AS "routeOccurrenceId",
           r.origin_label AS "originLabel",
           r.destination_label AS "destinationLabel",
-          r.departure_time AS "departureTime",
-          r.available_seats AS "availableSeats",
+          o.scheduled_departure_at AS "departureTime",
+          o.available_seats AS "availableSeats",
           r.route_length_m AS "routeLengthMeters",
           ST_LineLocatePoint(r.route_line, p.pickup) AS "pickupFraction",
           ST_LineLocatePoint(r.route_line, p.dropoff) AS "dropoffFraction",
@@ -68,15 +69,17 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
           p.pickup AS pickup,
           p.dropoff AS dropoff,
           r.route_line AS "routeLine"
-        FROM routing.route_plan r
+        FROM routing.route_occurrence o
+        JOIN routing.route_plan r ON r.route_plan_id = o.route_plan_id
         CROSS JOIN request_points p
         WHERE r.status = 'PUBLISHED'
-          AND r.departure_time BETWEEN :windowStart AND :windowEnd
-          AND r.available_seats >= :seats
+          AND o.status = 'PUBLISHED'
+          AND o.scheduled_departure_at BETWEEN :windowStart AND :windowEnd
+          AND o.available_seats >= :seats
           AND EXISTS (
             SELECT 1
             FROM routing.route_bucket_cell b
-            WHERE b.route_plan_id = r.route_plan_id
+            WHERE b.route_occurrence_id = o.route_occurrence_id
               AND b.bucket_resolution = :bucketResolution
               AND b.bucket_cell IN (:pickupBucketCell, :dropoffBucketCell)
           )
@@ -85,6 +88,7 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
       )
       SELECT
         "routePlanId",
+        "routeOccurrenceId",
         "originLabel",
         "destinationLabel",
         "departureTime",
@@ -137,6 +141,8 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
 
   interface RouteSearchCandidateRow {
     long getRoutePlanId();
+
+    long getRouteOccurrenceId();
 
     String getOriginLabel();
 

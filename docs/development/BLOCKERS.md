@@ -111,3 +111,13 @@ Resolution:
 - Added `PersistenceArchitectureTest` to enforce these boundaries.
 - Added Spotless/google-java-format and verified formatting.
 - Verified `./mvnw spotless:apply spotless:check test` and runtime `/actuator/health` are green.
+
+
+## Phase 05 booking occurrence slice
+
+Status: no third-party blocker.
+
+Notes:
+
+- Booking occurrence reservation and matched-fraction persistence are local backend/database work.
+- Payment provider selection remains a later blocker for real preauthorization/capture/refund flows.

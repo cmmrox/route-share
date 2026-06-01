@@ -3,5 +3,5 @@ package com.routeshare.routing.facade;
 import java.util.Optional;
 
 public interface RoutingFacade {
-  Optional<Double> reserveSeatsAndReturnRouteLength(long routePlanId, int seats);
+  Optional<RouteReservation> reserveSeatsAndReturnRouteLength(long routeOccurrenceId, int seats);
 }

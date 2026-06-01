@@ -24,18 +24,37 @@ public class BookingServiceImpl implements BookingService {
 
   @Transactional
   public Map<String, Object> book(BookingRequest req) {
+    validateMatchedFractions(req);
     var app = identityFacade.upsertFromToken(current.requireCurrentUser());
-    double routeLengthMeters =
+    var reservation =
         routingFacade
-            .reserveSeatsAndReturnRouteLength(req.routePlanId(), req.seats())
+            .reserveSeatsAndReturnRouteLength(req.routeOccurrenceId(), req.seats())
             .orElseThrow(
                 () -> new IllegalStateException("Insufficient seats or route unavailable"));
+    long matchedDistanceMeters =
+        Math.round(
+            reservation.routeLengthMeters()
+                * (req.dropoffRouteFraction() - req.pickupRouteFraction()));
     BigDecimal fareEstimate =
         fareCalculator
-            .estimate(Math.round(routeLengthMeters))
+            .estimate(matchedDistanceMeters)
             .totalFare()
             .multiply(BigDecimal.valueOf(req.seats()));
-    long bookingId = bookings.create(app.appUserId(), req, fareEstimate);
-    return Map.of("bookingId", bookingId, "status", "CONFIRMED", "fareEstimate", fareEstimate);
+    long bookingId = bookings.create(app.appUserId(), req, reservation.routePlanId(), fareEstimate);
+    return Map.of(
+        "bookingId",
+        bookingId,
+        "status",
+        "CONFIRMED",
+        "routeOccurrenceId",
+        reservation.routeOccurrenceId(),
+        "fareEstimate",
+        fareEstimate);
+  }
+
+  private void validateMatchedFractions(BookingRequest req) {
+    if (req.pickupRouteFraction() >= req.dropoffRouteFraction()) {
+      throw new IllegalArgumentException("Pickup must be before drop-off on the matched route");
+    }
   }
 }

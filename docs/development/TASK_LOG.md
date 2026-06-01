@@ -403,3 +403,42 @@ Third-Party Configuration:
 Next Step:
 
 - Start Phase 05 with booking/trip/fare/payment lifecycle hardening. First recommended slice: reserve seats against `route_occurrence`, add booking idempotency, store matched pickup/drop fractions from search into booking, and add booking status history.
+
+
+## 2026-06-01 20:38 +0530 — Phase 05 booking occurrence inventory slice
+
+Files changed:
+
+- `apps/api/src/main/resources/db/migration/V007__move_booking_inventory_to_route_occurrences.sql`
+- `apps/api/src/main/java/com/routeshare/booking/dto/request/BookingRequest.java`
+- `apps/api/src/main/java/com/routeshare/booking/entity/BookingEntity.java`
+- `apps/api/src/main/java/com/routeshare/booking/repository/BookingRepository.java`
+- `apps/api/src/main/java/com/routeshare/booking/service/impl/BookingServiceImpl.java`
+- `apps/api/src/main/java/com/routeshare/routing/facade/RouteReservation.java`
+- `apps/api/src/main/java/com/routeshare/routing/facade/RoutingFacade.java`
+- `apps/api/src/main/java/com/routeshare/routing/facade/impl/RoutingFacadeImpl.java`
+- `apps/api/src/main/java/com/routeshare/routing/repository/RouteOccurrenceRepository.java`
+- `apps/api/src/main/java/com/routeshare/routing/repository/RoutePlanRepository.java`
+- `apps/api/src/main/java/com/routeshare/routing/dto/response/RouteSearchResponse.java`
+- `apps/api/src/test/java/com/routeshare/booking/service/impl/BookingServiceTest.java`
+
+Implemented:
+
+- Wrote a failing booking service test first for booking against a route occurrence and storing matched fractions.
+- Added `RouteReservation` and moved booking seat reservation through `routing.route_occurrence`.
+- Added booking columns for `route_occurrence_id`, `pickup_route_fraction`, and `dropoff_route_fraction`.
+- Updated route search response/query to expose occurrence id and matched fractions needed by the booking request.
+- Fare estimate now uses the matched segment distance from pickup/drop route fractions instead of always charging the full route length.
+
+Verification:
+
+- RED: `./mvnw -q -Dtest=BookingServiceTest test` failed because `RouteReservation` did not exist yet.
+- GREEN: `./mvnw -q -Dtest=BookingServiceTest test` passed.
+- Full backend: `./mvnw spotless:apply spotless:check test -q` passed.
+- Runtime health: `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}`.
+- Flyway: latest migration version `007`, success `true`.
+- DB columns verified on `booking.booking`: `route_occurrence_id`, `pickup_route_fraction`, `dropoff_route_fraction`.
+
+Next step:
+
+- Continue Phase 05 with booking status history and explicit idempotency-key handling.

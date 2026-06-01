@@ -26,6 +26,9 @@ public class BookingEntity {
   @Column(name = "route_plan_id")
   private Long routePlanId;
 
+  @Column(name = "route_occurrence_id")
+  private Long routeOccurrenceId;
+
   @Column(name = "passenger_app_user_id")
   private Long passengerAppUserId;
 
@@ -34,4 +37,10 @@ public class BookingEntity {
 
   @Column(name = "fare_estimate")
   private BigDecimal fareEstimate;
+
+  @Column(name = "pickup_route_fraction")
+  private BigDecimal pickupRouteFraction;
+
+  @Column(name = "dropoff_route_fraction")
+  private BigDecimal dropoffRouteFraction;
 }

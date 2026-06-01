@@ -218,3 +218,19 @@ Third-party keys/config:
 Current next step:
 
 - Start Phase 05: booking/trip/fare/payment lifecycle hardening.
+
+
+## Phase 05 started — booking occurrence inventory slice
+
+- Committed completed Phase 04 work first: `75fdbd6 feat(routing): add route occurrence matching foundation`.
+- Started Phase 05 by moving booking inventory from abstract `route_plan` seats to concrete `route_occurrence` seats.
+- Added Flyway V007 to store `route_occurrence_id`, `pickup_route_fraction`, and `dropoff_route_fraction` on bookings.
+- Updated route search output to include `routeOccurrenceId`, `pickupRouteFraction`, and `dropoffRouteFraction` so the passenger app can hand matched route data into booking creation.
+- Booking fare estimate now uses matched segment distance from the stored fractions.
+- Verification passed: `BookingServiceTest`, full `spotless:apply spotless:check test`, runtime health, Flyway V007, and DB column checks.
+
+Next recommended work:
+
+1. Add booking status history.
+2. Add explicit HTTP `Idempotency-Key` handling backed by `common.idempotency_key`.
+3. Continue passenger boarded/no-show/drop-off and route-occurrence-aware trip lifecycle work.

@@ -212,11 +212,14 @@ public class RouteServiceImpl implements RouteService {
     var score = routeMatchScorer.score(candidate);
     return new RouteSearchResponse(
         row.getRoutePlanId(),
+        row.getRouteOccurrenceId(),
         row.getOriginLabel(),
         row.getDestinationLabel(),
         row.getDepartureTime(),
         row.getAvailableSeats(),
         round(row.getRouteLengthMeters()),
+        row.getPickupFraction(),
+        row.getDropoffFraction(),
         round(row.getPickupDistanceMeters()),
         round(row.getDropoffDistanceMeters()),
         round(row.getOverlapDistanceMeters()),

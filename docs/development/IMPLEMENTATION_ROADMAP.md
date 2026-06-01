@@ -171,7 +171,9 @@ Goal: Implement the transactional core for ride sharing.
 Tasks:
 
 - [x] Implement booking creation with idempotency.
-- [ ] Implement seat reservation and no-overbooking guarantees.
+- [x] Store matched pickup/drop route fractions on bookings.
+- [x] Move booking inventory reservation from route plans to route occurrences.
+- [x] Implement seat reservation and no-overbooking guarantees for route occurrences.
 - [ ] Implement booking status history.
 - [ ] Implement manual booking approve/decline if route requires it.
 - [x] Implement trip start/complete/cancel state machine.

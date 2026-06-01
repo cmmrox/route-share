@@ -1,6 +1,6 @@
 # RouteShareApp Development Status
 
-Last Updated: 2026-06-01 20:17 +0530
+Last Updated: 2026-06-01 20:38 +0530
 
 ## Purpose
 
@@ -8,17 +8,17 @@ This file is the first file to read before continuing RouteShareApp development.
 
 ## Current State
 
-- Current Phase: `PHASE_04_ROUTE_PUBLISHING_AND_MATCHING`
-- Current Milestone: `MILESTONE_04_ROUTE_SEARCH_MATCHING_FOUNDATION`
-- Current Active Task: `Phase 04 complete; next recommended backend work is Phase 05 booking/trip/fare/payment lifecycle`
-- Status: `PHASE_04_ROUTE_PUBLISHING_AND_MATCHING_COMPLETED_AND_VERIFIED`
-- Repository Git Status: `Git repository exists on branch main with clean baseline commit before latest Phase 04 working changes`
+- Current Phase: `PHASE_05_BOOKING_TRIP_FARE_PAYMENT_SETTLEMENT`
+- Current Milestone: `MILESTONE_05_BOOKING_OCCURRENCE_INVENTORY_FOUNDATION`
+- Current Active Task: `Phase 05 started; booking now reserves concrete route occurrences and stores matched route fractions`
+- Status: `PHASE_05_STARTED_BOOKING_OCCURRENCE_SLICE_VERIFIED`
+- Repository Git Status: `Phase 04 committed on main; Phase 05 working changes are uncommitted`
 
 ## Estimated Progress
 
-- Completed known implementation tasks: 57
+- Completed known implementation tasks: 60
 - Total known high-level tasks: 80+
-- Estimated overall progress: 52%
+- Estimated overall progress: 55%
 
 > Progress is estimated from known tasks and will change as requirements are added or split into smaller implementation tasks. The backend foundation now runs locally and has verified tests, but the full product backend still needs route matching, richer booking/trip/payment workflows, document/KYC upload flows, notifications, realtime websockets, admin management, observability, and production hardening.
 
@@ -79,6 +79,11 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Architecture documentation updated with the approved service/impl + facade approach.
 - [x] Java 21 virtual threads enabled for Spring Boot request/task execution with bounded Hikari database pool settings.
 
+- [x] Phase 04 route schedule rules, route occurrences, and route bucket indexing committed.
+- [x] Route search now exposes route occurrence identity and matched pickup/drop route fractions for booking handoff.
+- [x] Booking creation now reserves seats against `routing.route_occurrence` instead of abstract `routing.route_plan`.
+- [x] Booking rows now store `route_occurrence_id`, `pickup_route_fraction`, and `dropoff_route_fraction`.
+
 ## In Progress
 
 - [ ] Complete the full backend beyond the foundation/MVP slice.
@@ -91,8 +96,8 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Phase 01 — Local development environment.
 - [x] Phase 02 — Backend modular monolith foundation.
 - [x] Phase 03 — Identity, passenger, driver, KYC/document metadata, vehicle, saved places, trusted contacts, and vehicle review foundation APIs are implemented.
-- [~] Phase 04 — Route publishing and route matching. Route publish foundation is present; matching/search and route occurrence lifecycle remain.
-- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Foundation endpoints are present; full lifecycle/idempotency/settlement remains.
+- [x] Phase 04 — Route publishing and route matching. Route search, schedule rules, route occurrences, and bucket-cell broad filtering are implemented and committed.
+- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking now reserves route occurrences and stores matched fractions; booking status history, passenger trip states, idempotency hardening, payment, and settlement remain.
 - [ ] Phase 06 — Realtime location and WebSocket updates.
 - [ ] Phase 07 — Passenger mobile app.
 - [ ] Phase 08 — Driver mobile app.
@@ -103,7 +108,7 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Maven backend tests and formatting:
   - Command: `cd apps/api && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@21/bin:/opt/homebrew/bin:/opt/homebrew/opt/maven/bin:/usr/bin:/bin:/usr/sbin:/sbin ./mvnw spotless:apply test -q`
-  - Result: `BUILD SUCCESS`; `Tests run: 33, Failures: 0, Errors: 0, Skipped: 0`.
+  - Result: `BUILD SUCCESS`; `Tests run: full backend suite passed via `./mvnw spotless:apply spotless:check test -q``.
 - Virtual thread configuration:
   - `spring.threads.virtual.enabled=true` configured in `application.yml`.
   - HikariCP pool bounds configured with `ROUTESHARE_DB_POOL_MAX_SIZE`, `ROUTESHARE_DB_POOL_MIN_IDLE`, and `ROUTESHARE_DB_CONNECTION_TIMEOUT_MS`.
@@ -111,10 +116,13 @@ This file is the first file to read before continuing RouteShareApp development.
   - `PersistenceArchitectureTest` passes.
   - Enforces no `JdbcTemplate` in main sources, no SQL/low-level database APIs in service implementations, repositories under `repository`, entities under `entity`, service implementations under `service/impl`, facades under `facade/impl`, controllers not importing repositories/entities, MapStruct shared mapper config usage, and no cross-module repository/entity/impl imports.
 - Runtime health:
-  - Docker was unavailable in the current Mac shell (`docker-unavailable`), so runtime `/actuator/health` was not re-run for this checkpoint.
-  - Previous runtime health after the backend foundation was HTTP `200` / `{"status":"UP"}`.
+  - `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}` after applying Flyway V007.
+- Database migration:
+  - Latest Flyway migration is version `007`, success `true`.
+  - Verified `booking.booking` has `route_occurrence_id`, `pickup_route_fraction`, and `dropoff_route_fraction`.
 - Git status:
-  - Repository exists on branch `main`, but project contents are still untracked/no initial commit yet.
+  - Phase 04 is committed on `main` as `75fdbd6 feat(routing): add route occurrence matching foundation`.
+  - Phase 05 occurrence-booking slice is implemented and verified but not committed yet.
 
 ## Blockers / Risks
 
@@ -126,13 +134,13 @@ This file is the first file to read before continuing RouteShareApp development.
 
 ## Next Recommended Task
 
-Continue backend completion with a focused Phase 04 slice after the architecture refactor:
+Continue Phase 05 with the next booking/trip safety slice:
 
-1. Add route search/matching API backed by PostGIS candidate filtering.
-2. Expand booking/trip/payment workflows and idempotency.
-3. Add realtime WebSocket/event outbox location pipeline.
-4. Add Spring Boot integration tests for security and ownership checks.
-5. Prepare initial Git baseline commit after reviewing local-only generated files.
+1. Add booking status history table and service writes for created/cancelled/rejected/completed transitions.
+2. Harden booking idempotency with `Idempotency-Key` request handling backed by `common.idempotency_key`.
+3. Move trip lifecycle from route-plan identity toward route-occurrence identity where needed.
+4. Add passenger boarded/no-show/drop-off state machine.
+5. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.
 
 ## Update Rule
 
