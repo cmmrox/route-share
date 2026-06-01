@@ -563,3 +563,25 @@ Verification:
 Next:
 - Continue Phase 05 with immutable fare ledger and payment capture/void/refund lifecycle foundation.
 
+## 2026-06-01 22:24 +0530 — Phase 05 immutable fare ledger slice
+
+Implemented the immutable fare ledger foundation for booking payment intent creation.
+
+Changes:
+- Added `payment.fare_ledger_entry` via Flyway V010.
+- Added `FareLedgerEntryEntity` and `FareLedgerRepository`.
+- Payment intent creation now records a `BOOKING_FARE_ESTIMATE` ledger row with booking amount and currency before creating or replaying an active intent.
+- Ledger insertion is idempotent per `(booking_id, entry_type)` using `ON CONFLICT DO NOTHING` so repeated intent calls do not duplicate fare rows.
+- Added TDD coverage for ledger recording on new and replayed active payment intents.
+
+Verification:
+- RED: `PaymentServiceTest` failed because `FareLedgerRepository` did not exist.
+- GREEN: targeted `PaymentServiceTest` passed.
+- Full backend: `cd apps/api && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@21/bin:/opt/homebrew/bin:/opt/homebrew/opt/maven/bin:/usr/bin:/bin:/usr/sbin:/sbin ./mvnw spotless:apply spotless:check test -q` passed.
+- Runtime health: `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}`.
+- Flyway latest version: `010`, success `true`.
+- Verified `payment.fare_ledger_entry` exists.
+
+Next:
+- Continue Phase 05 with payment capture/void/refund transitions, then cash collection, earnings, commission, and settlement ledgers.
+

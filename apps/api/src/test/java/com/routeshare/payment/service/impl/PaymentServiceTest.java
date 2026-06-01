@@ -12,6 +12,7 @@ import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.payment.dto.request.PaymentIntentRequest;
+import com.routeshare.payment.repository.FareLedgerRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository.PaymentIntentView;
 import java.math.BigDecimal;
@@ -28,8 +29,10 @@ class PaymentServiceTest {
   private final BookingFacade bookingFacade = org.mockito.Mockito.mock(BookingFacade.class);
   private final PaymentIntentRepository paymentIntents =
       org.mockito.Mockito.mock(PaymentIntentRepository.class);
+  private final FareLedgerRepository fareLedger =
+      org.mockito.Mockito.mock(FareLedgerRepository.class);
   private final PaymentServiceImpl service =
-      new PaymentServiceImpl(current, identityFacade, bookingFacade, paymentIntents);
+      new PaymentServiceImpl(current, identityFacade, bookingFacade, paymentIntents, fareLedger);
 
   @BeforeEach
   void setUp() {
@@ -73,6 +76,42 @@ class PaymentServiceTest {
             anyString(),
             org.mockito.ArgumentMatchers.eq(amount),
             org.mockito.ArgumentMatchers.eq("LKR"));
+  }
+
+  @Test
+  void recordsImmutableFareLedgerForPaymentIntentAmount() {
+    var amount = new BigDecimal("1234.50");
+    when(bookingFacade.findFareEstimateForPassengerBooking(99L, 7L))
+        .thenReturn(Optional.of(amount));
+    when(paymentIntents.findActiveByBookingId(99L)).thenReturn(Optional.empty());
+    when(paymentIntents.create(
+            org.mockito.ArgumentMatchers.eq(99L),
+            anyString(),
+            org.mockito.ArgumentMatchers.eq(amount),
+            org.mockito.ArgumentMatchers.eq("LKR")))
+        .thenReturn(
+            new PaymentIntentView("MOCK", "mock_reference", "REQUIRES_CAPTURE", amount, "LKR"));
+
+    service.createIntent(new PaymentIntentRequest(99L));
+
+    verify(fareLedger).recordEstimateIfAbsent(99L, amount, "LKR", "BOOKING_FARE_ESTIMATE");
+  }
+
+  @Test
+  void replaysExistingActiveIntentWithoutDuplicatingFareLedger() {
+    var amount = new BigDecimal("1234.50");
+    when(bookingFacade.findFareEstimateForPassengerBooking(99L, 7L))
+        .thenReturn(Optional.of(amount));
+    when(paymentIntents.findActiveByBookingId(99L))
+        .thenReturn(
+            Optional.of(
+                new PaymentIntentView(
+                    "MOCK", "mock_reference", "REQUIRES_CAPTURE", amount, "LKR")));
+
+    var response = service.createIntent(new PaymentIntentRequest(99L));
+
+    assertThat(response).containsEntry("providerReference", "mock_reference");
+    verify(fareLedger).recordEstimateIfAbsent(99L, amount, "LKR", "BOOKING_FARE_ESTIMATE");
   }
 
   @Test

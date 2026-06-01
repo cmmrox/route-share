@@ -4,6 +4,7 @@ import com.routeshare.booking.facade.BookingFacade;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.payment.dto.request.PaymentIntentRequest;
+import com.routeshare.payment.repository.FareLedgerRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository;
 import com.routeshare.payment.service.PaymentService;
 import java.util.Map;
@@ -17,11 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
   static final String DEFAULT_CURRENCY = "LKR";
+  static final String BOOKING_FARE_ESTIMATE = "BOOKING_FARE_ESTIMATE";
 
   private final CurrentUserProvider current;
   private final IdentityFacade identityFacade;
   private final BookingFacade bookingFacade;
   private final PaymentIntentRepository paymentIntents;
+  private final FareLedgerRepository fareLedger;
 
   @Transactional
   public Map<String, Object> createIntent(PaymentIntentRequest req) {
@@ -35,6 +38,8 @@ public class PaymentServiceImpl implements PaymentService {
       throw new IllegalStateException("Booking fare estimate must be positive before payment");
     }
 
+    fareLedger.recordEstimateIfAbsent(
+        req.bookingId(), amount, DEFAULT_CURRENCY, BOOKING_FARE_ESTIMATE);
     var intent =
         paymentIntents
             .findActiveByBookingId(req.bookingId())

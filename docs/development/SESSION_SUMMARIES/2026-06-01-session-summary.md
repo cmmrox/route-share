@@ -327,3 +327,21 @@ Verification:
 
 Next recommended slice: immutable fare ledger and payment capture/void/refund lifecycle foundation.
 
+### Phase 05 immutable fare ledger slice
+
+Continued Phase 05 after passenger trip states and implemented the immutable fare ledger foundation.
+
+Implemented:
+- Flyway V010 adds `payment.fare_ledger_entry`.
+- Payment intent creation records `BOOKING_FARE_ESTIMATE` ledger rows using server-derived booking fare amount and `LKR` currency.
+- Ledger writes are idempotent per booking/entry type and happen before new active intent creation or replay response.
+- Added focused `PaymentServiceTest` coverage for ledger recording.
+
+Verification:
+- RED targeted test failed on missing `FareLedgerRepository`.
+- GREEN targeted test passed.
+- Full backend `spotless:apply spotless:check test -q` passed.
+- Runtime health passed and Flyway V010 applied successfully.
+
+Next recommended slice: payment capture/void/refund transition APIs and state machine.
+

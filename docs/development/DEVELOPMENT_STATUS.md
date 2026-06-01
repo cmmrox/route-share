@@ -9,16 +9,16 @@ This file is the first file to read before continuing RouteShareApp development.
 ## Current State
 
 - Current Phase: `PHASE_05_BOOKING_TRIP_FARE_PAYMENT_SETTLEMENT`
-- Current Milestone: `MILESTONE_05_BOOKING_STATUS_TRANSITIONS`
-- Current Active Task: `Phase 05 route-occurrence-aware passenger trip states implemented; next is payment/ledger foundation`
-- Status: `PHASE_05_BOOKING_STATUS_TRANSITIONS_VERIFIED`
-- Repository Git Status: `Phase 05 passenger trip-state working changes ready to commit`
+- Current Milestone: `MILESTONE_05_PAYMENT_LEDGER_FOUNDATION`
+- Current Active Task: `Phase 05 immutable fare ledger implemented; next is payment capture/void/refund lifecycle`
+- Status: `PHASE_05_FARE_LEDGER_VERIFIED`
+- Repository Git Status: `Phase 05 fare-ledger working changes ready to commit`
 
 ## Estimated Progress
 
-- Completed known implementation tasks: 63
+- Completed known implementation tasks: 65
 - Total known high-level tasks: 80+
-- Estimated overall progress: 55%
+- Estimated overall progress: 57%
 
 > Progress is estimated from known tasks and will change as requirements are added or split into smaller implementation tasks. The backend foundation now runs locally and has verified tests, but the full product backend still needs route matching, richer booking/trip/payment workflows, document/KYC upload flows, notifications, realtime websockets, admin management, observability, and production hardening.
 
@@ -86,6 +86,8 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Booking creation now writes initial `CONFIRMED` status history to `booking.booking_status_history`.
 - [x] Booking creation now requires an explicit HTTP `Idempotency-Key` and replays completed matching responses from `common.idempotency_key` without reserving seats twice.
 - [x] Booking status transitions for cancel/reject/complete are implemented with same-transaction status history rows.
+- [x] Passenger boarded/no-show/drop-off state machine implemented per booking on the concrete route occurrence.
+- [x] Immutable fare ledger foundation records booking fare estimates before payment intent creation/replay.
 
 ## In Progress
 
@@ -100,7 +102,7 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Phase 02 — Backend modular monolith foundation.
 - [x] Phase 03 — Identity, passenger, driver, KYC/document metadata, vehicle, saved places, trusted contacts, and vehicle review foundation APIs are implemented.
 - [x] Phase 04 — Route publishing and route matching. Route search, schedule rules, route occurrences, and bucket-cell broad filtering are implemented and committed.
-- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking now reserves route occurrences, stores matched fractions, records initial and transition status history, and has explicit `Idempotency-Key` replay safety. Trip now stores route occurrence identity and supports passenger boarded/no-show/drop-off state transitions; payment and settlement remain.
+- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking now reserves route occurrences, stores matched fractions, records initial and transition status history, and has explicit `Idempotency-Key` replay safety. Trip now stores route occurrence identity and supports passenger boarded/no-show/drop-off state transitions. Payment intent creation now records immutable booking fare estimate ledger rows; capture/void/refund, cash collection, earnings, commission, and settlement remain.
 - [ ] Phase 06 — Realtime location and WebSocket updates.
 - [ ] Phase 07 — Passenger mobile app.
 - [ ] Phase 08 — Driver mobile app.
@@ -119,30 +121,30 @@ This file is the first file to read before continuing RouteShareApp development.
   - `PersistenceArchitectureTest` passes.
   - Enforces no `JdbcTemplate` in main sources, no SQL/low-level database APIs in service implementations, repositories under `repository`, entities under `entity`, service implementations under `service/impl`, facades under `facade/impl`, controllers not importing repositories/entities, MapStruct shared mapper config usage, and no cross-module repository/entity/impl imports.
 - Runtime health:
-  - `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}` after the booking status-transition slice.
+  - `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}` after the fare-ledger slice.
 - Database migration:
-  - Latest Flyway migration is version `009`, success `true`.
+  - Latest Flyway migration is version `010`, success `true`.
   - Verified `common.idempotency_key` exists and is used by booking create replay handling.
-  - Verified `booking.booking_status_history` exists and is used for initial and transition audit rows; `booking.booking` has occurrence/fraction columns; `trip.passenger_trip_state` exists and `trip.trip` has `route_occurrence_id`.
+  - Verified `booking.booking_status_history` exists and is used for initial and transition audit rows; `booking.booking` has occurrence/fraction columns; `trip.passenger_trip_state` exists; `trip.trip` has `route_occurrence_id`; and `payment.fare_ledger_entry` exists.
 - Git status:
-  - Latest committed backend slice before this work is `8c1808c feat(booking): add status transitions`.
-  - Phase 05 passenger trip-state slice is implemented and verified but not committed yet.
+  - Latest committed backend slice before this work is `8a62742 feat(trip): add passenger trip states`.
+  - Phase 05 fare-ledger slice is implemented and verified but not committed yet.
 
 ## Blockers / Risks
 
 - No active runtime blocker for the backend foundation.
-- Git baseline exists; current working tree only contains the verified Phase 05 passenger trip-state slice pending commit.
+- Git baseline exists; current working tree only contains the verified Phase 05 fare-ledger slice pending commit.
 - Full backend is not complete yet. Remaining major areas are tracked in the roadmap and blockers file.
 - Current tests are mostly unit-level. Add Spring Boot integration/security tests before relying on these APIs as production-ready.
 - Dev infrastructure exposes local ports and uses local-only development credentials; do not reuse these settings for production.
 
 ## Next Recommended Task
 
-Continue Phase 05 with the next booking/trip safety slice:
+Continue Phase 05 with the next payment lifecycle slice:
 
-1. Move trip lifecycle from route-plan identity toward route-occurrence identity where needed.
-2. Add passenger boarded/no-show/drop-off state machine.
-3. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.
+1. Add payment capture/void/refund transition APIs and state machine.
+2. Add cash collection records.
+3. Add driver earnings, platform commission, and settlement balance ledgers.
 
 ## Update Rule
 

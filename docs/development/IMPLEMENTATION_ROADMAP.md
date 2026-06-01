@@ -179,8 +179,8 @@ Tasks:
 - [x] Implement trip start/complete/cancel state machine.
 - [x] Implement passenger boarded/no-show/drop-off state machine.
 - [x] Implement fare estimate.
-- [ ] Implement immutable fare ledger.
-- [ ] Implement payment intent abstraction.
+- [x] Implement immutable fare ledger.
+- [x] Implement payment intent abstraction.
 - [ ] Implement cash collection records.
 - [ ] Implement driver earnings ledger.
 - [ ] Implement platform commission ledger.
