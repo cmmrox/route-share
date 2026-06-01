@@ -12,7 +12,7 @@ This file is the first file to read before continuing RouteShareApp development.
 - Current Milestone: `MILESTONE_BACKEND_READY_FOR_PHASE_07`
 - Current Active Task: `Phase 06.5 backend readiness closure completed; next task is Phase 07 Passenger Mobile App`
 - Status: `BACKEND_APP_CONTRACTS_READY_FOR_PHASE_07`
-- Repository Git Status: `Clean after Phase 06.5 backend readiness closure commit`
+- Repository Git Status: `Clean after backend coverage/test closure commit`
 
 ## Estimated Progress
 
@@ -231,3 +231,20 @@ Phase 06 realtime location foundation is complete and verified. Latest work adds
 Audited the business requirement, passenger/driver designs, app implementation plans, OpenAPI contracts, and backend controllers before starting Passenger Mobile, Driver Mobile, or Admin Web. Result: Phase 06 backend foundation is complete, but app-facing backend is not fully complete for end-to-end app implementation. Created `docs/api/APP_BACKEND_READINESS_AUDIT.md` and added recommended `Phase 06.5 — App Backend Readiness Closure` to the roadmap.
 
 Summary gaps found: Passenger 24 missing/deferred contract operations, Driver 28, Admin 43. Some can be deferred or feature-flagged, but safety/support/notifications/ratings/early-drop-off/recurring routes/KYC submit/admin operations should be closed before full app phases.
+
+
+## 2026-06-02 03:00 +0530 — Backend test coverage gate and missing test closure
+
+Completed a backend test coverage review before Phase 07. Added JaCoCo coverage enforcement to `apps/api/pom.xml` with an 80% line-coverage gate for measured application logic, excluding generated/boilerplate adapter layers such as DTOs, JPA entities, Spring controllers, repositories, MapStruct mappers, configuration, security wiring, and generated facade glue.
+
+Added missing focused tests for:
+
+- `AppReadinessServiceImplTest` — app config, verification status, support/SOS default statuses, notification preferences, mark-read, share-link payload, payout default, dashboard summaries, and unserializable payload failure.
+- `VehicleServiceImplTest` — create/list/get/update/delete/review flows plus driver-profile access denial.
+- `RedisLatestLocationCacheTest` — TTL, empty cache lookup, JSON deserialize, JSON serialize with TTL, and Redis read failure wrapping.
+
+Verification:
+
+- `./mvnw verify` passed.
+- JaCoCo line coverage passed the 80% gate: `92.9078%` measured line coverage (`131` covered / `10` missed across `20` measured classes).
+- Full backend suite: `Tests run: 91, Failures: 0, Errors: 0, Skipped: 1`; skipped test is the Docker/Testcontainers migration smoke test when Docker Desktop Java client is unavailable.

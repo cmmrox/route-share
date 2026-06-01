@@ -802,3 +802,20 @@ No production code was changed in this audit; documentation/tracking only.
 Implemented all app-facing backend contract paths needed before Phase 07. Added shared app-readiness workflow persistence plus Passenger, Driver, Admin, and App Config controllers for app config, notifications, push registrations, support, SOS, ratings, payment-method placeholders, KYC/document submit compatibility, vehicle detail/update/delete, route publish alias, recurring-route compatibility, payout profile, admin dashboard/users/trips/bookings/fare/commission/settlement/support/SOS/reports/audit endpoints.
 
 Verification: targeted Phase 06.5 contract test passed; full backend `spotless:apply spotless:check test` passed.
+
+
+## 2026-06-02 03:00 +0530 — Backend test coverage gate and missing test closure
+
+Completed a backend test coverage review before Phase 07. Added JaCoCo coverage enforcement to `apps/api/pom.xml` with an 80% line-coverage gate for measured application logic, excluding generated/boilerplate adapter layers such as DTOs, JPA entities, Spring controllers, repositories, MapStruct mappers, configuration, security wiring, and generated facade glue.
+
+Added missing focused tests for:
+
+- `AppReadinessServiceImplTest` — app config, verification status, support/SOS default statuses, notification preferences, mark-read, share-link payload, payout default, dashboard summaries, and unserializable payload failure.
+- `VehicleServiceImplTest` — create/list/get/update/delete/review flows plus driver-profile access denial.
+- `RedisLatestLocationCacheTest` — TTL, empty cache lookup, JSON deserialize, JSON serialize with TTL, and Redis read failure wrapping.
+
+Verification:
+
+- `./mvnw verify` passed.
+- JaCoCo line coverage passed the 80% gate: `92.9078%` measured line coverage (`131` covered / `10` missed across `20` measured classes).
+- Full backend suite: `Tests run: 91, Failures: 0, Errors: 0, Skipped: 1`; skipped test is the Docker/Testcontainers migration smoke test when Docker Desktop Java client is unavailable.
