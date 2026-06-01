@@ -206,3 +206,19 @@ Final audit 2026-06-02 00:35 +0530:
 - No blocker remains open for phases 00 through 05.5.
 - Phase 06 may start after committing the verified working tree.
 - Deferred risks are intentionally later-phase scope, not incomplete pre-Phase-06 work.
+
+
+## Blocker 007 — App backend readiness gaps before full UI phases
+
+Status: `OPEN`
+
+The backend foundation through Phase 06 is complete, but a full app-facing contract audit found remaining Passenger, Driver, and Admin endpoints needed by the business requirement and implementation plans. See `docs/api/APP_BACKEND_READINESS_AUDIT.md`.
+
+Impact:
+
+- Full Passenger Mobile, Driver Mobile, and Admin Web implementation would hit backend-blocked screens.
+- Admin Web has the largest gap and should not start end-to-end until backend admin APIs are closed.
+
+Recommended resolution:
+
+- Add and complete `Phase 06.5 — App Backend Readiness Closure`, or explicitly reduce/feature-flag app scopes before starting UI implementation.

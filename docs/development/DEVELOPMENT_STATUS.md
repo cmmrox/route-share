@@ -10,8 +10,8 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Current Phase: `PHASE_06_REALTIME_LOCATION_COMPLETED`
 - Current Milestone: `MILESTONE_PRE_PHASE_06_CLOSURE`
-- Current Active Task: `Phase 06 realtime/location foundation completed; next task is Phase 07 passenger mobile app`
-- Status: `PHASE_06_REALTIME_LOCATION_VERIFIED`
+- Current Active Task: `Backend app-readiness audit completed; recommended next task is Phase 06.5 App Backend Readiness Closure before full Passenger/Driver/Admin app implementation`
+- Status: `PHASE_06_COMPLETE_BUT_APP_BACKEND_READINESS_GAPS_FOUND`
 - Repository Git Status: `Clean after latest commit feat: complete pre-phase 06 backend gate`
 
 ## Estimated Progress
@@ -129,9 +129,10 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Phase 04 — Route publishing and route matching. Route search, schedule rules, route occurrences, and bucket-cell broad filtering are implemented and committed.
 - [x] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking occurrence inventory, idempotency, status history, passenger trip states, immutable fare ledger, payment capture/void/refund, cash collection, receipt foundation, driver earnings, MVP commission, and settlement-balance read models are implemented for the Phase 06 gate.
 - [ ] Phase 06 — Realtime location and WebSocket updates.
-- [ ] Phase 07 — Passenger mobile app (blocked by passenger OpenAPI/backend reconciliation gate).
-- [ ] Phase 08 — Driver mobile app (blocked by driver OpenAPI/backend reconciliation gate).
-- [ ] Phase 09 — Admin web app (blocked by admin OpenAPI/backend reconciliation gate).
+- [ ] Phase 06.5 — App Backend Readiness Closure (recommended before full app UI phases).
+- [ ] Phase 07 — Passenger mobile app (blocked unless reduced scope/feature flags are accepted).
+- [ ] Phase 08 — Driver mobile app (blocked unless reduced scope/feature flags are accepted).
+- [ ] Phase 09 — Admin web app (blocked; admin contract has the largest backend gap).
 - [ ] Phase 10 — Hardening, observability, performance, deployment readiness.
 
 ## Latest Verification
@@ -223,3 +224,10 @@ The earlier docs still showed stale incomplete states for phases before Phase 06
 ## 2026-06-02 01:15 +0530 — Phase 06 completed
 
 Phase 06 realtime location foundation is complete and verified. Latest work adds driver location ingestion, Redis latest-location cache, auditable sample/outbox persistence, WebSocket/STOMP fanout, passenger live-state endpoint, and admin live trip feed.
+
+
+## 2026-06-02 01:45 +0530 — App backend readiness audit
+
+Audited the business requirement, passenger/driver designs, app implementation plans, OpenAPI contracts, and backend controllers before starting Passenger Mobile, Driver Mobile, or Admin Web. Result: Phase 06 backend foundation is complete, but app-facing backend is not fully complete for end-to-end app implementation. Created `docs/api/APP_BACKEND_READINESS_AUDIT.md` and added recommended `Phase 06.5 — App Backend Readiness Closure` to the roadmap.
+
+Summary gaps found: Passenger 24 missing/deferred contract operations, Driver 28, Admin 43. Some can be deferred or feature-flagged, but safety/support/notifications/ratings/early-drop-off/recurring routes/KYC submit/admin operations should be closed before full app phases.
