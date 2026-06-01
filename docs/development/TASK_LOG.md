@@ -505,3 +505,37 @@ Verification:
 Next step:
 
 - Continue Phase 05 with booking cancel/reject/complete transitions writing status history, then passenger boarded/no-show/drop-off route-occurrence-aware trip states.
+
+
+## 2026-06-01 21:51 +0530 — Phase 05 booking status-transition slice
+
+Files changed:
+
+- `apps/api/src/main/java/com/routeshare/booking/dto/request/BookingStatusTransitionRequest.java`
+- `apps/api/src/main/java/com/routeshare/booking/controller/BookingController.java`
+- `apps/api/src/main/java/com/routeshare/booking/service/BookingService.java`
+- `apps/api/src/main/java/com/routeshare/booking/service/impl/BookingServiceImpl.java`
+- `apps/api/src/main/java/com/routeshare/booking/repository/BookingRepository.java`
+- `apps/api/src/main/java/com/routeshare/booking/repository/BookingStatusHistoryRepository.java`
+- `apps/api/src/test/java/com/routeshare/booking/service/impl/BookingServiceTest.java`
+
+Implemented:
+
+- Wrote failing booking service tests first for cancelling a confirmed booking and for rejecting an invalid terminal-state transition.
+- Added `PATCH /api/v1/bookings/{bookingId}/status` with `BookingStatusTransitionRequest`.
+- Added booking status transition validation for `REQUESTED -> CONFIRMED/REJECTED/CANCELLED`, `CONFIRMED -> CANCELLED/COMPLETED`, and terminal `CANCELLED/REJECTED/COMPLETED` states.
+- Locked the passenger-owned booking row before status transition.
+- Updated booking status and wrote a `booking.booking_status_history` row in the same transaction.
+
+Verification:
+
+- RED: `./mvnw -q -Dtest=BookingServiceTest test` failed because `BookingStatusTransitionRequest` did not exist.
+- GREEN: `./mvnw -q -Dtest=BookingServiceTest test` passed after implementation.
+- Full backend: `./mvnw spotless:apply spotless:check test -q` passed with Java 21.
+- Runtime health: `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}` after restarting the API with the new code.
+- Flyway: latest migration version `008`, success `true`.
+- DB table verified: `booking.booking_status_history`.
+
+Next step:
+
+- Continue Phase 05 with route-occurrence-aware passenger trip states: boarded, no-show, and drop-off.

@@ -1,6 +1,6 @@
 # RouteShareApp Development Status
 
-Last Updated: 2026-06-01 21:35 +0530
+Last Updated: 2026-06-01 21:51 +0530
 
 ## Purpose
 
@@ -9,14 +9,14 @@ This file is the first file to read before continuing RouteShareApp development.
 ## Current State
 
 - Current Phase: `PHASE_05_BOOKING_TRIP_FARE_PAYMENT_SETTLEMENT`
-- Current Milestone: `MILESTONE_05_BOOKING_IDEMPOTENCY_FOUNDATION`
-- Current Active Task: `Phase 05 booking Idempotency-Key handling implemented; next is booking status transitions and passenger trip states`
-- Status: `PHASE_05_BOOKING_IDEMPOTENCY_SLICE_VERIFIED`
-- Repository Git Status: `Phase 05 booking idempotency working changes ready to commit`
+- Current Milestone: `MILESTONE_05_BOOKING_STATUS_TRANSITIONS`
+- Current Active Task: `Phase 05 booking status transitions implemented; next is route-occurrence-aware passenger trip states`
+- Status: `PHASE_05_BOOKING_STATUS_TRANSITIONS_VERIFIED`
+- Repository Git Status: `Phase 05 booking status-transition working changes ready to commit`
 
 ## Estimated Progress
 
-- Completed known implementation tasks: 62
+- Completed known implementation tasks: 63
 - Total known high-level tasks: 80+
 - Estimated overall progress: 55%
 
@@ -85,6 +85,7 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Booking rows now store `route_occurrence_id`, `pickup_route_fraction`, and `dropoff_route_fraction`.
 - [x] Booking creation now writes initial `CONFIRMED` status history to `booking.booking_status_history`.
 - [x] Booking creation now requires an explicit HTTP `Idempotency-Key` and replays completed matching responses from `common.idempotency_key` without reserving seats twice.
+- [x] Booking status transitions for cancel/reject/complete are implemented with same-transaction status history rows.
 
 ## In Progress
 
@@ -99,7 +100,7 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Phase 02 — Backend modular monolith foundation.
 - [x] Phase 03 — Identity, passenger, driver, KYC/document metadata, vehicle, saved places, trusted contacts, and vehicle review foundation APIs are implemented.
 - [x] Phase 04 — Route publishing and route matching. Route search, schedule rules, route occurrences, and bucket-cell broad filtering are implemented and committed.
-- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking now reserves route occurrences, stores matched fractions, records initial status history, and has explicit `Idempotency-Key` replay safety; passenger trip states, payment, and settlement remain.
+- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking now reserves route occurrences, stores matched fractions, records initial and transition status history, and has explicit `Idempotency-Key` replay safety; passenger trip states, payment, and settlement remain.
 - [ ] Phase 06 — Realtime location and WebSocket updates.
 - [ ] Phase 07 — Passenger mobile app.
 - [ ] Phase 08 — Driver mobile app.
@@ -118,14 +119,14 @@ This file is the first file to read before continuing RouteShareApp development.
   - `PersistenceArchitectureTest` passes.
   - Enforces no `JdbcTemplate` in main sources, no SQL/low-level database APIs in service implementations, repositories under `repository`, entities under `entity`, service implementations under `service/impl`, facades under `facade/impl`, controllers not importing repositories/entities, MapStruct shared mapper config usage, and no cross-module repository/entity/impl imports.
 - Runtime health:
-  - `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}` after the booking idempotency slice.
+  - `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}` after the booking status-transition slice.
 - Database migration:
   - Latest Flyway migration is version `008`, success `true`.
   - Verified `common.idempotency_key` exists and is used by booking create replay handling.
-  - Verified `booking.booking_status_history` exists with booking/status/auditing columns, and `booking.booking` has occurrence/fraction columns.
+  - Verified `booking.booking_status_history` exists and is used for initial and transition audit rows; `booking.booking` has occurrence/fraction columns.
 - Git status:
   - Latest committed backend slice before this work is `4cbe840 feat(booking): record booking status history`.
-  - Phase 05 booking idempotency slice is implemented and verified but not committed yet.
+  - Phase 05 booking status-transition slice is implemented and verified but not committed yet.
 
 ## Blockers / Risks
 
@@ -139,10 +140,9 @@ This file is the first file to read before continuing RouteShareApp development.
 
 Continue Phase 05 with the next booking/trip safety slice:
 
-1. Extend booking status history writes for future cancelled/rejected/completed transitions.
-2. Move trip lifecycle from route-plan identity toward route-occurrence identity where needed.
-3. Add passenger boarded/no-show/drop-off state machine.
-4. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.
+1. Move trip lifecycle from route-plan identity toward route-occurrence identity where needed.
+2. Add passenger boarded/no-show/drop-off state machine.
+3. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.
 
 ## Update Rule
 

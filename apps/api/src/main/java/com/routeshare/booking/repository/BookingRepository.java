@@ -5,6 +5,7 @@ import com.routeshare.booking.entity.BookingEntity;
 import java.math.BigDecimal;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -37,6 +38,30 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
   Optional<BigDecimal> findFareEstimateByIdAndPassengerAppUserId(
       long bookingId, long passengerAppUserId);
+
+  @Query(
+      value =
+          """
+      SELECT status
+      FROM booking.booking
+      WHERE booking_id = :bookingId
+        AND passenger_app_user_id = :passengerAppUserId
+      FOR UPDATE
+      """,
+      nativeQuery = true)
+  Optional<String> findStatusForUpdateByIdAndPassengerAppUserId(
+      @Param("bookingId") long bookingId, @Param("passengerAppUserId") long passengerAppUserId);
+
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE booking.booking
+      SET status = :status
+      WHERE booking_id = :bookingId
+      """,
+      nativeQuery = true)
+  int updateStatus(@Param("bookingId") long bookingId, @Param("status") String status);
 
   default long create(
       long appUserId, BookingRequest request, long routePlanId, BigDecimal fareEstimate) {

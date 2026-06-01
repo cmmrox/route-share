@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.routeshare.booking.dto.request.BookingRequest;
+import com.routeshare.booking.dto.request.BookingStatusTransitionRequest;
 import com.routeshare.booking.repository.BookingRepository;
 import com.routeshare.booking.repository.BookingStatusHistoryRepository;
 import com.routeshare.booking.service.BookingService;
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,9 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
   private static final String CONFIRMED = "CONFIRMED";
+  private static final String CANCELLED = "CANCELLED";
+  private static final String COMPLETED = "COMPLETED";
+  private static final String REJECTED = "REJECTED";
   private static final String CREATE_BOOKING_OPERATION = "booking:create";
   private static final String INITIAL_CONFIRMATION_REASON =
       "Booking confirmed after occurrence seat reservation";
@@ -39,6 +44,18 @@ public class BookingServiceImpl implements BookingService {
   private final IdempotencyKeyRepository idempotencyKeys;
   private final ObjectMapper objectMapper;
   private final FareCalculator fareCalculator = FareCalculator.defaultSriLankaCalculator();
+  private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
+      Map.of(
+          "REQUESTED",
+          Set.of(CONFIRMED, REJECTED, CANCELLED),
+          CONFIRMED,
+          Set.of(CANCELLED, COMPLETED),
+          CANCELLED,
+          Set.of(),
+          REJECTED,
+          Set.of(),
+          COMPLETED,
+          Set.of());
 
   @Override
   @Transactional
@@ -96,6 +113,47 @@ public class BookingServiceImpl implements BookingService {
             fareEstimate);
     idempotencyKeys.storeResponse(idempotencyKey, responseBody(response), 200);
     return response;
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> transition(long bookingId, BookingStatusTransitionRequest req) {
+    String toStatus = normalizeStatus(req.status());
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    String fromStatus =
+        bookings
+            .findStatusForUpdateByIdAndPassengerAppUserId(bookingId, app.appUserId())
+            .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
+    assertTransition(fromStatus, toStatus);
+    int updated = bookings.updateStatus(bookingId, toStatus);
+    if (updated != 1) {
+      throw new IllegalStateException("Booking status update failed");
+    }
+    String reason = transitionReason(req.reason(), fromStatus, toStatus);
+    statusHistory.recordTransition(bookingId, fromStatus, toStatus, app.appUserId(), reason);
+    return Map.of("bookingId", bookingId, "status", toStatus);
+  }
+
+  private String normalizeStatus(String status) {
+    String normalized = status.trim().toUpperCase(java.util.Locale.ROOT);
+    if (!ALLOWED_TRANSITIONS.containsKey(normalized)) {
+      throw new IllegalArgumentException("Unsupported booking status: " + status);
+    }
+    return normalized;
+  }
+
+  private void assertTransition(String fromStatus, String toStatus) {
+    if (!ALLOWED_TRANSITIONS.getOrDefault(fromStatus, Set.of()).contains(toStatus)) {
+      throw new IllegalStateException(
+          "Invalid booking transition from " + fromStatus + " to " + toStatus);
+    }
+  }
+
+  private String transitionReason(String reason, String fromStatus, String toStatus) {
+    if (StringUtils.hasText(reason)) {
+      return reason.trim();
+    }
+    return "Booking status changed from " + fromStatus + " to " + toStatus;
   }
 
   private Map<String, Object> responseFromExisting(

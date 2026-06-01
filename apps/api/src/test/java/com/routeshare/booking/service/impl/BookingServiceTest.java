@@ -1,6 +1,7 @@
 package com.routeshare.booking.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.routeshare.booking.dto.request.BookingRequest;
+import com.routeshare.booking.dto.request.BookingStatusTransitionRequest;
 import com.routeshare.booking.repository.BookingRepository;
 import com.routeshare.booking.repository.BookingStatusHistoryRepository;
 import com.routeshare.common.repository.IdempotencyKeyRepository;
@@ -136,6 +138,36 @@ class BookingServiceTest {
             org.mockito.Mockito.eq("key-store"),
             org.mockito.Mockito.contains("\"bookingId\":100"),
             org.mockito.Mockito.eq(200));
+  }
+
+  @Test
+  void cancelsConfirmedBookingAndRecordsStatusHistory() {
+    var request = new BookingStatusTransitionRequest("CANCELLED", "Passenger changed plans");
+    when(bookings.findStatusForUpdateByIdAndPassengerAppUserId(100L, 7L))
+        .thenReturn(java.util.Optional.of("CONFIRMED"));
+    when(bookings.updateStatus(100L, "CANCELLED")).thenReturn(1);
+
+    var response = service.transition(100L, request);
+
+    assertThat(response).containsEntry("bookingId", 100L);
+    assertThat(response).containsEntry("status", "CANCELLED");
+    verify(statusHistory)
+        .recordTransition(100L, "CONFIRMED", "CANCELLED", 7L, "Passenger changed plans");
+  }
+
+  @Test
+  void rejectsInvalidBookingStatusTransitionWithoutWritingHistory() {
+    var request = new BookingStatusTransitionRequest("COMPLETED", "Should not jump");
+    when(bookings.findStatusForUpdateByIdAndPassengerAppUserId(100L, 7L))
+        .thenReturn(java.util.Optional.of("CANCELLED"));
+
+    assertThatThrownBy(() -> service.transition(100L, request))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Invalid booking transition");
+
+    verify(bookings, never()).updateStatus(any(Long.class), anyString());
+    verify(statusHistory, never())
+        .recordTransition(any(Long.class), anyString(), anyString(), any(Long.class), anyString());
   }
 
   private IdempotencyKeyRepository.StoredResponse storedResponse(

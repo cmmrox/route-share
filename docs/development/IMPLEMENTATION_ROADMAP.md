@@ -174,7 +174,7 @@ Tasks:
 - [x] Store matched pickup/drop route fractions on bookings.
 - [x] Move booking inventory reservation from route plans to route occurrences.
 - [x] Implement seat reservation and no-overbooking guarantees for route occurrences.
-- [x] Implement booking status history.
+- [x] Implement booking status history, including initial and cancel/reject/complete transition audit rows.
 - [ ] Implement manual booking approve/decline if route requires it.
 - [x] Implement trip start/complete/cancel state machine.
 - [ ] Implement passenger boarded/no-show/drop-off state machine.

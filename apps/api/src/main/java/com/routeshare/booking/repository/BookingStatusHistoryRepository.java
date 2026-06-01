@@ -22,4 +22,20 @@ public interface BookingStatusHistoryRepository
       @Param("toStatus") String toStatus,
       @Param("changedByAppUserId") long changedByAppUserId,
       @Param("reason") String reason);
+
+  @Modifying
+  @Query(
+      value =
+          """
+      INSERT INTO booking.booking_status_history(
+        booking_id, from_status, to_status, changed_by_app_user_id, reason)
+      VALUES (:bookingId, :fromStatus, :toStatus, :changedByAppUserId, :reason)
+      """,
+      nativeQuery = true)
+  void recordTransition(
+      @Param("bookingId") long bookingId,
+      @Param("fromStatus") String fromStatus,
+      @Param("toStatus") String toStatus,
+      @Param("changedByAppUserId") long changedByAppUserId,
+      @Param("reason") String reason);
 }

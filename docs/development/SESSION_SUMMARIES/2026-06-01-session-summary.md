@@ -1,6 +1,6 @@
 # RouteShareApp Session Summary — 2026-06-01
 
-Updated: 2026-06-01 21:35 +0530
+Updated: 2026-06-01 21:51 +0530
 
 ## Summary
 
@@ -278,3 +278,32 @@ Next recommended work:
 2. Continue route-occurrence-aware trip lifecycle.
 3. Add passenger boarded/no-show/drop-off state machine.
 4. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.
+
+
+## Phase 05 continued — booking status transitions
+
+Completed at: 2026-06-01 21:51 +0530
+
+Implemented:
+
+- Added `BookingStatusTransitionRequest`.
+- Added `PATCH /api/v1/bookings/{bookingId}/status`.
+- Booking service now supports valid cancel/reject/complete transitions with explicit terminal-state rejection.
+- Each transition locks the passenger-owned booking row, updates `booking.booking.status`, and writes a `booking.booking_status_history` row in the same transaction.
+
+Verification:
+
+```text
+RED: ./mvnw -q -Dtest=BookingServiceTest test -> failed because BookingStatusTransitionRequest did not exist
+GREEN: ./mvnw -q -Dtest=BookingServiceTest test -> passed
+Full backend: ./mvnw spotless:apply spotless:check test -q -> BUILD SUCCESS
+GET /actuator/health -> 200 {"status":"UP"}
+Flyway latest version -> 008 successful
+booking.booking_status_history -> present
+```
+
+Next recommended work:
+
+1. Move trip lifecycle toward route-occurrence identity where needed.
+2. Add passenger boarded/no-show/drop-off state machine.
+3. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.
