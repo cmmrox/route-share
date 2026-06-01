@@ -1,0 +1,104 @@
+package com.routeshare.common.errors;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import java.util.*;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  ResponseEntity<ApiError> validation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+    var fields =
+        ex.getBindingResult().getFieldErrors().stream()
+            .map(e -> new FieldErrorDetail(e.getField(), e.getDefaultMessage()))
+            .toList();
+    return ResponseEntity.badRequest()
+        .body(
+            new ApiError(
+                "VALIDATION_FAILED",
+                "Request validation failed",
+                correlation(req),
+                fields,
+                java.time.Instant.now()));
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  ResponseEntity<ApiError> constraint(ConstraintViolationException ex, HttpServletRequest req) {
+    return ResponseEntity.badRequest()
+        .body(ApiError.of("VALIDATION_FAILED", ex.getMessage(), correlation(req)));
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  ResponseEntity<ApiError> unreadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+    return ResponseEntity.badRequest()
+        .body(
+            ApiError.of(
+                "BAD_REQUEST",
+                "Request body is invalid or contains unsupported enum values",
+                correlation(req)));
+  }
+
+  @ExceptionHandler(ResponseStatusException.class)
+  ResponseEntity<ApiError> responseStatus(ResponseStatusException ex, HttpServletRequest req) {
+    return ResponseEntity.status(ex.getStatusCode())
+        .body(
+            ApiError.of(
+                "REQUEST_FAILED",
+                ex.getReason() == null ? "Request failed" : ex.getReason(),
+                correlation(req)));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  ResponseEntity<ApiError> denied(AccessDeniedException ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        .body(ApiError.of("ACCESS_DENIED", "Access denied", correlation(req)));
+  }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  ResponseEntity<ApiError> badRequest(IllegalArgumentException ex, HttpServletRequest req) {
+    return ResponseEntity.badRequest()
+        .body(ApiError.of("BAD_REQUEST", ex.getMessage(), correlation(req)));
+  }
+
+  @ExceptionHandler(IllegalStateException.class)
+  ResponseEntity<ApiError> conflict(IllegalStateException ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiError.of("CONFLICT", ex.getMessage(), correlation(req)));
+  }
+
+  @ExceptionHandler({NoSuchElementException.class, EmptyResultDataAccessException.class})
+  ResponseEntity<ApiError> notFound(Exception ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiError.of("NOT_FOUND", "Resource not found", correlation(req)));
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  ResponseEntity<ApiError> dataConflict(
+      DataIntegrityViolationException ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(
+            ApiError.of(
+                "DATA_CONFLICT",
+                "Request conflicts with existing data or constraints",
+                correlation(req)));
+  }
+
+  @ExceptionHandler(Exception.class)
+  ResponseEntity<ApiError> generic(Exception ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(ApiError.of("INTERNAL_ERROR", "Unexpected server error", correlation(req)));
+  }
+
+  private String correlation(HttpServletRequest req) {
+    var existing = req.getHeader("X-Correlation-Id");
+    return existing == null || existing.isBlank() ? UUID.randomUUID().toString() : existing;
+  }
+}

@@ -1,0 +1,13 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+target/
+build/
+.gradle/
+node_modules/
+.idea/
+.vscode/
+*.log
+infra/data/
+.docker/

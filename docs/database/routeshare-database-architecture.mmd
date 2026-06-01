@@ -1,0 +1,913 @@
+erDiagram
+
+    %% =========================================================
+    %% ROUTESHAREAPP DATABASE ARCHITECTURE
+    %% Single PostgreSQL/PostGIS database: routeshare
+    %% Multiple module schemas represented by table prefixes.
+    %% Paste into https://mermaid.live/ or supported Markdown tools.
+    %% =========================================================
+
+    %% ===================== IDENTITY =====================
+
+    identity_app_user {
+        bigint id PK
+        text keycloak_subject UK
+        text phone
+        text email
+        text display_name
+        text profile_image_url
+        text local_status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    identity_user_role_projection {
+        bigint id PK
+        bigint app_user_id FK
+        text role_name
+        text source
+        timestamptz synced_at
+        timestamptz created_at
+    }
+
+    identity_auth_audit {
+        bigint id PK
+        bigint app_user_id FK
+        text keycloak_subject
+        text event_type
+        text client_id
+        inet ip_address
+        text user_agent
+        boolean success
+        text failure_reason
+        timestamptz created_at
+    }
+
+    %% ===================== PASSENGER =====================
+
+    passenger_passenger_profile {
+        bigint id PK
+        bigint app_user_id FK
+        text full_name
+        text preferred_name
+        date date_of_birth
+        text gender
+        text profile_photo_object_key
+        numeric rating_average
+        bigint rating_count
+        text status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    passenger_saved_place {
+        bigint id PK
+        bigint passenger_id FK
+        text label
+        text address_text
+        geometry location
+        text place_provider
+        text place_provider_id
+        boolean is_default
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    passenger_trusted_contact {
+        bigint id PK
+        bigint passenger_id FK
+        text name
+        text phone
+        text relationship
+        boolean is_primary
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    %% ===================== DRIVER / KYC =====================
+
+    driver_driver_profile {
+        bigint id PK
+        bigint app_user_id FK
+        text full_name
+        date date_of_birth
+        text gender
+        text address_text
+        text kyc_status
+        text driver_status
+        text approval_status
+        numeric rating_average
+        bigint rating_count
+        bigint total_completed_trips
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    driver_driver_kyc_application {
+        bigint id PK
+        bigint driver_id FK
+        text status
+        timestamptz submitted_at
+        bigint reviewed_by_admin_user_id FK
+        timestamptz reviewed_at
+        text rejection_reason
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    driver_driver_document {
+        bigint id PK
+        bigint driver_id FK
+        text document_type
+        text object_key
+        text file_name
+        text content_type
+        bigint file_size_bytes
+        text status
+        bigint reviewed_by_admin_user_id FK
+        timestamptz reviewed_at
+        text rejection_reason
+        timestamptz expires_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    driver_driver_payout_profile {
+        bigint id PK
+        bigint driver_id FK
+        text bank_name
+        text bank_branch
+        text account_holder_name
+        text account_number_encrypted
+        text status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    %% ===================== VEHICLE =====================
+
+    vehicle_vehicle {
+        bigint id PK
+        bigint driver_id FK
+        text make
+        text model
+        int year
+        text color
+        text registration_number UK
+        text vehicle_type
+        int passenger_seat_capacity
+        jsonb features
+        text verification_status
+        text active_status
+        boolean is_primary
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    vehicle_vehicle_document {
+        bigint id PK
+        bigint vehicle_id FK
+        text document_type
+        text object_key
+        text file_name
+        text content_type
+        bigint file_size_bytes
+        text status
+        bigint reviewed_by_admin_user_id FK
+        timestamptz reviewed_at
+        text rejection_reason
+        timestamptz expires_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    %% ===================== ROUTING =====================
+
+    routing_route_template {
+        bigint id PK
+        bigint driver_id FK
+        bigint vehicle_id FK
+        text title
+        text origin_address
+        geometry origin_location
+        text destination_address
+        geometry destination_location
+        numeric estimated_distance_km
+        int estimated_duration_minutes
+        numeric price_per_km
+        int seats_offered
+        text booking_mode
+        text status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    routing_route_geometry {
+        bigint id PK
+        bigint route_template_id FK
+        geometry route_line
+        text encoded_polyline
+        numeric distance_km
+        int duration_minutes
+        text provider
+        text provider_route_id
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    routing_route_schedule_rule {
+        bigint id PK
+        bigint route_template_id FK
+        text schedule_type
+        int_array days_of_week
+        date start_date
+        date end_date
+        time departure_time_local
+        text timezone
+        int booking_opens_minutes_before
+        int booking_closes_minutes_before
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    routing_route_occurrence {
+        bigint id PK
+        bigint route_template_id FK
+        bigint driver_id FK
+        bigint vehicle_id FK
+        timestamptz scheduled_departure_at
+        timestamptz scheduled_arrival_at
+        text status
+        int available_seats
+        int seats_offered
+        numeric price_per_km_snapshot
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    routing_route_h3_cell {
+        bigint id PK
+        bigint route_occurrence_id FK
+        int h3_resolution
+        text h3_cell
+        timestamptz created_at
+    }
+
+    routing_route_stop {
+        bigint id PK
+        bigint route_occurrence_id FK
+        int stop_order
+        text address_text
+        geometry location
+        timestamptz planned_arrival_at
+        text stop_type
+        timestamptz created_at
+    }
+
+    %% ===================== MATCHING =====================
+
+    matching_ride_search {
+        bigint id PK
+        bigint passenger_id FK
+        text pickup_address
+        geometry pickup_location
+        text dropoff_address
+        geometry dropoff_location
+        timestamptz requested_departure_at
+        int seats_requested
+        text status
+        timestamptz created_at
+        timestamptz expires_at
+    }
+
+    matching_ride_search_result {
+        bigint id PK
+        bigint ride_search_id FK
+        bigint route_occurrence_id FK
+        bigint driver_id FK
+        bigint vehicle_id FK
+        text match_type
+        numeric match_score
+        numeric overlap_percentage
+        numeric pickup_distance_meters
+        numeric dropoff_distance_meters
+        numeric estimated_overlap_km
+        numeric estimated_fare
+        timestamptz estimated_pickup_time
+        timestamptz estimated_dropoff_time
+        text explanation
+        timestamptz created_at
+    }
+
+    matching_route_match_debug {
+        bigint id PK
+        bigint ride_search_id FK
+        bigint route_occurrence_id FK
+        numeric pickup_fraction
+        numeric dropoff_fraction
+        geometry passenger_segment
+        jsonb raw_score_breakdown
+        timestamptz created_at
+    }
+
+    %% ===================== BOOKING =====================
+
+    booking_booking {
+        bigint id PK
+        text public_booking_ref UK
+        bigint passenger_id FK
+        bigint route_occurrence_id FK
+        bigint driver_id FK
+        bigint vehicle_id FK
+        bigint ride_search_result_id FK
+        text status
+        int seats_booked
+        text pickup_address
+        geometry pickup_location
+        text dropoff_address
+        geometry dropoff_location
+        numeric pickup_fraction_on_route
+        numeric dropoff_fraction_on_route
+        numeric estimated_distance_km
+        numeric estimated_fare
+        text payment_method_type
+        text idempotency_key
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    booking_seat_reservation {
+        bigint id PK
+        bigint booking_id FK
+        bigint route_occurrence_id FK
+        text seat_number
+        int seat_count
+        text status
+        timestamptz reserved_at
+        timestamptz released_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    booking_booking_status_history {
+        bigint id PK
+        bigint booking_id FK
+        text from_status
+        text to_status
+        bigint changed_by_app_user_id FK
+        text reason
+        timestamptz created_at
+    }
+
+    %% ===================== TRIP =====================
+
+    trip_trip {
+        bigint id PK
+        bigint route_occurrence_id FK
+        bigint driver_id FK
+        bigint vehicle_id FK
+        text status
+        timestamptz started_at
+        timestamptz completed_at
+        timestamptz cancelled_at
+        text cancel_reason
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    trip_passenger_trip_state {
+        bigint id PK
+        bigint trip_id FK
+        bigint booking_id FK
+        bigint passenger_id FK
+        text status
+        timestamptz boarded_at
+        geometry boarded_location
+        timestamptz dropped_at
+        geometry dropped_location
+        numeric actual_distance_km
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    trip_trip_event {
+        bigint id PK
+        bigint trip_id FK
+        bigint booking_id FK
+        text event_type
+        bigint actor_app_user_id FK
+        geometry event_location
+        jsonb event_data
+        timestamptz created_at
+    }
+
+    trip_trip_stop_event {
+        bigint id PK
+        bigint trip_id FK
+        bigint booking_id FK
+        text stop_type
+        geometry planned_location
+        geometry actual_location
+        timestamptz planned_time
+        timestamptz actual_time
+        text status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    %% ===================== LOCATION =====================
+
+    location_location_sample {
+        bigint id PK
+        bigint trip_id FK
+        bigint booking_id FK
+        text actor_type
+        bigint actor_id
+        text sample_type
+        geometry raw_location
+        geometry matched_location
+        numeric accuracy_meters
+        numeric speed_mps
+        numeric bearing_degrees
+        numeric route_fraction
+        numeric distance_along_route_km
+        timestamptz device_timestamp
+        timestamptz received_at
+        jsonb metadata
+    }
+
+    location_trip_location_summary {
+        bigint id PK
+        bigint trip_id FK
+        numeric driver_total_distance_km
+        numeric matched_route_distance_km
+        int deviation_count
+        geometry last_location
+        timestamptz last_location_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    location_passenger_distance_trace {
+        bigint id PK
+        bigint trip_id FK
+        bigint booking_id FK
+        bigint from_sample_id FK
+        bigint to_sample_id FK
+        numeric distance_delta_km
+        boolean accepted_for_billing
+        timestamptz created_at
+    }
+
+    %% ===================== PRICING =====================
+
+    pricing_commission_rule {
+        bigint id PK
+        text name
+        text commission_type
+        numeric commission_value
+        timestamptz effective_from
+        timestamptz effective_to
+        boolean active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    pricing_fare_estimate {
+        bigint id PK
+        bigint booking_id FK
+        bigint route_occurrence_id FK
+        numeric estimated_distance_km
+        numeric price_per_km
+        numeric estimated_gross_fare
+        numeric estimated_platform_commission
+        numeric estimated_driver_net
+        text currency
+        timestamptz created_at
+    }
+
+    pricing_fare_ledger {
+        bigint id PK
+        bigint booking_id FK
+        bigint trip_id FK
+        text ledger_type
+        numeric distance_km
+        numeric price_per_km
+        numeric gross_fare
+        numeric platform_commission
+        numeric driver_net
+        text currency
+        text source
+        bigint reversal_of_ledger_id FK
+        timestamptz created_at
+    }
+
+    %% ===================== PAYMENT =====================
+
+    payment_payment_intent {
+        bigint id PK
+        bigint booking_id FK
+        bigint passenger_id FK
+        numeric amount_authorized
+        numeric amount_captured
+        text currency
+        text payment_method_type
+        text provider
+        text provider_intent_id
+        text status
+        text idempotency_key
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    payment_payment_transaction {
+        bigint id PK
+        bigint payment_intent_id FK
+        text transaction_type
+        text provider_transaction_id
+        numeric amount
+        text currency
+        text status
+        jsonb provider_response
+        timestamptz created_at
+    }
+
+    payment_payment_method {
+        bigint id PK
+        bigint passenger_id FK
+        text provider
+        text provider_customer_id
+        text provider_payment_method_id
+        text type
+        text brand
+        text last4
+        int expiry_month
+        int expiry_year
+        text status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    payment_cash_collection {
+        bigint id PK
+        bigint booking_id FK
+        bigint driver_id FK
+        numeric gross_cash_collected
+        numeric platform_commission_due
+        numeric driver_net_cash_retained
+        text status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    %% ===================== SETTLEMENT =====================
+
+    settlement_driver_balance {
+        bigint id PK
+        bigint driver_id FK
+        numeric available_balance
+        numeric pending_balance
+        numeric cash_commission_due
+        text currency
+        timestamptz updated_at
+    }
+
+    settlement_driver_earning_ledger {
+        bigint id PK
+        bigint driver_id FK
+        bigint booking_id FK
+        bigint trip_id FK
+        text ledger_type
+        numeric amount
+        text currency
+        text description
+        timestamptz created_at
+    }
+
+    settlement_platform_commission_ledger {
+        bigint id PK
+        bigint booking_id FK
+        bigint trip_id FK
+        bigint driver_id FK
+        numeric commission_amount
+        text currency
+        text collection_method
+        text status
+        timestamptz created_at
+    }
+
+    settlement_payout_batch {
+        bigint id PK
+        text batch_reference UK
+        text status
+        text currency
+        numeric total_amount
+        bigint created_by_admin_user_id FK
+        timestamptz created_at
+        timestamptz approved_at
+        timestamptz paid_at
+    }
+
+    settlement_payout_item {
+        bigint id PK
+        bigint payout_batch_id FK
+        bigint driver_id FK
+        numeric amount
+        text currency
+        text status
+        text bank_reference
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    %% ===================== NOTIFICATION =====================
+
+    notification_notification_template {
+        bigint id PK
+        text code UK
+        text channel
+        text title_template
+        text body_template
+        boolean active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    notification_notification_delivery {
+        bigint id PK
+        bigint app_user_id FK
+        text channel
+        text template_code
+        text recipient
+        text title
+        text body
+        text status
+        text provider
+        text provider_message_id
+        text error_message
+        timestamptz created_at
+        timestamptz sent_at
+        timestamptz delivered_at
+        timestamptz read_at
+    }
+
+    %% ===================== SAFETY =====================
+
+    safety_sos_event {
+        bigint id PK
+        bigint app_user_id FK
+        bigint trip_id FK
+        bigint booking_id FK
+        text actor_type
+        geometry location
+        text status
+        text message
+        timestamptz created_at
+        bigint resolved_by_admin_user_id FK
+        timestamptz resolved_at
+        text resolution_notes
+    }
+
+    safety_trip_share_link {
+        bigint id PK
+        bigint booking_id FK
+        bigint passenger_id FK
+        text token_hash UK
+        timestamptz expires_at
+        boolean active
+        timestamptz created_at
+        timestamptz revoked_at
+    }
+
+    safety_safety_report {
+        bigint id PK
+        bigint reporter_app_user_id FK
+        bigint reported_app_user_id FK
+        bigint trip_id FK
+        bigint booking_id FK
+        text category
+        text description
+        text status
+        timestamptz created_at
+        timestamptz resolved_at
+    }
+
+    %% ===================== SUPPORT =====================
+
+    support_support_ticket {
+        bigint id PK
+        text ticket_number UK
+        bigint created_by_app_user_id FK
+        bigint assigned_to_admin_user_id FK
+        text category
+        text priority
+        text status
+        text subject
+        text description
+        bigint trip_id FK
+        bigint booking_id FK
+        bigint payment_intent_id FK
+        timestamptz created_at
+        timestamptz updated_at
+        timestamptz closed_at
+    }
+
+    support_support_message {
+        bigint id PK
+        bigint ticket_id FK
+        bigint sender_app_user_id FK
+        bigint sender_admin_user_id FK
+        text message
+        jsonb attachments
+        timestamptz created_at
+    }
+
+    support_dispute {
+        bigint id PK
+        bigint booking_id FK
+        bigint payment_intent_id FK
+        bigint opened_by_app_user_id FK
+        text dispute_type
+        text status
+        numeric claimed_amount
+        numeric resolved_amount
+        text resolution
+        timestamptz created_at
+        timestamptz resolved_at
+    }
+
+    %% ===================== RATINGS =====================
+
+    ratings_rating {
+        bigint id PK
+        bigint trip_id FK
+        bigint booking_id FK
+        bigint reviewer_app_user_id FK
+        bigint reviewee_app_user_id FK
+        text reviewer_type
+        text reviewee_type
+        int score
+        text comment
+        timestamptz created_at
+    }
+
+    ratings_rating_aggregate {
+        bigint id PK
+        bigint app_user_id FK
+        numeric average_score
+        bigint rating_count
+        timestamptz last_rating_at
+        timestamptz updated_at
+    }
+
+    %% ===================== ADMIN / AUDIT =====================
+
+    admin_admin_action_log {
+        bigint id PK
+        bigint admin_app_user_id FK
+        text action
+        text target_schema
+        text target_table
+        bigint target_id
+        jsonb previous_value
+        jsonb new_value
+        text reason
+        inet ip_address
+        text user_agent
+        timestamptz created_at
+    }
+
+    audit_outbox_event {
+        bigint id PK
+        text aggregate_type
+        bigint aggregate_id
+        text event_type
+        int event_version
+        jsonb payload
+        text status
+        timestamptz created_at
+        timestamptz published_at
+        int retry_count
+        text last_error
+    }
+
+    audit_idempotency_key {
+        bigint id PK
+        text scope
+        text idempotency_key
+        text request_hash
+        int response_status
+        jsonb response_body
+        timestamptz created_at
+        timestamptz expires_at
+    }
+
+    %% ===================== RELATIONSHIPS =====================
+
+    identity_app_user ||--o{ identity_user_role_projection : has_roles
+    identity_app_user ||--o{ identity_auth_audit : has_auth_events
+
+    identity_app_user ||--o| passenger_passenger_profile : passenger_profile
+    passenger_passenger_profile ||--o{ passenger_saved_place : saved_places
+    passenger_passenger_profile ||--o{ passenger_trusted_contact : trusted_contacts
+
+    identity_app_user ||--o| driver_driver_profile : driver_profile
+    driver_driver_profile ||--o{ driver_driver_kyc_application : kyc_applications
+    driver_driver_profile ||--o{ driver_driver_document : driver_documents
+    driver_driver_profile ||--o| driver_driver_payout_profile : payout_profile
+
+    driver_driver_profile ||--o{ vehicle_vehicle : vehicles
+    vehicle_vehicle ||--o{ vehicle_vehicle_document : vehicle_documents
+
+    driver_driver_profile ||--o{ routing_route_template : route_templates
+    vehicle_vehicle ||--o{ routing_route_template : route_vehicle
+    routing_route_template ||--o| routing_route_geometry : geometry
+    routing_route_template ||--o{ routing_route_schedule_rule : schedule_rules
+    routing_route_template ||--o{ routing_route_occurrence : occurrences
+    routing_route_occurrence ||--o{ routing_route_h3_cell : h3_cells
+    routing_route_occurrence ||--o{ routing_route_stop : stops
+    driver_driver_profile ||--o{ routing_route_occurrence : occurrence_driver
+    vehicle_vehicle ||--o{ routing_route_occurrence : occurrence_vehicle
+
+    passenger_passenger_profile ||--o{ matching_ride_search : ride_searches
+    matching_ride_search ||--o{ matching_ride_search_result : search_results
+    routing_route_occurrence ||--o{ matching_ride_search_result : matched_occurrence
+    matching_ride_search ||--o{ matching_route_match_debug : debug_records
+    routing_route_occurrence ||--o{ matching_route_match_debug : debug_occurrence
+
+    passenger_passenger_profile ||--o{ booking_booking : bookings
+    routing_route_occurrence ||--o{ booking_booking : occurrence_bookings
+    driver_driver_profile ||--o{ booking_booking : driver_bookings
+    vehicle_vehicle ||--o{ booking_booking : vehicle_bookings
+    matching_ride_search_result ||--o{ booking_booking : selected_result
+    booking_booking ||--o{ booking_seat_reservation : seat_reservations
+    booking_booking ||--o{ booking_booking_status_history : status_history
+
+    routing_route_occurrence ||--o| trip_trip : trip
+    trip_trip ||--o{ trip_passenger_trip_state : passenger_states
+    booking_booking ||--o| trip_passenger_trip_state : booking_state
+    trip_trip ||--o{ trip_trip_event : trip_events
+    booking_booking ||--o{ trip_trip_event : booking_events
+    trip_trip ||--o{ trip_trip_stop_event : stop_events
+    booking_booking ||--o{ trip_trip_stop_event : booking_stop_events
+
+    trip_trip ||--o{ location_location_sample : location_samples
+    booking_booking ||--o{ location_location_sample : passenger_samples
+    trip_trip ||--o| location_trip_location_summary : location_summary
+    trip_trip ||--o{ location_passenger_distance_trace : distance_trace
+    booking_booking ||--o{ location_passenger_distance_trace : billing_trace
+    location_location_sample ||--o{ location_passenger_distance_trace : from_sample
+    location_location_sample ||--o{ location_passenger_distance_trace : to_sample
+
+    booking_booking ||--o| pricing_fare_estimate : fare_estimate
+    routing_route_occurrence ||--o{ pricing_fare_estimate : route_estimates
+    booking_booking ||--o{ pricing_fare_ledger : fare_ledger
+    trip_trip ||--o{ pricing_fare_ledger : trip_fares
+    pricing_fare_ledger ||--o{ pricing_fare_ledger : reversal_adjustment
+
+    booking_booking ||--o| payment_payment_intent : payment_intent
+    passenger_passenger_profile ||--o{ payment_payment_intent : payment_intents
+    payment_payment_intent ||--o{ payment_payment_transaction : transactions
+    passenger_passenger_profile ||--o{ payment_payment_method : payment_methods
+    booking_booking ||--o| payment_cash_collection : cash_collection
+    driver_driver_profile ||--o{ payment_cash_collection : driver_cash
+
+    driver_driver_profile ||--o| settlement_driver_balance : balance
+    driver_driver_profile ||--o{ settlement_driver_earning_ledger : earning_ledger
+    booking_booking ||--o{ settlement_driver_earning_ledger : booking_earnings
+    trip_trip ||--o{ settlement_driver_earning_ledger : trip_earnings
+    booking_booking ||--o{ settlement_platform_commission_ledger : booking_commission
+    trip_trip ||--o{ settlement_platform_commission_ledger : trip_commission
+    driver_driver_profile ||--o{ settlement_platform_commission_ledger : driver_commission
+    settlement_payout_batch ||--o{ settlement_payout_item : payout_items
+    driver_driver_profile ||--o{ settlement_payout_item : driver_payouts
+
+    identity_app_user ||--o{ notification_notification_delivery : notifications
+
+    identity_app_user ||--o{ safety_sos_event : sos_events
+    trip_trip ||--o{ safety_sos_event : trip_sos
+    booking_booking ||--o{ safety_sos_event : booking_sos
+    booking_booking ||--o{ safety_trip_share_link : share_links
+    passenger_passenger_profile ||--o{ safety_trip_share_link : passenger_share_links
+    identity_app_user ||--o{ safety_safety_report : safety_reports_made
+    identity_app_user ||--o{ safety_safety_report : safety_reports_against
+    trip_trip ||--o{ safety_safety_report : trip_safety_reports
+    booking_booking ||--o{ safety_safety_report : booking_safety_reports
+
+    identity_app_user ||--o{ support_support_ticket : created_tickets
+    identity_app_user ||--o{ support_support_ticket : assigned_admin_tickets
+    trip_trip ||--o{ support_support_ticket : trip_tickets
+    booking_booking ||--o{ support_support_ticket : booking_tickets
+    payment_payment_intent ||--o{ support_support_ticket : payment_tickets
+    support_support_ticket ||--o{ support_support_message : messages
+    booking_booking ||--o{ support_dispute : booking_disputes
+    payment_payment_intent ||--o{ support_dispute : payment_disputes
+    identity_app_user ||--o{ support_dispute : opened_disputes
+
+    trip_trip ||--o{ ratings_rating : trip_ratings
+    booking_booking ||--o{ ratings_rating : booking_ratings
+    identity_app_user ||--o{ ratings_rating : reviewer
+    identity_app_user ||--o{ ratings_rating : reviewee
+    identity_app_user ||--o| ratings_rating_aggregate : rating_aggregate
+
+    identity_app_user ||--o{ admin_admin_action_log : admin_actions
