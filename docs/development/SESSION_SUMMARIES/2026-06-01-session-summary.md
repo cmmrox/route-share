@@ -234,3 +234,17 @@ Next recommended work:
 1. Add booking status history.
 2. Add explicit HTTP `Idempotency-Key` handling backed by `common.idempotency_key`.
 3. Continue passenger boarded/no-show/drop-off and route-occurrence-aware trip lifecycle work.
+
+
+## Phase 05 continued — booking status history
+
+- Added Flyway V008 for `booking.booking_status_history`.
+- Added `BookingStatusHistoryEntity` and `BookingStatusHistoryRepository`.
+- Booking creation now writes an initial `CONFIRMED` status history row after successful occurrence seat reservation and booking insert.
+- Verification passed: RED/GREEN `BookingServiceTest`, full backend formatting/tests, runtime health, Flyway V008, and DB table/column checks.
+
+Next recommended work:
+
+1. Implement explicit `Idempotency-Key` request handling using `common.idempotency_key`.
+2. Extend booking status history to future cancel/reject/complete transitions.
+3. Continue route-occurrence-aware trip lifecycle and passenger boarded/no-show/drop-off states.

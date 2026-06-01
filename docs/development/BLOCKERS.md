@@ -121,3 +121,13 @@ Notes:
 
 - Booking occurrence reservation and matched-fraction persistence are local backend/database work.
 - Payment provider selection remains a later blocker for real preauthorization/capture/refund flows.
+
+
+## Phase 05 booking status history slice
+
+Status: no third-party blocker.
+
+Notes:
+
+- Initial booking status history is a local database/backend feature and is verified with Flyway V008.
+- Future explicit idempotency handling remains local backend work using the existing `common.idempotency_key` table.

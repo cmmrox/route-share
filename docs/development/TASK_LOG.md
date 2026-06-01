@@ -442,3 +442,33 @@ Verification:
 Next step:
 
 - Continue Phase 05 with booking status history and explicit idempotency-key handling.
+
+
+## 2026-06-01 21:09 +0530 — Phase 05 booking status history foundation
+
+Files changed:
+
+- `apps/api/src/main/resources/db/migration/V008__add_booking_status_history.sql`
+- `apps/api/src/main/java/com/routeshare/booking/entity/BookingStatusHistoryEntity.java`
+- `apps/api/src/main/java/com/routeshare/booking/repository/BookingStatusHistoryRepository.java`
+- `apps/api/src/main/java/com/routeshare/booking/service/impl/BookingServiceImpl.java`
+- `apps/api/src/test/java/com/routeshare/booking/service/impl/BookingServiceTest.java`
+
+Implemented:
+
+- Added immutable booking status history table with `from_status`, `to_status`, changed-by user, reason, and timestamp.
+- Booking creation now records initial `CONFIRMED` status history after successful route-occurrence seat reservation and booking insert.
+- Added repository and entity under the booking module, keeping service code free of SQL.
+
+Verification:
+
+- RED: `./mvnw -q -Dtest=BookingServiceTest test` failed because `BookingStatusHistoryRepository` did not exist.
+- GREEN: `./mvnw -q -Dtest=BookingServiceTest test` passed after implementation.
+- Full backend: `./mvnw spotless:apply spotless:check test -q` passed with Java 21.
+- Runtime health: `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}`.
+- Flyway: latest migration version `008`, success `true`.
+- DB table verified: `booking.booking_status_history` with expected status/audit columns.
+
+Next step:
+
+- Continue Phase 05 with explicit HTTP `Idempotency-Key` handling backed by `common.idempotency_key`.
