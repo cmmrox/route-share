@@ -5,6 +5,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.routeshare.booking.dto.request.BookingRequest;
 import com.routeshare.booking.dto.request.BookingStatusTransitionRequest;
+import com.routeshare.booking.dto.response.DriverBookingRequestResponse;
+import com.routeshare.booking.dto.response.PassengerBookingDetailResponse;
+import com.routeshare.booking.dto.response.PassengerBookingSummaryResponse;
 import com.routeshare.booking.repository.BookingRepository;
 import com.routeshare.booking.repository.BookingStatusHistoryRepository;
 import com.routeshare.booking.service.BookingService;
@@ -18,7 +21,9 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -124,14 +129,151 @@ public class BookingServiceImpl implements BookingService {
         bookings
             .findStatusForUpdateByIdAndPassengerAppUserId(bookingId, app.appUserId())
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
+    updateBookingStatus(bookingId, app.appUserId(), fromStatus, toStatus, req.reason());
+    return Map.of("bookingId", bookingId, "status", toStatus);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<PassengerBookingSummaryResponse> listPassengerBookings() {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return bookings.findPassengerBookings(app.appUserId()).stream().map(this::toSummary).toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public PassengerBookingDetailResponse getPassengerBooking(long bookingId) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return bookings
+        .findPassengerBookingDetail(app.appUserId(), bookingId)
+        .map(this::toDetail)
+        .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<PassengerBookingDetailResponse> getCurrentPassengerTrip() {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return bookings.findCurrentPassengerTrip(app.appUserId()).map(this::toDetail);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<PassengerBookingSummaryResponse> listPassengerTripHistory() {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return bookings.findPassengerTripHistory(app.appUserId()).stream()
+        .map(this::toSummary)
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<DriverBookingRequestResponse> listDriverBookingRequests(Long tripId) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return bookings.findDriverBookingRequests(app.appUserId(), tripId).stream()
+        .map(this::toDriverBookingRequest)
+        .toList();
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> approveByDriver(long bookingId) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    String fromStatus =
+        bookings
+            .findStatusForUpdateByIdAndDriverAppUserId(bookingId, app.appUserId())
+            .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
+    updateBookingStatus(
+        bookingId, app.appUserId(), fromStatus, CONFIRMED, "Driver approved booking");
+    return Map.of("bookingId", bookingId, "status", CONFIRMED);
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> declineByDriver(long bookingId, String reason) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    String fromStatus =
+        bookings
+            .findStatusForUpdateByIdAndDriverAppUserId(bookingId, app.appUserId())
+            .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
+    updateBookingStatus(bookingId, app.appUserId(), fromStatus, REJECTED, reason);
+    return Map.of("bookingId", bookingId, "status", REJECTED);
+  }
+
+  private void updateBookingStatus(
+      long bookingId, long actorAppUserId, String fromStatus, String toStatus, String reason) {
     assertTransition(fromStatus, toStatus);
     int updated = bookings.updateStatus(bookingId, toStatus);
     if (updated != 1) {
       throw new IllegalStateException("Booking status update failed");
     }
-    String reason = transitionReason(req.reason(), fromStatus, toStatus);
-    statusHistory.recordTransition(bookingId, fromStatus, toStatus, app.appUserId(), reason);
-    return Map.of("bookingId", bookingId, "status", toStatus);
+    statusHistory.recordTransition(
+        bookingId,
+        fromStatus,
+        toStatus,
+        actorAppUserId,
+        transitionReason(reason, fromStatus, toStatus));
+  }
+
+  private PassengerBookingSummaryResponse toSummary(BookingRepository.PassengerBookingRow row) {
+    return new PassengerBookingSummaryResponse(
+        row.getBookingId(),
+        row.getRoutePlanId(),
+        row.getRouteOccurrenceId(),
+        row.getTripId(),
+        row.getOriginLabel(),
+        row.getDestinationLabel(),
+        row.getDepartureTime(),
+        row.getSeats(),
+        row.getBookingStatus(),
+        row.getTripStatus(),
+        row.getPassengerTripStatus(),
+        row.getFareEstimate(),
+        row.getPaymentStatus(),
+        row.getCreatedAt());
+  }
+
+  private PassengerBookingDetailResponse toDetail(BookingRepository.PassengerBookingRow row) {
+    return new PassengerBookingDetailResponse(
+        row.getBookingId(),
+        row.getRoutePlanId(),
+        row.getRouteOccurrenceId(),
+        row.getTripId(),
+        row.getOriginLabel(),
+        row.getDestinationLabel(),
+        row.getDepartureTime(),
+        row.getSeats(),
+        row.getBookingStatus(),
+        row.getTripStatus(),
+        row.getPassengerTripStatus(),
+        row.getFareEstimate(),
+        row.getPaymentStatus(),
+        row.getPickupLatitude(),
+        row.getPickupLongitude(),
+        row.getDropoffLatitude(),
+        row.getDropoffLongitude(),
+        row.getPickupRouteFraction(),
+        row.getDropoffRouteFraction(),
+        row.getCreatedAt());
+  }
+
+  private DriverBookingRequestResponse toDriverBookingRequest(
+      BookingRepository.DriverBookingRequestRow row) {
+    return new DriverBookingRequestResponse(
+        row.getBookingId(),
+        row.getRoutePlanId(),
+        row.getRouteOccurrenceId(),
+        row.getTripId(),
+        row.getPassengerAppUserId(),
+        row.getPassengerName(),
+        row.getSeats(),
+        row.getStatus(),
+        row.getFareEstimate(),
+        row.getPickupLatitude(),
+        row.getPickupLongitude(),
+        row.getDropoffLatitude(),
+        row.getDropoffLongitude(),
+        row.getCreatedAt());
   }
 
   private String normalizeStatus(String status) {

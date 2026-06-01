@@ -1,6 +1,6 @@
 # RouteShareApp Blockers
 
-Last Updated: 2026-06-01 21:51 +0530
+Last Updated: 2026-06-02 00:35 +0530
 
 ## Purpose
 
@@ -17,9 +17,42 @@ Blocker Status Values:
 
 ## Active Blockers
 
+No active blocker prevents starting Phase 06 after the verified pre-Phase-06 commit.
+
+## Resolved Blockers
+
+### Blocker 006 — API contracts expanded but backend implementation is not reconciled
+
+Status: `RESOLVED`
+Severity: `HIGH`
+
+Description:
+
+The passenger, driver, and admin OpenAPI contracts have been expanded after reviewing the business requirement PDF and supplied mobile designs. These contracts now include required product APIs for payment methods, receipts, early drop-off, KYC upload details, recurring routes, cash collection, earnings, admin finance/support/safety/reporting, and other screens. The current backend implementation only covers a subset and often uses generic resource paths such as `/api/v1/routes`, `/api/v1/bookings`, `/api/v1/trips`, and `/api/v1/payments`.
+
+Impact:
+
+- Passenger/driver/admin app development can drift or be blocked if it starts before endpoint names and response shapes are reconciled.
+- Generated TypeScript clients cannot be treated as implementation-ready until backend coverage is verified.
+
+Recommended Action:
+
+- Before Phase 07/08/09 app implementation, reconcile every path in `docs/api/*.openapi.json` with Spring Boot controllers.
+- Either implement app-specific aliases, update contracts to canonical generic endpoints, or mark paths as deferred/future.
+- Add contract drift checks and generate clients under `packages/api-contracts`.
+
+Progress 2026-06-01 23:22 +0530:
+
+- First app-facing backend alias slice implemented and verified for passenger ride search, passenger booking create/cancel, passenger payment intent, driver route create, and driver trip/passenger-state operations.
+- Earlier remaining gaps for list/detail/projection endpoints, manual booking approval, admin finance operations, payment lifecycle, and generated contract inventory are now implemented for the Phase 06 gate. Realtime begins in Phase 06; notifications/support/SOS are later phases.
+
+---
+
+## Deferred / Later-Phase Risks
+
 ### Blocker 003 — Full backend completion still requires larger product workflows
 
-Status: `OPEN`
+Status: `DEFERRED`
 Severity: `MEDIUM`
 
 Description:
@@ -28,10 +61,8 @@ The backend foundation is verified, but the full product backend still needs sev
 
 - Upload/storage integration for KYC/document binaries.
 - Deeper route matching integration/performance tests with realistic volumes.
-- Passenger boarded/no-show/drop-off trip states and payment/settlement lifecycle.
-- Trip passenger state transitions and settlement/payment lifecycle.
-- Realtime WebSocket updates and event streaming/outbox.
-- Admin management/reporting APIs.
+- Realtime WebSocket updates and event streaming/outbox are Phase 06.
+- Notifications/support/SOS, advanced admin management/reporting APIs, and real provider payout batches are later product/hardening phases.
 - Integration/security tests.
 
 Impact:
@@ -40,11 +71,11 @@ Impact:
 
 Recommended Action:
 
-- Continue implementation in small verified slices: Phase 05 booking/trip/fare/payment lifecycle, then realtime/event/admin workflows. Add realistic-volume route matching performance tests before scale claims.
+- Phase 05 booking/trip/fare/payment lifecycle is complete for the Phase 06 gate. Continue with Phase 06 realtime/event work next; add realistic-volume route matching performance tests before scale claims.
 
 ---
 
-## Resolved Blockers
+## Historical Resolved Blockers
 
 ### Blocker 002 — Initial Git commit is pending
 
@@ -151,3 +182,27 @@ Notes:
 
 - Cancel/reject/complete booking transitions are local backend/database work and now write `booking.booking_status_history` rows in the same transaction as the status update.
 - Seat release/refund/settlement side effects remain future workflow slices and should be implemented with explicit tests.
+
+
+Progress 2026-06-01 23:43 +0530:
+
+- Passenger booking/trip projections, driver route/trip projections, booking requests, and driver approve/decline are implemented and verified.
+- Blocker 006 is now resolved for the Phase 06 gate. Realtime-dependent APIs start in Phase 06; notifications/support/SOS and full contract drift automation are later phases.
+
+
+Payment progress 2026-06-01 23:52 +0530:
+
+- Capture, void, refund, driver cash collection, and passenger receipt foundation are implemented and verified.
+- Admin payment list/detail/events, cash collection review, driver earnings, platform commission, and settlement balance are implemented for the Phase 06 gate. Provider-specific payment gateway integration remains deferred hardening.
+
+
+Blocker 006 closed 2026-06-02 00:08 +0530:
+
+The API contract/backend mismatch that blocked Phase 06 has been reduced to non-blocking future hardening. Core Passenger/Driver/Admin pre-Phase-06 endpoints are implemented, tested, smoke-verified, and tracked. Real payment provider integration, settlement payout operations, and advanced finance review workflows remain later hardening tasks, not Phase 06 blockers.
+
+
+Final audit 2026-06-02 00:35 +0530:
+
+- No blocker remains open for phases 00 through 05.5.
+- Phase 06 may start after committing the verified working tree.
+- Deferred risks are intentionally later-phase scope, not incomplete pre-Phase-06 work.

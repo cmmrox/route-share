@@ -3,10 +3,17 @@ package com.routeshare.payment.service.impl;
 import com.routeshare.booking.facade.BookingFacade;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
+import com.routeshare.payment.dto.request.CashCollectionRequest;
+import com.routeshare.payment.dto.request.FareAdjustmentRequest;
 import com.routeshare.payment.dto.request.PaymentIntentRequest;
+import com.routeshare.payment.dto.request.PaymentLifecycleRequest;
+import com.routeshare.payment.dto.response.ReceiptResponse;
 import com.routeshare.payment.repository.FareLedgerRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository;
+import com.routeshare.payment.repository.PaymentIntentRepository.PaymentIntentView;
 import com.routeshare.payment.service.PaymentService;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentServiceImpl implements PaymentService {
   static final String DEFAULT_CURRENCY = "LKR";
   static final String BOOKING_FARE_ESTIMATE = "BOOKING_FARE_ESTIMATE";
+  static final String PAYMENT_CAPTURED = "PAYMENT_CAPTURED";
+  static final String PAYMENT_VOIDED = "PAYMENT_VOIDED";
+  static final String PAYMENT_REFUNDED = "PAYMENT_REFUNDED";
+  static final String CASH_COLLECTED = "CASH_COLLECTED";
+  static final String FARE_ADJUSTMENT_REQUESTED = "FARE_ADJUSTMENT_REQUESTED";
 
   private final CurrentUserProvider current;
   private final IdentityFacade identityFacade;
@@ -26,6 +38,7 @@ public class PaymentServiceImpl implements PaymentService {
   private final PaymentIntentRepository paymentIntents;
   private final FareLedgerRepository fareLedger;
 
+  @Override
   @Transactional
   public Map<String, Object> createIntent(PaymentIntentRequest req) {
     var app = identityFacade.upsertFromToken(current.requireCurrentUser());
@@ -47,7 +60,220 @@ public class PaymentServiceImpl implements PaymentService {
                 () ->
                     paymentIntents.create(
                         req.bookingId(), "mock_" + UUID.randomUUID(), amount, DEFAULT_CURRENCY));
+    return toResponse(intent);
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> capture(long paymentIntentId, PaymentLifecycleRequest req) {
+    var intent = transition(paymentIntentId, "REQUIRES_CAPTURE", "CAPTURED");
+    fareLedger.recordPaymentLifecycleIfAbsent(
+        requireBookingId(intent), PAYMENT_CAPTURED, intent.amount(), intent.currency());
+    return toResponse(intent);
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> voidIntent(long paymentIntentId, PaymentLifecycleRequest req) {
+    var intent = transition(paymentIntentId, "REQUIRES_CAPTURE", "VOIDED");
+    fareLedger.recordPaymentLifecycleIfAbsent(
+        requireBookingId(intent), PAYMENT_VOIDED, intent.amount(), intent.currency());
+    return toResponse(intent);
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> refund(long paymentIntentId, PaymentLifecycleRequest req) {
+    var intent = transition(paymentIntentId, "CAPTURED", "REFUNDED");
+    fareLedger.recordPaymentLifecycleIfAbsent(
+        requireBookingId(intent), PAYMENT_REFUNDED, intent.amount().negate(), intent.currency());
+    return toResponse(intent);
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> recordCashCollected(long bookingId, CashCollectionRequest req) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    var fare =
+        bookingFacade
+            .findDriverOwnedBookingFare(bookingId, app.appUserId())
+            .orElseThrow(
+                () -> new AccessDeniedException("Booking does not belong to current driver"));
+    if (req.amount().compareTo(fare) > 0) {
+      throw new IllegalArgumentException("Cash collection cannot exceed booking fare");
+    }
+    fareLedger.recordPaymentLifecycleIfAbsent(
+        bookingId, CASH_COLLECTED, req.amount(), DEFAULT_CURRENCY);
     return Map.of(
+        "bookingId",
+        bookingId,
+        "status",
+        "CASH_COLLECTED",
+        "amount",
+        req.amount(),
+        "currency",
+        DEFAULT_CURRENCY);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public ReceiptResponse receipt(long bookingId) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    var fare =
+        bookingFacade
+            .findFareEstimateForPassengerBooking(bookingId, app.appUserId())
+            .orElseThrow(
+                () -> new AccessDeniedException("Booking does not belong to current user"));
+    List<ReceiptResponse.LineItem> lines =
+        fareLedger.findRowsByBookingId(bookingId).stream()
+            .map(
+                row ->
+                    new ReceiptResponse.LineItem(
+                        row.getEntryType(), row.getAmount(), row.getCurrency()))
+            .toList();
+    BigDecimal paid = sum(lines, PAYMENT_CAPTURED);
+    BigDecimal refunded = sum(lines, PAYMENT_REFUNDED).abs();
+    BigDecimal cash = sum(lines, CASH_COLLECTED);
+    BigDecimal balance = fare.subtract(paid).subtract(cash).add(refunded);
+    return new ReceiptResponse(
+        bookingId, fare, paid, refunded, cash, balance, DEFAULT_CURRENCY, lines);
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> requestFareAdjustment(long bookingId, FareAdjustmentRequest req) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    bookingFacade
+        .findDriverOwnedBookingFare(bookingId, app.appUserId())
+        .orElseThrow(() -> new AccessDeniedException("Booking does not belong to current driver"));
+    if (req.amount().signum() == 0) {
+      throw new IllegalArgumentException("Fare adjustment amount cannot be zero");
+    }
+    fareLedger.recordPaymentLifecycleIfAbsent(
+        bookingId, FARE_ADJUSTMENT_REQUESTED, req.amount(), DEFAULT_CURRENCY);
+    return Map.of(
+        "bookingId",
+        bookingId,
+        "status",
+        "FARE_ADJUSTMENT_REQUESTED",
+        "amount",
+        req.amount(),
+        "currency",
+        DEFAULT_CURRENCY);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Map<String, Object> driverEarningsSummary() {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    BigDecimal gross = fareLedger.sumDriverGrossEarnings(app.appUserId());
+    if (gross == null) {
+      gross = BigDecimal.ZERO;
+    }
+    BigDecimal commission = gross.multiply(new BigDecimal("0.10"));
+    BigDecimal net = gross.subtract(commission);
+    return Map.of(
+        "currency", DEFAULT_CURRENCY,
+        "grossEarnings", gross,
+        "platformCommission", commission,
+        "settlementBalance", net,
+        "totalEarnings", net);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Map<String, Object>> driverEarningsTransactions() {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return fareLedger.findDriverLedgerRows(app.appUserId()).stream()
+        .map(this::ledgerRowToMap)
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Map<String, Object>> adminPayments() {
+    return paymentIntents.findAdminPayments().stream().map(this::paymentRowToMap).toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Map<String, Object> adminPaymentDetail(long paymentIntentId) {
+    return paymentIntents
+        .findAdminPayment(paymentIntentId)
+        .map(this::paymentRowToMap)
+        .orElseThrow(() -> new java.util.NoSuchElementException("Payment intent not found"));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Map<String, Object>> adminPaymentEvents(long paymentIntentId) {
+    var payment = paymentIntents.findAdminPayment(paymentIntentId).orElseThrow();
+    return fareLedger.findRowsByBookingId(payment.getBookingId()).stream()
+        .map(
+            row ->
+                Map.<String, Object>of(
+                    "bookingId", payment.getBookingId(),
+                    "entryType", row.getEntryType(),
+                    "amount", row.getAmount(),
+                    "currency", row.getCurrency()))
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Map<String, Object>> adminCashCollections() {
+    return fareLedger.findRowsByTypes(java.util.List.of(CASH_COLLECTED)).stream()
+        .map(this::ledgerRowToMap)
+        .toList();
+  }
+
+  private Map<String, Object> paymentRowToMap(PaymentIntentRepository.PaymentAdminRow row) {
+    return Map.of(
+        "paymentIntentId", row.getPaymentIntentId(),
+        "bookingId", row.getBookingId(),
+        "provider", row.getProvider(),
+        "providerReference", row.getProviderReference(),
+        "status", row.getStatus(),
+        "amount", row.getAmount(),
+        "currency", row.getCurrency());
+  }
+
+  private Map<String, Object> ledgerRowToMap(FareLedgerRepository.FareLedgerAdminRow row) {
+    return Map.of(
+        "bookingId", row.getBookingId(),
+        "entryType", row.getEntryType(),
+        "amount", row.getAmount(),
+        "currency", row.getCurrency(),
+        "createdAt", row.getCreatedAt());
+  }
+
+  private PaymentIntentView transition(long paymentIntentId, String fromStatus, String toStatus) {
+    return paymentIntents
+        .transitionStatus(paymentIntentId, fromStatus, toStatus)
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Invalid payment transition from " + fromStatus + " to " + toStatus));
+  }
+
+  private long requireBookingId(PaymentIntentView intent) {
+    if (intent.bookingId() == null) {
+      throw new IllegalStateException("Payment intent is missing booking id");
+    }
+    return intent.bookingId();
+  }
+
+  private BigDecimal sum(List<ReceiptResponse.LineItem> lines, String type) {
+    return lines.stream()
+        .filter(line -> type.equals(line.type()))
+        .map(ReceiptResponse.LineItem::amount)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+  }
+
+  private Map<String, Object> toResponse(PaymentIntentView intent) {
+    return Map.of(
+        "paymentIntentId", intent.paymentIntentId() == null ? 0L : intent.paymentIntentId(),
+        "bookingId", intent.bookingId() == null ? 0L : intent.bookingId(),
         "provider", intent.provider(),
         "providerReference", intent.providerReference(),
         "status", intent.status(),

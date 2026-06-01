@@ -5,4 +5,6 @@ import java.util.Optional;
 
 public interface BookingFacade {
   Optional<BigDecimal> findFareEstimateForPassengerBooking(long bookingId, long passengerAppUserId);
+
+  Optional<BigDecimal> findDriverOwnedBookingFare(long bookingId, long driverAppUserId);
 }

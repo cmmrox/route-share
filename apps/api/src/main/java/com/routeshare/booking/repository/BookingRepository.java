@@ -3,6 +3,8 @@ package com.routeshare.booking.repository;
 import com.routeshare.booking.dto.request.BookingRequest;
 import com.routeshare.booking.entity.BookingEntity;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -42,6 +44,20 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
   @Query(
       value =
           """
+      SELECT b.fare_estimate
+      FROM booking.booking b
+      JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      WHERE b.booking_id = :bookingId
+        AND d.app_user_id = :driverAppUserId
+      """,
+      nativeQuery = true)
+  Optional<BigDecimal> findFareEstimateForDriverBooking(
+      @Param("bookingId") long bookingId, @Param("driverAppUserId") long driverAppUserId);
+
+  @Query(
+      value =
+          """
       SELECT status
       FROM booking.booking
       WHERE booking_id = :bookingId
@@ -51,6 +67,21 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
       nativeQuery = true)
   Optional<String> findStatusForUpdateByIdAndPassengerAppUserId(
       @Param("bookingId") long bookingId, @Param("passengerAppUserId") long passengerAppUserId);
+
+  @Query(
+      value =
+          """
+      SELECT b.status
+      FROM booking.booking b
+      JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      WHERE b.booking_id = :bookingId
+        AND d.app_user_id = :driverAppUserId
+      FOR UPDATE OF b
+      """,
+      nativeQuery = true)
+  Optional<String> findStatusForUpdateByIdAndDriverAppUserId(
+      @Param("bookingId") long bookingId, @Param("driverAppUserId") long driverAppUserId);
 
   @Modifying
   @Query(
@@ -62,6 +93,89 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
       """,
       nativeQuery = true)
   int updateStatus(@Param("bookingId") long bookingId, @Param("status") String status);
+
+  @Query(
+      value =
+          PASSENGER_SELECT
+              + """
+      WHERE b.passenger_app_user_id = :passengerAppUserId
+      ORDER BY b.created_at DESC
+      """,
+      nativeQuery = true)
+  List<PassengerBookingRow> findPassengerBookings(
+      @Param("passengerAppUserId") long passengerAppUserId);
+
+  @Query(
+      value =
+          PASSENGER_SELECT
+              + """
+      WHERE b.passenger_app_user_id = :passengerAppUserId
+        AND b.booking_id = :bookingId
+      """,
+      nativeQuery = true)
+  Optional<PassengerBookingRow> findPassengerBookingDetail(
+      @Param("passengerAppUserId") long passengerAppUserId, @Param("bookingId") long bookingId);
+
+  @Query(
+      value =
+          PASSENGER_SELECT
+              + """
+      WHERE b.passenger_app_user_id = :passengerAppUserId
+        AND b.status IN ('REQUESTED','CONFIRMED')
+        AND COALESCE(t.status::text, 'SCHEDULED') NOT IN ('COMPLETED','CANCELLED')
+      ORDER BY ro.scheduled_departure_at ASC, b.created_at DESC
+      LIMIT 1
+      """,
+      nativeQuery = true)
+  Optional<PassengerBookingRow> findCurrentPassengerTrip(
+      @Param("passengerAppUserId") long passengerAppUserId);
+
+  @Query(
+      value =
+          PASSENGER_SELECT
+              + """
+      WHERE b.passenger_app_user_id = :passengerAppUserId
+        AND (b.status IN ('CANCELLED','REJECTED','COMPLETED')
+             OR COALESCE(t.status::text, 'SCHEDULED') IN ('COMPLETED','CANCELLED'))
+      ORDER BY b.created_at DESC
+      """,
+      nativeQuery = true)
+  List<PassengerBookingRow> findPassengerTripHistory(
+      @Param("passengerAppUserId") long passengerAppUserId);
+
+  @Query(
+      value =
+          """
+      SELECT
+        b.booking_id AS "bookingId",
+        b.route_plan_id AS "routePlanId",
+        b.route_occurrence_id AS "routeOccurrenceId",
+        t.trip_id AS "tripId",
+        b.passenger_app_user_id AS "passengerAppUserId",
+        COALESCE(pp.full_name, au.display_name, au.email, au.phone, 'Passenger') AS "passengerName",
+        b.seats AS "seats",
+        b.status AS "status",
+        b.fare_estimate AS "fareEstimate",
+        ST_Y(b.pickup) AS "pickupLatitude",
+        ST_X(b.pickup) AS "pickupLongitude",
+        ST_Y(b.dropoff) AS "dropoffLatitude",
+        ST_X(b.dropoff) AS "dropoffLongitude",
+        b.created_at AS "createdAt"
+      FROM booking.booking b
+      JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      LEFT JOIN trip.trip t ON t.route_plan_id = b.route_plan_id
+        AND (t.route_occurrence_id = b.route_occurrence_id OR t.route_occurrence_id IS NULL)
+      LEFT JOIN passenger.passenger_profile pp ON pp.app_user_id = b.passenger_app_user_id
+      LEFT JOIN identity.app_user au ON au.app_user_id = b.passenger_app_user_id
+      WHERE d.app_user_id = :driverAppUserId
+        AND (:tripId IS NULL OR t.trip_id = :tripId)
+        AND b.status IN ('REQUESTED','CONFIRMED')
+      ORDER BY b.created_at ASC
+      """,
+      nativeQuery = true)
+  List<DriverBookingRequestRow> findDriverBookingRequests(
+      @Param("driverAppUserId") long driverAppUserId, @Param("tripId") Long tripId);
 
   default long create(
       long appUserId, BookingRequest request, long routePlanId, BigDecimal fareEstimate) {
@@ -82,5 +196,110 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
   default Optional<BigDecimal> findFareEstimateByBookingIdAndPassengerAppUserId(
       long bookingId, long appUserId) {
     return findFareEstimateByIdAndPassengerAppUserId(bookingId, appUserId);
+  }
+
+  String PASSENGER_SELECT =
+      """
+      SELECT
+        b.booking_id AS "bookingId",
+        b.route_plan_id AS "routePlanId",
+        b.route_occurrence_id AS "routeOccurrenceId",
+        t.trip_id AS "tripId",
+        r.origin_label AS "originLabel",
+        r.destination_label AS "destinationLabel",
+        ro.scheduled_departure_at AS "departureTime",
+        b.seats AS "seats",
+        b.status AS "bookingStatus",
+        t.status AS "tripStatus",
+        pts.status AS "passengerTripStatus",
+        b.fare_estimate AS "fareEstimate",
+        pi.status AS "paymentStatus",
+        ST_Y(b.pickup) AS "pickupLatitude",
+        ST_X(b.pickup) AS "pickupLongitude",
+        ST_Y(b.dropoff) AS "dropoffLatitude",
+        ST_X(b.dropoff) AS "dropoffLongitude",
+        b.pickup_route_fraction AS "pickupRouteFraction",
+        b.dropoff_route_fraction AS "dropoffRouteFraction",
+        b.created_at AS "createdAt"
+      FROM booking.booking b
+      JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
+      LEFT JOIN routing.route_occurrence ro ON ro.route_occurrence_id = b.route_occurrence_id
+      LEFT JOIN trip.trip t ON t.route_plan_id = b.route_plan_id
+        AND (t.route_occurrence_id = b.route_occurrence_id OR t.route_occurrence_id IS NULL)
+      LEFT JOIN trip.passenger_trip_state pts ON pts.booking_id = b.booking_id
+        AND pts.trip_id = t.trip_id
+      LEFT JOIN payment.payment_intent pi ON pi.booking_id = b.booking_id
+      """;
+
+  interface PassengerBookingRow {
+    Long getBookingId();
+
+    Long getRoutePlanId();
+
+    Long getRouteOccurrenceId();
+
+    Long getTripId();
+
+    String getOriginLabel();
+
+    String getDestinationLabel();
+
+    Instant getDepartureTime();
+
+    Integer getSeats();
+
+    String getBookingStatus();
+
+    String getTripStatus();
+
+    String getPassengerTripStatus();
+
+    BigDecimal getFareEstimate();
+
+    String getPaymentStatus();
+
+    Double getPickupLatitude();
+
+    Double getPickupLongitude();
+
+    Double getDropoffLatitude();
+
+    Double getDropoffLongitude();
+
+    BigDecimal getPickupRouteFraction();
+
+    BigDecimal getDropoffRouteFraction();
+
+    Instant getCreatedAt();
+  }
+
+  interface DriverBookingRequestRow {
+    Long getBookingId();
+
+    Long getRoutePlanId();
+
+    Long getRouteOccurrenceId();
+
+    Long getTripId();
+
+    Long getPassengerAppUserId();
+
+    String getPassengerName();
+
+    Integer getSeats();
+
+    String getStatus();
+
+    BigDecimal getFareEstimate();
+
+    Double getPickupLatitude();
+
+    Double getPickupLongitude();
+
+    Double getDropoffLatitude();
+
+    Double getDropoffLongitude();
+
+    Instant getCreatedAt();
   }
 }

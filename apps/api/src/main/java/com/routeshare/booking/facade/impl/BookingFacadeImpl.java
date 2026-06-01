@@ -17,4 +17,9 @@ public class BookingFacadeImpl implements BookingFacade {
       long bookingId, long passengerAppUserId) {
     return bookings.findFareEstimateByBookingIdAndPassengerAppUserId(bookingId, passengerAppUserId);
   }
+
+  @Override
+  public Optional<BigDecimal> findDriverOwnedBookingFare(long bookingId, long driverAppUserId) {
+    return bookings.findFareEstimateForDriverBooking(bookingId, driverAppUserId);
+  }
 }

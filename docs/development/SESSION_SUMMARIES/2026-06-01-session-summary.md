@@ -55,7 +55,7 @@ PostGIS enabled: t
 
 - Backend foundation: verified and running.
 - Full backend: still in progress.
-- Git: repository exists on branch `main`; initial commit still pending and files are untracked.
+- Git historical note from early session: repository existed on branch `main`; initial commit was pending then. This was later resolved and is no longer current.
 
 ## Next Recommended Work
 
@@ -345,3 +345,157 @@ Verification:
 
 Next recommended slice: payment capture/void/refund transition APIs and state machine.
 
+
+## 22:49 +0530 — Requirements/design/API contract audit
+
+- Reviewed business requirements, passenger design screens, driver design screens, current backend implementation state, and existing app/admin OpenAPI contracts.
+- Expanded the passenger contract to cover missing mobile flows: payment methods/intents, receipts, early drop-off, trip history, trip sharing, verification upload, push/notification preferences/read state, and support messages.
+- Expanded the driver contract to cover missing mobile flows: KYC identity/licence, document/vehicle document workflows, recurring routes, route share links, pre-trip checklist, arrived pickup, cash collection, fare adjustment, earnings transactions, ratings, SOS, push/notifications, and support messages.
+- Expanded the admin contract to cover user detail/status/roles, vehicle review, private document preview, booking/trip operations, finance/fare policies, payment events/voids, cash collections, support/SOS details, broadcasts, report exports, and audit-adjacent workflows.
+- Added `docs/api/API_GAP_ANALYSIS.md` and updated roadmap/blockers with API contract reconciliation gates before passenger/driver/admin app implementation.
+- Verification: all OpenAPI JSON files pass `python3 -m json.tool`; updated counts are passenger 36 paths, driver 48 paths, admin 49 paths.
+
+Next recommended step: reconcile expanded OpenAPI contracts with the actual Spring Boot controllers and either implement app-specific aliases, switch contracts to canonical generic endpoints, or mark endpoints deferred before generating TypeScript API clients.
+
+
+## 2026-06-01 23:22 +0530 — API reconciliation first backend alias slice
+
+- Created `docs/api/API_BACKEND_RECONCILIATION.md` mapping app-facing contracts to implemented/missing/deferred backend APIs.
+- Implemented first TDD-backed app-facing backend aliases:
+  - passenger ride search create, booking create/cancel, passenger payment intent
+  - driver route create, trip start/complete, passenger board/no-show/drop-off
+- Verification: targeted alias controller tests passed; full `spotless:check test` passed with Java 21; API restarted and `/actuator/health` returned HTTP 200.
+- Remaining API reconciliation work: passenger booking/detail/current-trip/history projections, driver route/trip projections, manual booking approve/decline, admin operations, payment lifecycle, realtime, notifications/support, generated clients.
+
+
+## 2026-06-01 23:43 +0530 — Continue all previous implementation phases before Phase 06
+
+Implemented another Phase 05/05.5 backend API reconciliation slice before starting Phase 06 realtime work.
+
+Implemented APIs:
+
+- `GET /api/v1/passenger/bookings`
+- `GET /api/v1/passenger/bookings/{bookingId}`
+- `GET /api/v1/passenger/trips/current`
+- `GET /api/v1/passenger/trips/history`
+- `GET /api/v1/driver/routes`
+- `GET /api/v1/driver/routes/{routeId}`
+- `POST /api/v1/driver/routes/{routeId}/cancel`
+- `GET /api/v1/driver/trips`
+- `GET /api/v1/driver/trips/{tripId}`
+- `GET /api/v1/driver/trips/{tripId}/booking-requests`
+- `POST /api/v1/driver/bookings/{bookingId}/approve`
+- `POST /api/v1/driver/bookings/{bookingId}/decline`
+
+Verification:
+
+- Targeted controller tests passed.
+- Full backend command passed: `cd apps/api && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@21/bin:/opt/homebrew/bin:/opt/homebrew/opt/maven/bin:/usr/bin:/bin:/usr/sbin:/sbin ./mvnw -q spotless:apply spotless:check test`.
+- Runtime health passed after restart: HTTP 200 `{"status":"UP"}`.
+
+Next recommended work before/alongside Phase 06 readiness:
+
+- Payment lifecycle: capture, void, refund, cash collection, earnings, commission, settlements.
+- Receipt/final fare endpoints.
+- Route share link/QR, pre-trip checklist, arrived pickup, notifications, support, SOS, and remaining admin APIs.
+
+
+## 2026-06-01 23:52 +0530 — Payment lifecycle continuation before Phase 06
+
+Continued previous backend implementation phases before starting Phase 06.
+
+Implemented:
+
+- `POST /api/v1/admin/payments/{paymentIntentId}/capture`
+- `POST /api/v1/admin/payments/{paymentIntentId}/void`
+- `POST /api/v1/admin/payments/{paymentIntentId}/refund`
+- `POST /api/v1/driver/bookings/{bookingId}/cash-collected`
+- `GET /api/v1/passenger/bookings/{bookingId}/receipt`
+- `V011__expand_payment_lifecycle_ledger.sql`
+
+TDD/verification:
+
+- Wrote `PaymentLifecycleServiceTest` first and confirmed it failed because lifecycle DTO/service/repository methods were missing.
+- Implemented DTOs, service methods, repository transition/ledger helpers, controller endpoints, and migration.
+- Targeted payment lifecycle tests passed.
+- Full backend verification passed: `./mvnw -q spotless:apply spotless:check test`.
+- Runtime health passed after restart: HTTP 200 `{"status":"UP"}`.
+
+Next concrete pre-Phase-06 options:
+
+1. Driver operational APIs: route share link/QR, pre-trip checklist, arrived-at-pickup, fare adjustment.
+2. Admin financial projections: payment list/detail/events and cash collection review.
+3. Earnings/settlement read models: driver earnings summary/transactions, platform commission, settlement balance.
+
+## 2026-06-02 00:08 +0530 — Pre-Phase-06 closure: driver ops, admin finance, earnings, contract inventory
+
+Completed remaining practical backend/API work before Phase 06 realtime/location work:
+
+Driver operational APIs:
+
+- `POST /api/v1/driver/routes/{routeId}/share-link`
+- `POST /api/v1/driver/trips/{tripId}/pre-trip-checklist`
+- `POST /api/v1/driver/trips/{tripId}/arrived-pickup`
+- `POST /api/v1/driver/bookings/{bookingId}/fare-adjustment-request`
+
+Admin finance projections:
+
+- `GET /api/v1/admin/payments`
+- `GET /api/v1/admin/payments/{paymentIntentId}`
+- `GET /api/v1/admin/payments/{paymentIntentId}/events`
+- `GET /api/v1/admin/cash-collections`
+
+Driver earnings/read models:
+
+- `GET /api/v1/driver/earnings/summary`
+- `GET /api/v1/driver/earnings/transactions`
+- Uses ledger-derived gross earnings, 10% MVP platform commission, and settlement balance.
+
+Schema/contracts:
+
+- Added `V012__pre_phase06_operational_finance.sql` for pre-trip checklist, arrived-pickup event, route share link, and fare adjustment ledger entry type.
+- Generated lightweight contract inventory in `packages/api-contracts/src/index.ts` from the Passenger/Driver/Admin OpenAPI files.
+
+Verification:
+
+- RED test first: `PrePhase06ControllerContractTest` initially failed because driver earnings controller, fare adjustment DTO, and pre-trip checklist DTO did not exist.
+- Targeted `PrePhase06ControllerContractTest` passed after implementation.
+- Full backend verification passed: `./mvnw -q spotless:apply spotless:check test`.
+- Runtime API smoke passed after restart: `/actuator/health` HTTP 200.
+- OpenAPI JSON syntax validation passed for Passenger, Driver, and Admin contracts.
+- Backend source route check found implemented controller mappings for share-link, pre-trip-checklist, arrived-pickup, fare-adjustment-request, earnings summary/transactions, admin payments/events, and cash collections.
+
+Status: previous backend/API phases are now closed enough to begin Phase 06. Remaining deeper financial work, such as real provider integration and settlement payouts, is later hardening and not a blocker for Phase 06 realtime foundation.
+
+## 2026-06-02 00:42 +0530 — Phase completion audit, verification, and commit preparation
+
+Completed the requested audit of all phases before Phase 06 and fixed stale incomplete markers that were still visible in the tracking docs.
+
+Audit findings and corrections:
+
+- Phase 00 had a stale unchecked TypeScript workspace/client setup item. Added root `package.json`, `pnpm-workspace.yaml`, `packages/api-contracts/package.json`, and `packages/api-contracts/tsconfig.json`; generated contract inventory is typecheckable.
+- Phase 02 had stale unchecked migration/logging/Testcontainers items. Existing migrations are now documented accurately through `V012`; logging conventions are documented in `docs/development/LOGGING_CONVENTIONS.md`; added `FlywayPostgisMigrationIntegrationTest` as Testcontainers migration smoke coverage with automatic skip when Java Testcontainers cannot connect to Docker.
+- Phase 03 had a stale partial-completion marker even though the foundation scope was done; marked completed.
+- Phase 05 had a stale partial-completion marker with stale unchecked manual approve/decline, cash collection, earnings, commission, and settlement-balance items; updated to `COMPLETED_FOR_PHASE_06_GATE`.
+- Phase 05.5 had a stale in-progress marker; updated to `COMPLETED_FOR_PHASE_06_GATE`.
+- API reconciliation stale `MISSING` markers for receipt, route share link, pre-trip checklist, arrived pickup, cash collection, fare adjustment, earnings, admin payments, and admin cash collections were updated to implemented/complete-for-gate.
+- Remaining non-implemented items were explicitly classified as Phase 06+ or later-phase scope, not pre-Phase-06 blockers.
+
+Verification:
+
+- `pnpm install` completed and `pnpm --filter @routeshare/api-contracts typecheck` passed.
+- Backend `./mvnw -q spotless:apply spotless:check test` passed.
+- Testcontainers migration smoke test is present; on this Mac Java Testcontainers cannot connect to Docker Desktop's socket and therefore auto-skips under `disabledWithoutDocker = true` during the full suite.
+- Runtime restart passed: `/actuator/health` returned HTTP 200 with `{"status":"UP"}`.
+- Running database latest migration check passed: `flyway_schema_history` latest version `012`, success `true`.
+- Verified key pre-Phase-06 tables exist in the running database: `payment.fare_ledger_entry`, `routing.route_share_link`, and `trip.pre_trip_checklist`.
+
+Verdict: phases 00 through 05.5 are complete for the Phase 06 gate and committed.
+
+## 2026-06-02 00:45 +0530 — Pre-Phase-06 closure committed
+
+Committed all verified pre-Phase-06 work:
+
+- Commit: `latest commit `feat: complete pre-phase 06 backend gate``
+- Working tree: clean immediately after commit.
+- Phase 06 may start from this commit.

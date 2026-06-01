@@ -2,9 +2,12 @@ package com.routeshare.trip.repository;
 
 import com.routeshare.trip.domain.TripStatus;
 import com.routeshare.trip.entity.TripEntity;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -24,6 +27,123 @@ public interface TripRepository extends JpaRepository<TripEntity, Long> {
   @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
   @Query("select t.status from TripEntity t where t.id = :tripId")
   Optional<TripStatus> lockAndFindStatus(@Param("tripId") long tripId);
+
+  @Query(
+      value =
+          """
+      SELECT
+        t.trip_id AS "tripId",
+        t.route_plan_id AS "routePlanId",
+        t.route_occurrence_id AS "routeOccurrenceId",
+        r.origin_label AS "originLabel",
+        r.destination_label AS "destinationLabel",
+        ro.scheduled_departure_at AS "departureTime",
+        t.status AS "status",
+        COUNT(b.booking_id) FILTER (WHERE b.status = 'CONFIRMED') AS "confirmedBookings",
+        COALESCE(SUM(b.seats) FILTER (WHERE b.status = 'CONFIRMED'), 0) AS "bookedSeats",
+        t.started_at AS "startedAt",
+        t.completed_at AS "completedAt"
+      FROM trip.trip t
+      JOIN routing.route_plan r ON r.route_plan_id = t.route_plan_id
+      LEFT JOIN routing.route_occurrence ro ON ro.route_occurrence_id = t.route_occurrence_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      LEFT JOIN booking.booking b ON b.route_plan_id = t.route_plan_id
+        AND (b.route_occurrence_id = t.route_occurrence_id OR t.route_occurrence_id IS NULL)
+      WHERE d.app_user_id = :driverAppUserId
+      GROUP BY t.trip_id, t.route_plan_id, t.route_occurrence_id, r.origin_label, r.destination_label,
+               ro.scheduled_departure_at, t.status, t.started_at, t.completed_at
+      ORDER BY COALESCE(ro.scheduled_departure_at, t.started_at, t.completed_at) DESC
+      """,
+      nativeQuery = true)
+  List<DriverTripRow> findDriverTrips(@Param("driverAppUserId") long driverAppUserId);
+
+  @Query(
+      value =
+          """
+      SELECT
+        t.trip_id AS "tripId",
+        t.route_plan_id AS "routePlanId",
+        t.route_occurrence_id AS "routeOccurrenceId",
+        r.origin_label AS "originLabel",
+        r.destination_label AS "destinationLabel",
+        ro.scheduled_departure_at AS "departureTime",
+        t.status AS "status",
+        COUNT(b.booking_id) FILTER (WHERE b.status = 'CONFIRMED') AS "confirmedBookings",
+        COALESCE(SUM(b.seats) FILTER (WHERE b.status = 'CONFIRMED'), 0) AS "bookedSeats",
+        t.started_at AS "startedAt",
+        t.completed_at AS "completedAt"
+      FROM trip.trip t
+      JOIN routing.route_plan r ON r.route_plan_id = t.route_plan_id
+      LEFT JOIN routing.route_occurrence ro ON ro.route_occurrence_id = t.route_occurrence_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      LEFT JOIN booking.booking b ON b.route_plan_id = t.route_plan_id
+        AND (b.route_occurrence_id = t.route_occurrence_id OR t.route_occurrence_id IS NULL)
+      WHERE d.app_user_id = :driverAppUserId
+        AND t.trip_id = :tripId
+      GROUP BY t.trip_id, t.route_plan_id, t.route_occurrence_id, r.origin_label, r.destination_label,
+               ro.scheduled_departure_at, t.status, t.started_at, t.completed_at
+      """,
+      nativeQuery = true)
+  Optional<DriverTripRow> findDriverTrip(
+      @Param("driverAppUserId") long driverAppUserId, @Param("tripId") long tripId);
+
+  @Modifying
+  @Query(
+      value =
+          """
+      INSERT INTO trip.pre_trip_checklist(
+        trip_id, driver_app_user_id, vehicle_checked, documents_ready, route_reviewed, notes)
+      VALUES (:tripId, :driverAppUserId, :vehicleChecked, :documentsReady, :routeReviewed, :notes)
+      ON CONFLICT (trip_id) DO UPDATE SET
+        vehicle_checked = EXCLUDED.vehicle_checked,
+        documents_ready = EXCLUDED.documents_ready,
+        route_reviewed = EXCLUDED.route_reviewed,
+        notes = EXCLUDED.notes
+      """,
+      nativeQuery = true)
+  int insertPreTripChecklist(
+      @Param("tripId") long tripId,
+      @Param("driverAppUserId") long driverAppUserId,
+      @Param("vehicleChecked") boolean vehicleChecked,
+      @Param("documentsReady") boolean documentsReady,
+      @Param("routeReviewed") boolean routeReviewed,
+      @Param("notes") String notes);
+
+  @Modifying
+  @Query(
+      value =
+          """
+      INSERT INTO trip.trip_operational_event(trip_id, event_type, actor_app_user_id)
+      VALUES (:tripId, 'ARRIVED_PICKUP', :actorAppUserId)
+      ON CONFLICT (trip_id, event_type) DO NOTHING
+      """,
+      nativeQuery = true)
+  int insertArrivedPickupEvent(
+      @Param("tripId") long tripId, @Param("actorAppUserId") long actorAppUserId);
+
+  interface DriverTripRow {
+    Long getTripId();
+
+    Long getRoutePlanId();
+
+    Long getRouteOccurrenceId();
+
+    String getOriginLabel();
+
+    String getDestinationLabel();
+
+    Instant getDepartureTime();
+
+    String getStatus();
+
+    Long getConfirmedBookings();
+
+    Integer getBookedSeats();
+
+    Instant getStartedAt();
+
+    Instant getCompletedAt();
+  }
 
   default TripStatus findStatusForUpdate(long tripId) {
     return lockAndFindStatus(tripId).orElseThrow();

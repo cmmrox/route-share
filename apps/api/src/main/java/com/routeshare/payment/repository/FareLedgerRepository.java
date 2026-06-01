@@ -2,6 +2,7 @@ package com.routeshare.payment.repository;
 
 import com.routeshare.payment.entity.FareLedgerEntryEntity;
 import java.math.BigDecimal;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,8 +24,88 @@ public interface FareLedgerRepository extends JpaRepository<FareLedgerEntryEntit
       @Param("currency") String currency,
       @Param("entryType") String entryType);
 
+  @Query(
+      value =
+          """
+      SELECT entry_type AS "entryType", amount AS "amount", currency AS "currency"
+      FROM payment.fare_ledger_entry
+      WHERE booking_id = :bookingId
+      ORDER BY fare_ledger_entry_id ASC
+      """,
+      nativeQuery = true)
+  List<FareLedgerRow> findRowsByBookingId(@Param("bookingId") long bookingId);
+
   default void recordEstimateIfAbsent(
       long bookingId, BigDecimal amount, String currency, String entryType) {
     insertIfAbsent(bookingId, amount, currency, entryType);
+  }
+
+  default void recordPaymentLifecycleIfAbsent(
+      long bookingId, String entryType, BigDecimal amount, String currency) {
+    insertIfAbsent(bookingId, amount, currency, entryType);
+  }
+
+  @Query(
+      value =
+          """
+      SELECT f.booking_id AS "bookingId", f.entry_type AS "entryType", f.amount AS "amount",
+             f.currency AS "currency", f.created_at AS "createdAt"
+      FROM payment.fare_ledger_entry f
+      WHERE f.entry_type IN (:entryTypes)
+      ORDER BY f.created_at DESC
+      LIMIT 300
+      """,
+      nativeQuery = true)
+  List<FareLedgerAdminRow> findRowsByTypes(
+      @Param("entryTypes") java.util.Collection<String> entryTypes);
+
+  @Query(
+      value =
+          """
+      SELECT COALESCE(SUM(f.amount), 0) AS "amount"
+      FROM payment.fare_ledger_entry f
+      JOIN booking.booking b ON b.booking_id = f.booking_id
+      JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      WHERE d.app_user_id = :driverAppUserId
+        AND f.entry_type IN ('PAYMENT_CAPTURED','CASH_COLLECTED','FARE_ADJUSTMENT_REQUESTED')
+      """,
+      nativeQuery = true)
+  BigDecimal sumDriverGrossEarnings(@Param("driverAppUserId") long driverAppUserId);
+
+  @Query(
+      value =
+          """
+      SELECT f.booking_id AS "bookingId", f.entry_type AS "entryType", f.amount AS "amount",
+             f.currency AS "currency", f.created_at AS "createdAt"
+      FROM payment.fare_ledger_entry f
+      JOIN booking.booking b ON b.booking_id = f.booking_id
+      JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      WHERE d.app_user_id = :driverAppUserId
+      ORDER BY f.created_at DESC
+      LIMIT 200
+      """,
+      nativeQuery = true)
+  List<FareLedgerAdminRow> findDriverLedgerRows(@Param("driverAppUserId") long driverAppUserId);
+
+  interface FareLedgerAdminRow {
+    Long getBookingId();
+
+    String getEntryType();
+
+    BigDecimal getAmount();
+
+    String getCurrency();
+
+    java.time.Instant getCreatedAt();
+  }
+
+  interface FareLedgerRow {
+    String getEntryType();
+
+    BigDecimal getAmount();
+
+    String getCurrency();
   }
 }

@@ -10,6 +10,7 @@ import com.routeshare.routing.domain.RouteSchedulePolicy;
 import com.routeshare.routing.dto.request.CoordinateRequest;
 import com.routeshare.routing.dto.request.RoutePublishRequest;
 import com.routeshare.routing.dto.request.RouteSearchRequest;
+import com.routeshare.routing.dto.response.DriverRouteResponse;
 import com.routeshare.routing.dto.response.RouteSearchResponse;
 import com.routeshare.routing.repository.RouteBucketCellRepository;
 import com.routeshare.routing.repository.RouteOccurrenceRepository;
@@ -23,6 +24,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -157,6 +159,65 @@ public class RouteServiceImpl implements RouteService {
         .map(this::toSearchResponse)
         .sorted(Comparator.comparing(RouteSearchResponse::score).reversed())
         .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<DriverRouteResponse> listDriverRoutes() {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return routes.findDriverRoutes(app.appUserId()).stream()
+        .map(this::toDriverRouteResponse)
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public DriverRouteResponse getDriverRoute(long routeId) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return routes
+        .findDriverRoute(app.appUserId(), routeId)
+        .map(this::toDriverRouteResponse)
+        .orElseThrow(() -> new java.util.NoSuchElementException("Route not found"));
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> cancelDriverRoute(long routeId) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    int updated = routes.cancelDriverRoutePlan(app.appUserId(), routeId);
+    if (updated != 1) {
+      throw new java.util.NoSuchElementException("Route not found or not cancellable");
+    }
+    routes.cancelRouteOccurrences(routeId);
+    return Map.of("routePlanId", routeId, "status", "CANCELLED");
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> createShareLink(long routeId) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    if (!routes.isPublishedDriverRoute(app.appUserId(), routeId)) {
+      throw new java.util.NoSuchElementException("Route not found or not shareable");
+    }
+    String token = UUID.randomUUID().toString();
+    String shareUrl = "https://routeshare.local/routes/" + routeId + "?share=" + token;
+    String qrPayload = "ROUTESHARE_ROUTE:" + token;
+    String savedUrl = routes.upsertShareLink(routeId, token, shareUrl, qrPayload);
+    return Map.of("routeId", routeId, "shareUrl", savedUrl, "qrPayload", qrPayload);
+  }
+
+  private DriverRouteResponse toDriverRouteResponse(RoutePlanRepository.DriverRouteRow row) {
+    return new DriverRouteResponse(
+        row.getRoutePlanId(),
+        row.getRouteOccurrenceId(),
+        row.getVehicleId(),
+        row.getOriginLabel(),
+        row.getDestinationLabel(),
+        row.getDepartureTime(),
+        row.getAvailableSeats(),
+        row.getRouteLengthMeters(),
+        row.getRouteStatus(),
+        row.getOccurrenceStatus());
   }
 
   public void validateCoordinates(List<CoordinateRequest> coordinates) {

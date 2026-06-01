@@ -1,10 +1,12 @@
 package com.routeshare.routing.repository;
 
 import com.routeshare.routing.entity.RoutePlanEntity;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -137,6 +139,134 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
         lineStringPoints,
         departureTime,
         availableSeats);
+  }
+
+  @Query(
+      value =
+          """
+      SELECT
+        r.route_plan_id AS "routePlanId",
+        o.route_occurrence_id AS "routeOccurrenceId",
+        r.vehicle_id AS "vehicleId",
+        r.origin_label AS "originLabel",
+        r.destination_label AS "destinationLabel",
+        o.scheduled_departure_at AS "departureTime",
+        o.available_seats AS "availableSeats",
+        r.route_length_m AS "routeLengthMeters",
+        r.status AS "routeStatus",
+        o.status AS "occurrenceStatus"
+      FROM routing.route_plan r
+      LEFT JOIN routing.route_occurrence o ON o.route_plan_id = r.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      WHERE d.app_user_id = :driverAppUserId
+      ORDER BY COALESCE(o.scheduled_departure_at, r.departure_time) DESC
+      """,
+      nativeQuery = true)
+  List<DriverRouteRow> findDriverRoutes(@Param("driverAppUserId") long driverAppUserId);
+
+  @Query(
+      value =
+          """
+      SELECT
+        r.route_plan_id AS "routePlanId",
+        o.route_occurrence_id AS "routeOccurrenceId",
+        r.vehicle_id AS "vehicleId",
+        r.origin_label AS "originLabel",
+        r.destination_label AS "destinationLabel",
+        o.scheduled_departure_at AS "departureTime",
+        o.available_seats AS "availableSeats",
+        r.route_length_m AS "routeLengthMeters",
+        r.status AS "routeStatus",
+        o.status AS "occurrenceStatus"
+      FROM routing.route_plan r
+      LEFT JOIN routing.route_occurrence o ON o.route_plan_id = r.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      WHERE d.app_user_id = :driverAppUserId
+        AND r.route_plan_id = :routePlanId
+      """,
+      nativeQuery = true)
+  Optional<DriverRouteRow> findDriverRoute(
+      @Param("driverAppUserId") long driverAppUserId, @Param("routePlanId") long routePlanId);
+
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE routing.route_plan r
+      SET status = 'CANCELLED'
+      FROM driver.driver_profile d
+      WHERE r.driver_profile_id = d.driver_profile_id
+        AND d.app_user_id = :driverAppUserId
+        AND r.route_plan_id = :routePlanId
+        AND r.status IN ('DRAFT','PUBLISHED')
+      """,
+      nativeQuery = true)
+  int cancelDriverRoutePlan(
+      @Param("driverAppUserId") long driverAppUserId, @Param("routePlanId") long routePlanId);
+
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE routing.route_occurrence o
+      SET status = 'CANCELLED'
+      WHERE o.route_plan_id = :routePlanId
+        AND o.status = 'PUBLISHED'
+      """,
+      nativeQuery = true)
+  int cancelRouteOccurrences(@Param("routePlanId") long routePlanId);
+
+  @Query(
+      value =
+          """
+      SELECT EXISTS(
+        SELECT 1
+        FROM routing.route_plan r
+        JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+        WHERE r.route_plan_id = :routePlanId
+          AND d.app_user_id = :driverAppUserId
+          AND r.status = 'PUBLISHED'
+      )
+      """,
+      nativeQuery = true)
+  boolean isPublishedDriverRoute(
+      @Param("driverAppUserId") long driverAppUserId, @Param("routePlanId") long routePlanId);
+
+  @Query(
+      value =
+          """
+      INSERT INTO routing.route_share_link(route_plan_id, share_token, share_url, qr_payload)
+      VALUES (:routePlanId, :shareToken, :shareUrl, :qrPayload)
+      ON CONFLICT (route_plan_id) DO UPDATE SET share_url = EXCLUDED.share_url
+      RETURNING share_url
+      """,
+      nativeQuery = true)
+  String upsertShareLink(
+      @Param("routePlanId") long routePlanId,
+      @Param("shareToken") String shareToken,
+      @Param("shareUrl") String shareUrl,
+      @Param("qrPayload") String qrPayload);
+
+  interface DriverRouteRow {
+    Long getRoutePlanId();
+
+    Long getRouteOccurrenceId();
+
+    Long getVehicleId();
+
+    String getOriginLabel();
+
+    String getDestinationLabel();
+
+    Instant getDepartureTime();
+
+    Integer getAvailableSeats();
+
+    BigDecimal getRouteLengthMeters();
+
+    String getRouteStatus();
+
+    String getOccurrenceStatus();
   }
 
   interface RouteSearchCandidateRow {

@@ -6,10 +6,13 @@ import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.trip.domain.PassengerTripStateMachine;
 import com.routeshare.trip.domain.TripStateMachine;
 import com.routeshare.trip.dto.request.PassengerTripStateTransitionRequest;
+import com.routeshare.trip.dto.request.PreTripChecklistRequest;
 import com.routeshare.trip.dto.request.TripTransitionRequest;
+import com.routeshare.trip.dto.response.DriverTripResponse;
 import com.routeshare.trip.repository.PassengerTripStateRepository;
 import com.routeshare.trip.repository.TripRepository;
 import com.routeshare.trip.service.TripService;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +62,68 @@ public class TripServiceImpl implements TripService {
       throw new IllegalStateException("Passenger trip state update failed");
     }
     return Map.of("tripId", tripId, "bookingId", bookingId, "status", req.status().name());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<DriverTripResponse> listDriverTrips() {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return trips.findDriverTrips(app.appUserId()).stream().map(this::toDriverTripResponse).toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public DriverTripResponse getDriverTrip(long tripId) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return trips
+        .findDriverTrip(app.appUserId(), tripId)
+        .map(this::toDriverTripResponse)
+        .orElseThrow(() -> new NoSuchElementException("Trip not found"));
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> recordPreTripChecklist(long tripId, PreTripChecklistRequest req) {
+    CurrentUser currentUser = current.requireCurrentUser();
+    var app = identityFacade.upsertFromToken(currentUser);
+    requireTripOwnerOrAdmin(tripId, currentUser, app.appUserId());
+    trips.insertPreTripChecklist(
+        tripId,
+        app.appUserId(),
+        req.vehicleChecked(),
+        req.documentsReady(),
+        req.routeReviewed(),
+        req.notes());
+    return Map.of("tripId", tripId, "status", "CHECKLIST_RECORDED");
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> markArrivedPickup(long tripId) {
+    CurrentUser currentUser = current.requireCurrentUser();
+    var app = identityFacade.upsertFromToken(currentUser);
+    requireTripOwnerOrAdmin(tripId, currentUser, app.appUserId());
+    var currentStatus = trips.findStatusForUpdate(tripId);
+    stateMachine.assertTransition(
+        currentStatus, com.routeshare.trip.domain.TripStatus.ARRIVED_PICKUP);
+    trips.updateStatus(tripId, com.routeshare.trip.domain.TripStatus.ARRIVED_PICKUP);
+    trips.insertArrivedPickupEvent(tripId, app.appUserId());
+    return Map.of("tripId", tripId, "status", "ARRIVED_PICKUP");
+  }
+
+  private DriverTripResponse toDriverTripResponse(TripRepository.DriverTripRow row) {
+    return new DriverTripResponse(
+        row.getTripId(),
+        row.getRoutePlanId(),
+        row.getRouteOccurrenceId(),
+        row.getOriginLabel(),
+        row.getDestinationLabel(),
+        row.getDepartureTime(),
+        row.getStatus(),
+        row.getConfirmedBookings(),
+        row.getBookedSeats(),
+        row.getStartedAt(),
+        row.getCompletedAt());
   }
 
   private void requireTripOwnerOrAdmin(long tripId, CurrentUser currentUser, long appUserId) {
