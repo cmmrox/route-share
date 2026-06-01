@@ -10,9 +10,9 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Current Phase: `PHASE_05_BOOKING_TRIP_FARE_PAYMENT_SETTLEMENT`
 - Current Milestone: `MILESTONE_05_BOOKING_STATUS_TRANSITIONS`
-- Current Active Task: `Phase 05 booking status transitions implemented; next is route-occurrence-aware passenger trip states`
+- Current Active Task: `Phase 05 route-occurrence-aware passenger trip states implemented; next is payment/ledger foundation`
 - Status: `PHASE_05_BOOKING_STATUS_TRANSITIONS_VERIFIED`
-- Repository Git Status: `Phase 05 booking status-transition working changes ready to commit`
+- Repository Git Status: `Phase 05 passenger trip-state working changes ready to commit`
 
 ## Estimated Progress
 
@@ -100,7 +100,7 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Phase 02 — Backend modular monolith foundation.
 - [x] Phase 03 — Identity, passenger, driver, KYC/document metadata, vehicle, saved places, trusted contacts, and vehicle review foundation APIs are implemented.
 - [x] Phase 04 — Route publishing and route matching. Route search, schedule rules, route occurrences, and bucket-cell broad filtering are implemented and committed.
-- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking now reserves route occurrences, stores matched fractions, records initial and transition status history, and has explicit `Idempotency-Key` replay safety; passenger trip states, payment, and settlement remain.
+- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking now reserves route occurrences, stores matched fractions, records initial and transition status history, and has explicit `Idempotency-Key` replay safety. Trip now stores route occurrence identity and supports passenger boarded/no-show/drop-off state transitions; payment and settlement remain.
 - [ ] Phase 06 — Realtime location and WebSocket updates.
 - [ ] Phase 07 — Passenger mobile app.
 - [ ] Phase 08 — Driver mobile app.
@@ -121,17 +121,17 @@ This file is the first file to read before continuing RouteShareApp development.
 - Runtime health:
   - `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}` after the booking status-transition slice.
 - Database migration:
-  - Latest Flyway migration is version `008`, success `true`.
+  - Latest Flyway migration is version `009`, success `true`.
   - Verified `common.idempotency_key` exists and is used by booking create replay handling.
-  - Verified `booking.booking_status_history` exists and is used for initial and transition audit rows; `booking.booking` has occurrence/fraction columns.
+  - Verified `booking.booking_status_history` exists and is used for initial and transition audit rows; `booking.booking` has occurrence/fraction columns; `trip.passenger_trip_state` exists and `trip.trip` has `route_occurrence_id`.
 - Git status:
-  - Latest committed backend slice before this work is `4cbe840 feat(booking): record booking status history`.
-  - Phase 05 booking status-transition slice is implemented and verified but not committed yet.
+  - Latest committed backend slice before this work is `8c1808c feat(booking): add status transitions`.
+  - Phase 05 passenger trip-state slice is implemented and verified but not committed yet.
 
 ## Blockers / Risks
 
 - No active runtime blocker for the backend foundation.
-- Git baseline exists; current working tree only contains the verified Phase 05 booking idempotency slice pending commit.
+- Git baseline exists; current working tree only contains the verified Phase 05 passenger trip-state slice pending commit.
 - Full backend is not complete yet. Remaining major areas are tracked in the roadmap and blockers file.
 - Current tests are mostly unit-level. Add Spring Boot integration/security tests before relying on these APIs as production-ready.
 - Dev infrastructure exposes local ports and uses local-only development credentials; do not reuse these settings for production.

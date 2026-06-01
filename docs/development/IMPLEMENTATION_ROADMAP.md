@@ -177,7 +177,7 @@ Tasks:
 - [x] Implement booking status history, including initial and cancel/reject/complete transition audit rows.
 - [ ] Implement manual booking approve/decline if route requires it.
 - [x] Implement trip start/complete/cancel state machine.
-- [ ] Implement passenger boarded/no-show/drop-off state machine.
+- [x] Implement passenger boarded/no-show/drop-off state machine.
 - [x] Implement fare estimate.
 - [ ] Implement immutable fare ledger.
 - [ ] Implement payment intent abstraction.

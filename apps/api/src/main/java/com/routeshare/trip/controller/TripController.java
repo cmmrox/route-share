@@ -1,11 +1,13 @@
 package com.routeshare.trip.controller;
 
 import com.routeshare.common.web.ApiResponse;
+import com.routeshare.trip.dto.request.PassengerTripStateTransitionRequest;
 import com.routeshare.trip.dto.request.TripTransitionRequest;
 import com.routeshare.trip.service.TripService;
 import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,5 +28,13 @@ public class TripController {
   ApiResponse<Map<String, Object>> transition(
       @PathVariable long id, @Valid @RequestBody TripTransitionRequest req) {
     return ApiResponse.ok(trips.transition(id, req));
+  }
+
+  @PatchMapping("/{tripId}/passengers/{bookingId}/state")
+  ApiResponse<Map<String, Object>> transitionPassengerState(
+      @PathVariable long tripId,
+      @PathVariable long bookingId,
+      @Valid @RequestBody PassengerTripStateTransitionRequest req) {
+    return ApiResponse.ok(trips.transitionPassengerState(tripId, bookingId, req));
   }
 }

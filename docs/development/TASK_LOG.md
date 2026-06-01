@@ -539,3 +539,27 @@ Verification:
 Next step:
 
 - Continue Phase 05 with route-occurrence-aware passenger trip states: boarded, no-show, and drop-off.
+
+## 2026-06-01 22:12 +0530 — Phase 05 passenger trip-state slice
+
+Implemented the route-occurrence-aware passenger trip-state slice.
+
+Changes:
+- Added `trip.route_occurrence_id` and `trip.passenger_trip_state` via Flyway V009.
+- Added passenger trip statuses: `WAITING_PICKUP`, `BOARDED`, `NO_SHOW`, and `DROPPED_OFF`.
+- Added passenger state transition rules: waiting pickup may become boarded or no-show; boarded may become dropped off; no-show and dropped-off are terminal.
+- Added `PATCH /api/v1/trips/{tripId}/passengers/{bookingId}/state` for driver/admin passenger state updates.
+- Passenger state rows are created only for confirmed bookings that share the trip route plan and route occurrence.
+- Added domain and service tests for boarding, no-show rejection after boarding, drop-off flow, and terminal-state protection.
+
+Verification:
+- RED: `PassengerTripStateMachineTest,TripServiceImplTest` initially failed because passenger trip state classes did not exist.
+- GREEN: targeted `PassengerTripStateMachineTest,TripServiceImplTest` passed.
+- Full backend: `cd apps/api && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@21/bin:/opt/homebrew/bin:/opt/homebrew/opt/maven/bin:/usr/bin:/bin:/usr/sbin:/sbin ./mvnw spotless:apply spotless:check test -q` passed.
+- Runtime health: `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}`.
+- Flyway latest version: `009`, success `true`.
+- Verified `trip.passenger_trip_state` exists and `trip.trip.route_occurrence_id` exists.
+
+Next:
+- Continue Phase 05 with immutable fare ledger and payment capture/void/refund lifecycle foundation.
+

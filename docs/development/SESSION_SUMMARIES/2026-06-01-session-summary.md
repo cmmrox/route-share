@@ -307,3 +307,23 @@ Next recommended work:
 1. Move trip lifecycle toward route-occurrence identity where needed.
 2. Add passenger boarded/no-show/drop-off state machine.
 3. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.
+
+### Phase 05 passenger trip-state slice
+
+Continued Phase 05 after booking status transitions and implemented route-occurrence-aware passenger trip states.
+
+Implemented:
+- Flyway V009 adds `trip.trip.route_occurrence_id` and `trip.passenger_trip_state`.
+- Passenger trip states: `WAITING_PICKUP`, `BOARDED`, `NO_SHOW`, `DROPPED_OFF`.
+- State machine: waiting pickup -> boarded/no-show; boarded -> dropped-off; terminal states cannot move.
+- Driver/admin API: `PATCH /api/v1/trips/{tripId}/passengers/{bookingId}/state`.
+- Confirmed booking + route occurrence guard before passenger state row creation.
+
+Verification:
+- RED targeted tests failed on missing passenger trip state classes.
+- GREEN targeted tests passed.
+- Full backend `spotless:apply spotless:check test -q` passed.
+- Runtime health passed and Flyway V009 applied successfully.
+
+Next recommended slice: immutable fare ledger and payment capture/void/refund lifecycle foundation.
+

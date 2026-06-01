@@ -1,6 +1,6 @@
 package com.routeshare.trip.entity;
 
-import com.routeshare.trip.domain.TripStatus;
+import com.routeshare.trip.domain.PassengerTripStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,28 +16,43 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "trip", schema = "trip")
+@Table(name = "passenger_trip_state", schema = "trip")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TripEntity {
+public class PassengerTripStateEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "trip_id")
+  @Column(name = "passenger_trip_state_id")
   private Long id;
 
-  @Column(name = "route_plan_id")
-  private Long routePlanId;
+  @Column(name = "trip_id")
+  private Long tripId;
+
+  @Column(name = "booking_id")
+  private Long bookingId;
 
   @Column(name = "route_occurrence_id")
   private Long routeOccurrenceId;
 
+  @Column(name = "passenger_app_user_id")
+  private Long passengerAppUserId;
+
   @Enumerated(EnumType.STRING)
-  private TripStatus status;
+  private PassengerTripStatus status;
 
-  @Column(name = "started_at")
-  private Instant startedAt;
+  @Column(name = "boarded_at")
+  private Instant boardedAt;
 
-  @Column(name = "completed_at")
-  private Instant completedAt;
+  @Column(name = "no_show_at")
+  private Instant noShowAt;
+
+  @Column(name = "dropped_off_at")
+  private Instant droppedOffAt;
+
+  @Column(name = "created_at")
+  private Instant createdAt;
+
+  @Column(name = "updated_at")
+  private Instant updatedAt;
 }
