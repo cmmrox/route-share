@@ -311,3 +311,95 @@ Verification:
 Next Step:
 
 - Continue backend feature implementation with route search/matching and keep future async/event code on Spring-managed execution.
+
+
+---
+
+### Task: Implement Phase 04 route search and matching foundation
+
+Status: `COMPLETED`
+
+Files Created/Updated:
+
+- `apps/api/src/main/java/com/routeshare/routing/controller/RouteController.java`
+- `apps/api/src/main/java/com/routeshare/routing/service/RouteService.java`
+- `apps/api/src/main/java/com/routeshare/routing/service/impl/RouteServiceImpl.java`
+- `apps/api/src/main/java/com/routeshare/routing/repository/RoutePlanRepository.java`
+- `apps/api/src/main/java/com/routeshare/routing/domain/RouteMatchCandidate.java`
+- `apps/api/src/main/java/com/routeshare/routing/domain/RouteMatchScore.java`
+- `apps/api/src/main/java/com/routeshare/routing/domain/RouteMatchScorer.java`
+- `apps/api/src/main/java/com/routeshare/routing/dto/request/RouteSearchRequest.java`
+- `apps/api/src/main/java/com/routeshare/routing/dto/response/RouteSearchResponse.java`
+- `apps/api/src/test/java/com/routeshare/routing/domain/RouteMatchScorerTest.java`
+
+Implementation Notes:
+
+- Added authenticated `POST /api/v1/routes/search` for passenger route search.
+- Added request validation for pickup/drop-off coordinates, future requested departure time, seat count, optional search radii, time window, and result limit.
+- Added PostGIS-backed candidate filtering for published routes by departure window, available seats, pickup/drop proximity, and same-direction route fraction order.
+- Added exact overlap distance calculation with `ST_LineLocatePoint`, `ST_LineSubstring`, and geography distance/length measurements.
+- Added route match scoring with weighted overlap, pickup proximity, drop-off proximity, and UI-facing explanation text.
+
+Verification:
+
+- TDD red check: `RouteMatchScorerTest` first failed because `RouteMatchScorer` did not exist.
+- `./mvnw spotless:apply spotless:check test -q` passed.
+- Full Maven tests passed: `Tests run: 28, Failures: 0, Errors: 0, Skipped: 0`.
+- Runtime health before final docs update: `GET /actuator/health -> 200 {"status":"UP"}`.
+- PostgreSQL/PostGIS smoke query verified same-direction candidate search and overlap calculation inside a rolled-back transaction.
+- Docker infrastructure check: Postgres healthy; Flyway latest version `005` successful.
+
+Next Step:
+
+- Continue Phase 04 with route schedule rules, route occurrence generation, H3/bucket indexing, route matching integration tests with Testcontainers/PostGIS, and performance-oriented query plan checks.
+
+
+---
+
+### Task: Complete Phase 04 route publishing and matching
+
+Status: `COMPLETED`
+
+Files Created/Updated:
+
+- `apps/api/src/main/resources/db/migration/V006__add_route_schedule_occurrence_and_bucket_cells.sql`
+- `apps/api/src/main/java/com/routeshare/routing/domain/RouteSchedulePolicy.java`
+- `apps/api/src/main/java/com/routeshare/routing/domain/RouteBucketCellGenerator.java`
+- `apps/api/src/main/java/com/routeshare/routing/entity/RouteScheduleRuleEntity.java`
+- `apps/api/src/main/java/com/routeshare/routing/entity/RouteOccurrenceEntity.java`
+- `apps/api/src/main/java/com/routeshare/routing/entity/RouteBucketCellEntity.java`
+- `apps/api/src/main/java/com/routeshare/routing/repository/RouteScheduleRuleRepository.java`
+- `apps/api/src/main/java/com/routeshare/routing/repository/RouteOccurrenceRepository.java`
+- `apps/api/src/main/java/com/routeshare/routing/repository/RouteBucketCellRepository.java`
+- `apps/api/src/main/java/com/routeshare/routing/repository/RoutePlanRepository.java`
+- `apps/api/src/main/java/com/routeshare/routing/service/impl/RouteServiceImpl.java`
+- `apps/api/src/test/java/com/routeshare/routing/domain/RouteSchedulePolicyTest.java`
+- `apps/api/src/test/java/com/routeshare/routing/domain/RouteBucketCellGeneratorTest.java`
+
+Implementation Notes:
+
+- Added route schedule rules for the MVP one-time route publishing flow.
+- Added concrete route occurrence generation at publish time.
+- Added route bucket-cell indexing foundation as an H3-compatible abstraction path without requiring the PostgreSQL H3 extension yet.
+- Integrated bucket-cell prefiltering into route search before exact PostGIS proximity/direction/overlap checks.
+- Kept external maps/directions providers out of this backend slice; route coordinates are accepted from API clients and matched with PostGIS.
+
+Verification:
+
+- TDD red checks were run for schedule policy and bucket-cell generation before implementation.
+- `./mvnw spotless:apply spotless:check test -q` passed.
+- Full Maven tests passed: `Tests run: 31, Failures: 0, Errors: 0, Skipped: 0`.
+- Spring Boot runtime restarted and health verified: `GET /actuator/health -> 200 {"status":"UP"}`.
+- Flyway latest version: `006`, success `true`.
+- New tables verified with `to_regclass`: `routing.route_schedule_rule`, `routing.route_occurrence`, `routing.route_bucket_cell`.
+- PostGIS smoke query with route occurrence and bucket-cell prefilter returned one same-direction candidate and overlap `94351.60m`; transaction rolled back.
+
+Third-Party Configuration:
+
+- No Google Maps, Firebase/FCM, or other third-party key was required to finish Phase 04 backend foundation.
+- Google Maps Platform key will be needed later for app-side map display/place search/directions polyline UX.
+- Firebase/FCM setup will be needed later for push notifications.
+
+Next Step:
+
+- Start Phase 05 with booking/trip/fare/payment lifecycle hardening. First recommended slice: reserve seats against `route_occurrence`, add booking idempotency, store matched pickup/drop fractions from search into booking, and add booking status history.

@@ -1,6 +1,6 @@
 # RouteShareApp Blockers
 
-Last Updated: 2026-06-01 12:43 +0530
+Last Updated: 2026-06-01 20:17 +0530
 
 ## Purpose
 
@@ -17,28 +17,6 @@ Blocker Status Values:
 
 ## Active Blockers
 
-### Blocker 002 — Initial Git commit is pending
-
-Status: `OPEN`
-Severity: `MEDIUM`
-
-Description:
-
-The project root is now a Git repository on branch `main`, but latest status still shows project contents as untracked (`?? apps/`, `?? docs/`, `?? infra/`, etc.).
-
-Impact:
-
-- `git diff` cannot show normal tracked-file diffs until files are added.
-- Verification and implementation can continue, but change review and rollback are weaker without an initial commit.
-
-Recommended Action:
-
-- Review generated project files for local-only secrets before staging.
-- Add appropriate files to Git and create the first baseline commit.
-- Keep local dev credentials redacted/local-only.
-
----
-
 ### Blocker 003 — Full backend completion still requires larger product workflows
 
 Status: `OPEN`
@@ -49,7 +27,7 @@ Description:
 The backend foundation is verified, but the full product backend still needs several complete workflows:
 
 - Upload/storage integration for KYC/document binaries.
-- Route search and route matching.
+- Deeper route matching integration/performance tests with realistic volumes.
 - Booking idempotency and richer status lifecycle.
 - Trip passenger state transitions and settlement/payment lifecycle.
 - Realtime WebSocket updates and event streaming/outbox.
@@ -62,11 +40,27 @@ Impact:
 
 Recommended Action:
 
-- Continue implementation in small verified slices, starting with Phase 04 route matching/search and richer backend workflows.
+- Continue implementation in small verified slices: Phase 05 booking/trip/fare/payment lifecycle, then realtime/event/admin workflows. Add realistic-volume route matching performance tests before scale claims.
 
 ---
 
 ## Resolved Blockers
+
+### Blocker 002 — Initial Git commit is pending
+
+Status: `RESOLVED`
+Severity: `MEDIUM`
+
+Description:
+
+Earlier tracking showed the project contents were untracked and no initial baseline commit existed. The project now has a baseline commit on branch `main`; latest Phase 04 work is present as normal tracked/untracked working-tree changes for review.
+
+Resolution:
+
+- Baseline commit exists.
+- Use normal `git diff`/`git status` for current Phase 04 changes before committing.
+
+---
 
 ### Blocker 001 — Repository is not initialized as Git repository
 

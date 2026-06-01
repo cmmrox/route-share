@@ -138,7 +138,7 @@ Deliverable:
 
 ## Phase 04 — Route Publishing and Matching
 
-Status: `PARTIALLY_COMPLETED`
+Status: `COMPLETED`
 
 Goal: Build the RouteShareApp product core: planned route publishing and passenger route matching.
 
@@ -146,14 +146,14 @@ Tasks:
 
 - [x] Implement route template creation.
 - [x] Implement route geometry storage.
-- [ ] Implement route schedule rules.
-- [ ] Implement route occurrence generation.
+- [x] Implement route schedule rules.
+- [x] Implement route occurrence generation.
 - [x] Implement route publish/cancel lifecycle.
-- [ ] Implement route H3/bucket indexing strategy.
-- [ ] Implement passenger ride search.
-- [ ] Implement broad candidate filtering.
-- [ ] Implement PostGIS exact overlap scoring.
-- [ ] Implement match result ranking and explanation.
+- [x] Implement route H3/bucket indexing strategy.
+- [x] Implement passenger ride search.
+- [x] Implement broad candidate filtering.
+- [x] Implement PostGIS exact overlap scoring foundation.
+- [x] Implement match result ranking and explanation foundation.
 
 Deliverable:
 

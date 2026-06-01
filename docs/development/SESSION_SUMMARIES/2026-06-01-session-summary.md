@@ -1,6 +1,6 @@
 # RouteShareApp Session Summary — 2026-06-01
 
-Updated: 2026-06-01 18:35 +0530
+Updated: 2026-06-01 20:17 +0530
 
 ## Summary
 
@@ -156,3 +156,65 @@ Verification:
 Virtual thread configuration test -> passed
 ```
 
+
+
+## Phase 04 Route Search / Matching Foundation Checkpoint
+
+Completed at: 2026-06-01 19:49 +0530
+
+Implemented:
+
+- `POST /api/v1/routes/search` authenticated route search endpoint.
+- Route search request/response DTOs.
+- PostGIS candidate filtering for published routes using time window, available seats, pickup/drop proximity, and same-direction line fractions.
+- Exact overlap distance calculation foundation using `ST_LineLocatePoint`, `ST_LineSubstring`, and geography distance/length.
+- Route match scoring domain with overlap, pickup proximity, drop-off proximity, weighted score, and explanation.
+- TDD test coverage for same-direction rejection and stronger match ranking.
+
+Verification:
+
+```text
+./mvnw spotless:apply spotless:check test -q -> BUILD SUCCESS
+./mvnw test -> Tests run: 28, Failures: 0, Errors: 0, Skipped: 0
+GET /actuator/health -> 200 {"status":"UP"}
+PostGIS smoke query -> one same-direction candidate found; overlap calculation returned 94351.60m; transaction rolled back
+Flyway latest version -> 005 successful
+```
+
+Current next step:
+
+- Continue Phase 04 with route schedule rules, route occurrence generation, H3/bucket indexing, and integration/performance tests for matching queries.
+
+
+## Phase 04 Completion Checkpoint
+
+Completed at: 2026-06-01 20:17 +0530
+
+Completed:
+
+- Route schedule rule foundation for one-time published routes.
+- Route occurrence generation at publish time.
+- Route bucket-cell indexing foundation for broad candidate filtering without requiring the H3 PostgreSQL extension yet.
+- Search query now includes bucket-cell prefilter, then exact PostGIS distance, direction, overlap, and scoring.
+- Flyway V006 creates `routing.route_schedule_rule`, `routing.route_occurrence`, and `routing.route_bucket_cell` with indexes.
+
+Verification:
+
+```text
+./mvnw spotless:apply spotless:check test -q -> BUILD SUCCESS
+./mvnw test -> Tests run: 31, Failures: 0, Errors: 0, Skipped: 0
+GET /actuator/health -> 200 {"status":"UP"}
+Flyway latest version -> 006 successful
+New routing tables -> present
+PostGIS route occurrence + bucket-cell smoke query -> one same-direction candidate, overlap 94351.60m, transaction rolled back
+```
+
+Third-party keys/config:
+
+- No third-party key was required for Phase 04 backend completion.
+- Google Maps Platform key is needed later for app-side maps/place autocomplete/directions route generation.
+- Firebase/FCM is needed later for notification delivery.
+
+Current next step:
+
+- Start Phase 05: booking/trip/fare/payment lifecycle hardening.
