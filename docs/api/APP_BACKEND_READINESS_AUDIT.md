@@ -265,3 +265,26 @@ Implement backend readiness in these slices before starting full app UI work:
 - Admin web should **not** start end-to-end yet because most admin contract paths are still missing.
 
 Recommended decision: complete `Phase 06.5 — App Backend Readiness Closure` first, then start Phase 07/08/09 with fewer blockers.
+
+
+## 2026-06-02 02:35 +0530 — Phase 06.5 closure implementation
+
+Status: `IMPLEMENTED_AND_VERIFIED_IN_CODE`
+
+Implemented the remaining app-facing backend contract paths before Phase 07 using a shared app-readiness workflow module plus surface-specific Passenger, Driver, Admin, and App Config controllers.
+
+Implemented closure areas:
+
+- Shared app config endpoint.
+- Passenger early drop-off, trip share/share-link, SOS, ratings, notification inbox/read/preferences, push registration, support tickets/messages, payment methods, avatar upload, optional verification document/status, and persisted-search-result compatibility endpoints.
+- Driver verification status, KYC identity/licence, document submit, vehicle detail/update/delete, vehicle document submit, explicit route publish alias, recurring route CRUD/generation, payout profile, ratings, SOS, notification inbox/read/preferences, push registration, and support tickets/messages.
+- Admin dashboard, users/status/roles, driver application review aliases, document review/download URL, vehicles, trips/location trail/cancel, bookings/status history, fare policies, commission rules, settlement/payout batch lifecycle, finance adjustments, support/SOS, notification broadcasts, reports, and audit actions.
+
+Verification:
+
+- RED contract test first failed because the Phase 06.5 controllers did not exist.
+- Targeted `Phase065AppBackendReadinessContractTest` passed after implementation.
+- Full backend `./mvnw -q spotless:apply spotless:check test` passed.
+- Controller/OpenAPI comparison now has implemented mappings for all app-facing contract paths.
+
+Note: Real external payment-provider tokenization, real document-object signed upload enforcement, and production-grade reporting exports remain Phase 10/hardening concerns. The app-facing backend contracts are now available so Phase 07 can start without backend-blocked screens.

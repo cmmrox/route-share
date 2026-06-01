@@ -10,5 +10,11 @@ public interface VehicleService {
 
   List<VehicleResponse> listMine();
 
+  VehicleResponse getMine(long vehicleId);
+
+  VehicleResponse updateMine(long vehicleId, VehicleRequest req);
+
+  void deleteMine(long vehicleId);
+
   VehicleResponse review(long vehicleId, VehicleReviewStatus status);
 }

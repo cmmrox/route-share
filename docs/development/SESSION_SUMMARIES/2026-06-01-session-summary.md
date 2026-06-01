@@ -521,3 +521,10 @@ Verification recorded after implementation: targeted Phase 06 tests pass, full b
 Reviewed business requirements, design ZIP inventory, app implementation plans, OpenAPI contracts, and implemented Spring Boot controller mappings. Created `docs/api/APP_BACKEND_READINESS_AUDIT.md`. Added `Phase 06.5 — App Backend Readiness Closure` to the roadmap and opened Blocker 007 because full Passenger/Driver/Admin apps are not yet backend-ready end-to-end.
 
 No production code was changed in this audit; documentation/tracking only.
+
+
+## 2026-06-02 02:35 +0530 — Phase 06.5 backend readiness closure
+
+Implemented all app-facing backend contract paths needed before Phase 07. Added shared app-readiness workflow persistence plus Passenger, Driver, Admin, and App Config controllers for app config, notifications, push registrations, support, SOS, ratings, payment-method placeholders, KYC/document submit compatibility, vehicle detail/update/delete, route publish alias, recurring-route compatibility, payout profile, admin dashboard/users/trips/bookings/fare/commission/settlement/support/SOS/reports/audit endpoints.
+
+Verification: targeted Phase 06.5 contract test passed; full backend `spotless:apply spotless:check test` passed.

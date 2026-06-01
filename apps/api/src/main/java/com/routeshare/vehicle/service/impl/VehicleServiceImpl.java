@@ -36,6 +36,44 @@ public class VehicleServiceImpl implements VehicleService {
         .toList();
   }
 
+  public VehicleResponse getMine(long vehicleId) {
+    long driverProfileId = currentDriverProfileId();
+    var entity =
+        vehicles
+            .findById(vehicleId)
+            .filter(vehicle -> vehicle.getDriverProfileId().equals(driverProfileId))
+            .orElseThrow();
+    return vehicleMapper.toResponse(entity);
+  }
+
+  @Transactional
+  public VehicleResponse updateMine(long vehicleId, VehicleRequest req) {
+    long driverProfileId = currentDriverProfileId();
+    var entity =
+        vehicles
+            .findById(vehicleId)
+            .filter(vehicle -> vehicle.getDriverProfileId().equals(driverProfileId))
+            .orElseThrow();
+    entity.setMake(req.make());
+    entity.setModel(req.model());
+    entity.setManufactureYear(req.manufactureYear());
+    entity.setColor(req.color());
+    entity.setRegistrationNumber(req.registrationNumber());
+    entity.setSeatCount(req.seatCount());
+    return vehicleMapper.toResponse(vehicles.save(entity));
+  }
+
+  @Transactional
+  public void deleteMine(long vehicleId) {
+    long driverProfileId = currentDriverProfileId();
+    var entity =
+        vehicles
+            .findById(vehicleId)
+            .filter(vehicle -> vehicle.getDriverProfileId().equals(driverProfileId))
+            .orElseThrow();
+    vehicles.delete(entity);
+  }
+
   @Transactional
   public VehicleResponse review(long vehicleId, VehicleReviewStatus status) {
     var entity = vehicles.findById(vehicleId).orElseThrow();

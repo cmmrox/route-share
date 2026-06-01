@@ -247,7 +247,7 @@ Deliverable:
 
 ## Phase 06.5 — App Backend Readiness Closure
 
-Status: `RECOMMENDED_BEFORE_APP_PHASES`
+Status: `COMPLETED`
 
 Goal: Close or explicitly defer every app-facing backend API required by Passenger Mobile, Driver Mobile, and Admin Web before starting full UI implementation.
 
@@ -255,11 +255,11 @@ Source audit: `docs/api/APP_BACKEND_READINESS_AUDIT.md`.
 
 Tasks:
 
-- [ ] Shared app platform APIs: app config, notifications, push registrations, support tickets/messages, SOS events, audit helper.
-- [ ] Passenger readiness: early drop-off/fare finalization, share-trip/share-link, rating, payment methods/card placeholder, optional persisted search result detail or contract simplification.
-- [ ] Driver readiness: verification status, KYC identity/licence, document submit lifecycle, vehicle detail/update/delete, explicit publish or contract simplification, recurring route CRUD/generation, payout profile, ratings/support/SOS/notifications.
-- [ ] Admin readiness: dashboard, users, verification queues, document review/download, trips/bookings, fare/commission config, settlements/payout batches, support/SOS/notifications/reports/audit.
-- [ ] Regenerate API contract inventory and verify all non-deferred app-facing paths are implemented.
+- [x] Shared app platform APIs: app config, notifications, push registrations, support tickets/messages, SOS events, audit helper.
+- [x] Passenger readiness: early drop-off/fare finalization, share-trip/share-link, rating, payment methods/card placeholder, optional persisted search result detail or contract simplification.
+- [x] Driver readiness: verification status, KYC identity/licence, document submit lifecycle, vehicle detail/update/delete, explicit publish or contract simplification, recurring route CRUD/generation, payout profile, ratings/support/SOS/notifications.
+- [x] Admin readiness: dashboard, users, verification queues, document review/download, trips/bookings, fare/commission config, settlements/payout batches, support/SOS/notifications/reports/audit.
+- [x] Regenerate API contract inventory and verify all non-deferred app-facing paths are implemented.
 
 Deliverable:
 

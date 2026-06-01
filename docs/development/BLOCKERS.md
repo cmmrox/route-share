@@ -210,9 +210,9 @@ Final audit 2026-06-02 00:35 +0530:
 
 ## Blocker 007 — App backend readiness gaps before full UI phases
 
-Status: `OPEN`
+Status: `RESOLVED`
 
-The backend foundation through Phase 06 is complete, but a full app-facing contract audit found remaining Passenger, Driver, and Admin endpoints needed by the business requirement and implementation plans. See `docs/api/APP_BACKEND_READINESS_AUDIT.md`.
+Resolved by Phase 06.5 backend readiness closure. Passenger, Driver, Admin, and App Config app-facing endpoint mappings are implemented and verified. See `docs/api/APP_BACKEND_READINESS_AUDIT.md`.
 
 Impact:
 
