@@ -1,6 +1,6 @@
 # RouteShareApp Blockers
 
-Last Updated: 2026-06-01 20:17 +0530
+Last Updated: 2026-06-01 21:35 +0530
 
 ## Purpose
 
@@ -28,7 +28,7 @@ The backend foundation is verified, but the full product backend still needs sev
 
 - Upload/storage integration for KYC/document binaries.
 - Deeper route matching integration/performance tests with realistic volumes.
-- Booking idempotency and richer status lifecycle.
+- Richer booking status lifecycle beyond initial confirmation/cancel/reject/complete transitions.
 - Trip passenger state transitions and settlement/payment lifecycle.
 - Realtime WebSocket updates and event streaming/outbox.
 - Admin management/reporting APIs.
@@ -130,4 +130,14 @@ Status: no third-party blocker.
 Notes:
 
 - Initial booking status history is a local database/backend feature and is verified with Flyway V008.
-- Future explicit idempotency handling remains local backend work using the existing `common.idempotency_key` table.
+- Explicit booking idempotency handling is implemented using the existing `common.idempotency_key` table.
+
+
+## Phase 05 booking idempotency slice
+
+Status: no third-party blocker.
+
+Notes:
+
+- Booking `Idempotency-Key` handling is local backend/database work and uses `common.idempotency_key`.
+- Real payment-provider idempotency remains a later provider-specific concern once the gateway is selected.

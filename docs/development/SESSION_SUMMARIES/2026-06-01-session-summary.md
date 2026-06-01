@@ -1,6 +1,6 @@
 # RouteShareApp Session Summary — 2026-06-01
 
-Updated: 2026-06-01 20:17 +0530
+Updated: 2026-06-01 21:35 +0530
 
 ## Summary
 
@@ -248,3 +248,33 @@ Next recommended work:
 1. Implement explicit `Idempotency-Key` request handling using `common.idempotency_key`.
 2. Extend booking status history to future cancel/reject/complete transitions.
 3. Continue route-occurrence-aware trip lifecycle and passenger boarded/no-show/drop-off states.
+
+
+## Phase 05 continued — booking idempotency key handling
+
+Completed at: 2026-06-01 21:35 +0530
+
+Implemented:
+
+- Added `IdempotencyKeyEntity` and `IdempotencyKeyRepository` for the existing `common.idempotency_key` table.
+- Updated `POST /api/v1/bookings` to require the `Idempotency-Key` header.
+- Booking service now hashes the booking request, reserves the key for `booking:create`, stores the successful response JSON, and replays matching completed responses without a second seat reservation or booking insert.
+- Same idempotency key with a different request body is rejected.
+
+Verification:
+
+```text
+RED: ./mvnw -q -Dtest=BookingServiceTest test -> failed because IdempotencyKeyRepository did not exist
+GREEN: ./mvnw -q -Dtest=BookingServiceTest test -> passed
+Full backend: ./mvnw spotless:apply spotless:check test -q -> BUILD SUCCESS
+GET /actuator/health -> 200 {"status":"UP"}
+Flyway latest version -> 008 successful
+common.idempotency_key -> present
+```
+
+Next recommended work:
+
+1. Add booking cancel/reject/complete transitions and write status history for each state change.
+2. Continue route-occurrence-aware trip lifecycle.
+3. Add passenger boarded/no-show/drop-off state machine.
+4. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.

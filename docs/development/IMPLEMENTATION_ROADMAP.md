@@ -170,7 +170,7 @@ Goal: Implement the transactional core for ride sharing.
 
 Tasks:
 
-- [x] Implement booking creation with idempotency.
+- [x] Implement booking creation with explicit `Idempotency-Key` replay handling backed by `common.idempotency_key`.
 - [x] Store matched pickup/drop route fractions on bookings.
 - [x] Move booking inventory reservation from route plans to route occurrences.
 - [x] Implement seat reservation and no-overbooking guarantees for route occurrences.

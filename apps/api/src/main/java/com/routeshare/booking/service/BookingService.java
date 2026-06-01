@@ -4,5 +4,5 @@ import com.routeshare.booking.dto.request.BookingRequest;
 import java.util.Map;
 
 public interface BookingService {
-  Map<String, Object> book(BookingRequest req);
+  Map<String, Object> book(BookingRequest req, String idempotencyKey);
 }

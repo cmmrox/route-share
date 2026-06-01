@@ -1,6 +1,6 @@
 # RouteShareApp Development Status
 
-Last Updated: 2026-06-01 21:09 +0530
+Last Updated: 2026-06-01 21:35 +0530
 
 ## Purpose
 
@@ -9,14 +9,14 @@ This file is the first file to read before continuing RouteShareApp development.
 ## Current State
 
 - Current Phase: `PHASE_05_BOOKING_TRIP_FARE_PAYMENT_SETTLEMENT`
-- Current Milestone: `MILESTONE_05_BOOKING_STATUS_HISTORY_FOUNDATION`
-- Current Active Task: `Phase 05 booking status history foundation implemented; next is explicit Idempotency-Key handling`
-- Status: `PHASE_05_BOOKING_STATUS_HISTORY_SLICE_VERIFIED`
-- Repository Git Status: `Phase 05 booking status-history working changes ready to commit`
+- Current Milestone: `MILESTONE_05_BOOKING_IDEMPOTENCY_FOUNDATION`
+- Current Active Task: `Phase 05 booking Idempotency-Key handling implemented; next is booking status transitions and passenger trip states`
+- Status: `PHASE_05_BOOKING_IDEMPOTENCY_SLICE_VERIFIED`
+- Repository Git Status: `Phase 05 booking idempotency working changes ready to commit`
 
 ## Estimated Progress
 
-- Completed known implementation tasks: 61
+- Completed known implementation tasks: 62
 - Total known high-level tasks: 80+
 - Estimated overall progress: 55%
 
@@ -84,6 +84,7 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Booking creation now reserves seats against `routing.route_occurrence` instead of abstract `routing.route_plan`.
 - [x] Booking rows now store `route_occurrence_id`, `pickup_route_fraction`, and `dropoff_route_fraction`.
 - [x] Booking creation now writes initial `CONFIRMED` status history to `booking.booking_status_history`.
+- [x] Booking creation now requires an explicit HTTP `Idempotency-Key` and replays completed matching responses from `common.idempotency_key` without reserving seats twice.
 
 ## In Progress
 
@@ -98,7 +99,7 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Phase 02 — Backend modular monolith foundation.
 - [x] Phase 03 — Identity, passenger, driver, KYC/document metadata, vehicle, saved places, trusted contacts, and vehicle review foundation APIs are implemented.
 - [x] Phase 04 — Route publishing and route matching. Route search, schedule rules, route occurrences, and bucket-cell broad filtering are implemented and committed.
-- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking now reserves route occurrences, stores matched fractions, and records initial status history; passenger trip states, idempotency hardening, payment, and settlement remain.
+- [~] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking now reserves route occurrences, stores matched fractions, records initial status history, and has explicit `Idempotency-Key` replay safety; passenger trip states, payment, and settlement remain.
 - [ ] Phase 06 — Realtime location and WebSocket updates.
 - [ ] Phase 07 — Passenger mobile app.
 - [ ] Phase 08 — Driver mobile app.
@@ -108,8 +109,8 @@ This file is the first file to read before continuing RouteShareApp development.
 ## Latest Verification
 
 - Maven backend tests and formatting:
-  - Command: `cd apps/api && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@21/bin:/opt/homebrew/bin:/opt/homebrew/opt/maven/bin:/usr/bin:/bin:/usr/sbin:/sbin ./mvnw spotless:apply test -q`
-  - Result: `BUILD SUCCESS`; `Tests run: full backend suite passed via `./mvnw spotless:apply spotless:check test -q``.
+  - Command: `cd apps/api && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home PATH=/opt/homebrew/opt/openjdk@21/bin:/opt/homebrew/bin:/opt/homebrew/opt/maven/bin:/usr/bin:/bin:/usr/sbin:/sbin ./mvnw spotless:apply spotless:check test -q`
+  - Result: `BUILD SUCCESS`.
 - Virtual thread configuration:
   - `spring.threads.virtual.enabled=true` configured in `application.yml`.
   - HikariCP pool bounds configured with `ROUTESHARE_DB_POOL_MAX_SIZE`, `ROUTESHARE_DB_POOL_MIN_IDLE`, and `ROUTESHARE_DB_CONNECTION_TIMEOUT_MS`.
@@ -117,18 +118,19 @@ This file is the first file to read before continuing RouteShareApp development.
   - `PersistenceArchitectureTest` passes.
   - Enforces no `JdbcTemplate` in main sources, no SQL/low-level database APIs in service implementations, repositories under `repository`, entities under `entity`, service implementations under `service/impl`, facades under `facade/impl`, controllers not importing repositories/entities, MapStruct shared mapper config usage, and no cross-module repository/entity/impl imports.
 - Runtime health:
-  - `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}` after applying Flyway V007.
+  - `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}` after the booking idempotency slice.
 - Database migration:
   - Latest Flyway migration is version `008`, success `true`.
+  - Verified `common.idempotency_key` exists and is used by booking create replay handling.
   - Verified `booking.booking_status_history` exists with booking/status/auditing columns, and `booking.booking` has occurrence/fraction columns.
 - Git status:
-  - Phase 04 is committed on `main` as `75fdbd6 feat(routing): add route occurrence matching foundation`.
-  - Phase 05 booking status-history slice is implemented and verified but not committed yet.
+  - Latest committed backend slice before this work is `4cbe840 feat(booking): record booking status history`.
+  - Phase 05 booking idempotency slice is implemented and verified but not committed yet.
 
 ## Blockers / Risks
 
 - No active runtime blocker for the backend foundation.
-- Initial Git commit is still pending; all project files currently appear as untracked from Git status.
+- Git baseline exists; current working tree only contains the verified Phase 05 booking idempotency slice pending commit.
 - Full backend is not complete yet. Remaining major areas are tracked in the roadmap and blockers file.
 - Current tests are mostly unit-level. Add Spring Boot integration/security tests before relying on these APIs as production-ready.
 - Dev infrastructure exposes local ports and uses local-only development credentials; do not reuse these settings for production.
@@ -137,11 +139,10 @@ This file is the first file to read before continuing RouteShareApp development.
 
 Continue Phase 05 with the next booking/trip safety slice:
 
-1. Harden booking idempotency with `Idempotency-Key` request handling backed by `common.idempotency_key`.
-2. Extend booking status history writes for future cancelled/rejected/completed transitions.
-3. Move trip lifecycle from route-plan identity toward route-occurrence identity where needed.
-4. Add passenger boarded/no-show/drop-off state machine.
-5. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.
+1. Extend booking status history writes for future cancelled/rejected/completed transitions.
+2. Move trip lifecycle from route-plan identity toward route-occurrence identity where needed.
+3. Add passenger boarded/no-show/drop-off state machine.
+4. Continue payment intent, immutable ledger, cash collection, commission, and settlement slices.
 
 ## Update Rule
 

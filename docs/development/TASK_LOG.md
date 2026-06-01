@@ -472,3 +472,36 @@ Verification:
 Next step:
 
 - Continue Phase 05 with explicit HTTP `Idempotency-Key` handling backed by `common.idempotency_key`.
+
+
+## 2026-06-01 21:35 +0530 — Phase 05 booking idempotency key slice
+
+Files changed:
+
+- `apps/api/src/main/java/com/routeshare/common/entity/IdempotencyKeyEntity.java`
+- `apps/api/src/main/java/com/routeshare/common/repository/IdempotencyKeyRepository.java`
+- `apps/api/src/main/java/com/routeshare/booking/controller/BookingController.java`
+- `apps/api/src/main/java/com/routeshare/booking/service/BookingService.java`
+- `apps/api/src/main/java/com/routeshare/booking/service/impl/BookingServiceImpl.java`
+- `apps/api/src/test/java/com/routeshare/booking/service/impl/BookingServiceTest.java`
+
+Implemented:
+
+- Wrote failing booking service tests first for duplicate `Idempotency-Key` replay and successful response persistence.
+- Added `common.idempotency_key` JPA entity/repository wrapper around the existing Flyway table.
+- `POST /api/v1/bookings` now requires the `Idempotency-Key` header.
+- Booking creation reserves an idempotency row for operation `booking:create`, hashes the request body, stores the successful JSON response, and replays matching completed responses without reserving seats or inserting a second booking.
+- Reusing the same key with a different request body now fails explicitly.
+
+Verification:
+
+- RED: `./mvnw -q -Dtest=BookingServiceTest test` failed because `IdempotencyKeyRepository` did not exist.
+- GREEN: `./mvnw -q -Dtest=BookingServiceTest test` passed after implementation.
+- Full backend: `./mvnw spotless:apply spotless:check test -q` passed with Java 21.
+- Runtime health: `GET /actuator/health` returned HTTP `200` / `{"status":"UP"}`.
+- Flyway: latest migration version `008`, success `true`.
+- DB table verified: `common.idempotency_key`.
+
+Next step:
+
+- Continue Phase 05 with booking cancel/reject/complete transitions writing status history, then passenger boarded/no-show/drop-off route-occurrence-aware trip states.

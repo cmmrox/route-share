@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,7 +23,9 @@ public class BookingController {
   }
 
   @PostMapping
-  ApiResponse<Map<String, Object>> book(@Valid @RequestBody BookingRequest req) {
-    return ApiResponse.ok(bookings.book(req));
+  ApiResponse<Map<String, Object>> book(
+      @RequestHeader("Idempotency-Key") String idempotencyKey,
+      @Valid @RequestBody BookingRequest req) {
+    return ApiResponse.ok(bookings.book(req, idempotencyKey));
   }
 }
