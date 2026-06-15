@@ -1,6 +1,6 @@
 package com.routeshare.identity.service.impl;
 
-import com.routeshare.identity.config.OtpDevBypassProperties;
+import com.routeshare.identity.config.NotifyLkProperties;
 import com.routeshare.identity.dto.request.OtpRequest;
 import com.routeshare.identity.dto.request.OtpVerifyRequest;
 import com.routeshare.identity.dto.response.OtpRequestResponse;
@@ -29,6 +29,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
   private static final Duration OTP_TTL = Duration.ofMinutes(5);
   private static final Duration RESEND_DELAY = Duration.ofSeconds(60);
   private static final int MAX_ATTEMPTS = 5;
+  private static final String DEMO_OTP_CODE = "000000";
 
   private final PhoneOtpChallengeRepository challenges;
   private final SmsGateway smsGateway;
@@ -37,7 +38,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
   private final OtpCodeHasher hasher;
   private final PhoneOtpAccessTokenService accessTokens;
   private final PhoneVerifiedIdentityService phoneIdentities;
-  private final OtpDevBypassProperties devBypass;
+  private final NotifyLkProperties notifyLk;
 
   @Autowired
   public PhoneOtpServiceImpl(
@@ -46,7 +47,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
       Clock clock,
       PhoneOtpAccessTokenService accessTokens,
       PhoneVerifiedIdentityService phoneIdentities,
-      OtpDevBypassProperties devBypass) {
+      NotifyLkProperties notifyLk) {
     this(
         challenges,
         smsGateway,
@@ -55,7 +56,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
         new BCryptOtpCodeHasher(),
         accessTokens,
         phoneIdentities,
-        devBypass);
+        notifyLk);
   }
 
   PhoneOtpServiceImpl(
@@ -74,7 +75,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
         phone ->
             new PhoneVerifiedIdentityService.VerifiedPhoneUser(
                 "phone:" + phone, phone, phone, java.util.Set.of("PASSENGER")),
-        new OtpDevBypassProperties(false, ""));
+        testNotifyLkProperties(false));
   }
 
   PhoneOtpServiceImpl(
@@ -93,7 +94,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
         hasher,
         accessTokens,
         phoneIdentities,
-        new OtpDevBypassProperties(false, ""));
+        testNotifyLkProperties(false));
   }
 
   PhoneOtpServiceImpl(
@@ -104,7 +105,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
       OtpCodeHasher hasher,
       PhoneOtpAccessTokenService accessTokens,
       PhoneVerifiedIdentityService phoneIdentities,
-      OtpDevBypassProperties devBypass) {
+      NotifyLkProperties notifyLk) {
     this.challenges = challenges;
     this.smsGateway = smsGateway;
     this.clock = clock;
@@ -112,7 +113,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
     this.hasher = hasher;
     this.accessTokens = accessTokens;
     this.phoneIdentities = phoneIdentities;
-    this.devBypass = devBypass;
+    this.notifyLk = notifyLk;
   }
 
   @Override
@@ -144,7 +145,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
             now.plus(OTP_TTL),
             now.plus(RESEND_DELAY));
     challenges.save(challenge);
-    if (!devBypass.isEnabled()) {
+    if (!notifyLk.allowDemoSenderForOtp()) {
       smsGateway.sendOtp(phone, code, (int) OTP_TTL.toMinutes());
     }
 
@@ -171,7 +172,7 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
     }
 
     boolean codeAccepted =
-        devBypass.accepts(request.code()) || hasher.matches(request.code(), challenge.getOtpHash());
+        isDemoOtpAccepted(request.code()) || hasher.matches(request.code(), challenge.getOtpHash());
     if (challenge.getAttempts() >= MAX_ATTEMPTS || !codeAccepted) {
       challenge.registerFailedAttempt();
       challenges.save(challenge);
@@ -200,6 +201,21 @@ public class PhoneOtpServiceImpl implements PhoneOtpService {
       throw new IllegalArgumentException("Phone number must be a valid Sri Lankan mobile number");
     }
     return "+" + digits;
+  }
+
+  private boolean isDemoOtpAccepted(String code) {
+    return notifyLk.allowDemoSenderForOtp() && DEMO_OTP_CODE.equals(code);
+  }
+
+  private static NotifyLkProperties testNotifyLkProperties(boolean allowDemoSenderForOtp) {
+    return new NotifyLkProperties(
+        false,
+        java.net.URI.create("https://app.notify.lk/api/v1"),
+        "",
+        "",
+        "",
+        allowDemoSenderForOtp,
+        "Your RouteShare verification code is %s. It expires in %d minutes.");
   }
 
   private ResponseStatusException invalidOtp() {

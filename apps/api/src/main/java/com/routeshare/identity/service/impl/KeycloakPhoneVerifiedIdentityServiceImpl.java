@@ -6,6 +6,8 @@ import com.routeshare.identity.config.KeycloakAdminProperties;
 import com.routeshare.identity.service.PhoneVerifiedIdentityService;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,22 +79,31 @@ public class KeycloakPhoneVerifiedIdentityServiceImpl implements PhoneVerifiedId
     String response =
         restClient
             .get()
-            .uri(
-                builder ->
-                    builder
-                        .scheme(properties.serverUrl().getScheme())
-                        .host(properties.serverUrl().getHost())
-                        .port(resolvePort(properties.serverUrl()))
-                        .path("/admin/realms/" + properties.realm() + "/users")
-                        .queryParam("username", username)
-                        .queryParam("exact", true)
-                        .build())
+            .uri(exactUsernameLookupPath(username))
             .header(HttpHeaders.AUTHORIZATION, bearer(token))
             .retrieve()
             .body(String.class);
-    JsonNode users = parse(response);
-    if (users.isArray() && !users.isEmpty()) {
-      return users.get(0).path("id").asText(null);
+    return exactUsernameMatch(parse(response), username);
+  }
+
+  private URI exactUsernameLookupPath(String username) {
+    String encodedUsername = URLEncoder.encode(username, StandardCharsets.UTF_8);
+    return path(
+        "/admin/realms/"
+            + properties.realm()
+            + "/users?username="
+            + encodedUsername
+            + "&exact=true");
+  }
+
+  private String exactUsernameMatch(JsonNode users, String username) {
+    if (!users.isArray()) {
+      return null;
+    }
+    for (JsonNode user : users) {
+      if (username.equals(user.path("username").asText(null))) {
+        return user.path("id").asText(null);
+      }
     }
     return null;
   }
@@ -132,11 +143,12 @@ public class KeycloakPhoneVerifiedIdentityServiceImpl implements PhoneVerifiedId
       }
     }
 
-    String created = findUserIdByUsername(phoneE164, token);
-    if (created == null || created.isBlank()) {
-      throw new IllegalStateException("Keycloak user was created but could not be resolved");
+    String existing = findUserIdByUsername(phoneE164, token);
+    if (existing == null || existing.isBlank()) {
+      throw new IllegalStateException(
+          "Keycloak user already exists but username could not be resolved");
     }
-    return created;
+    return existing;
   }
 
   private void assignPassengerRole(String userId, String token) {

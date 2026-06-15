@@ -42,9 +42,6 @@ logging:
 
 
 routeshare:
-  otp:
-    dev-bypass-enabled: ${ROUTESHARE_OTP_DEV_BYPASS_ENABLED:false}
-    dev-bypass-code: ${ROUTESHARE_OTP_DEV_BYPASS_CODE:}
   notify-lk:
     enabled: ${NOTIFY_LK_ENABLED:false}
     api-base-url: ${NOTIFY_LK_API_BASE_URL:https://app.notify.lk/api/v1}

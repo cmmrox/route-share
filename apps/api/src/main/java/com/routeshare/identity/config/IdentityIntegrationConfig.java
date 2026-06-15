@@ -6,11 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@EnableConfigurationProperties({
-  NotifyLkProperties.class,
-  KeycloakAdminProperties.class,
-  OtpDevBypassProperties.class
-})
+@EnableConfigurationProperties({NotifyLkProperties.class, KeycloakAdminProperties.class})
 public class IdentityIntegrationConfig {
   @Bean
   RestClient notifyLkRestClient(RestClient.Builder builder) {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 
 import { createPassengerRuntimeApi } from '../application/providers';
 import { useToast } from '../application/toast';
@@ -36,6 +36,7 @@ export function LoginScreen({ navigation }: { readonly navigation?: LoginNavigat
       return;
     }
     try {
+      Keyboard.dismiss();
       setSending(true);
       const response = await createPassengerRuntimeApi().auth.requestOtp({ phoneNumber: result.e164 });
       navigation?.navigate?.('Otp', { phoneNumber: response.phoneNumber, verificationId: response.verificationId });
@@ -55,8 +56,10 @@ export function LoginScreen({ navigation }: { readonly navigation?: LoginNavigat
       <Pressable accessibilityRole="button" accessibilityLabel="Back" accessibilityHint="Return to the previous screen" onPress={() => navigation?.goBack?.()} disabled={!navigation?.canGoBack?.()} style={styles.backButton}>
         <AppText variant="title">‹</AppText>
       </Pressable>
-      <AppText variant="display">Welcome back</AppText>
-      <AppText color="#6f6258">Enter your mobile number to continue</AppText>
+      <View style={styles.heading}>
+        <AppText variant="display" style={styles.displayTitle}>Welcome back</AppText>
+        <AppText color="#6f6258">Enter your mobile number to continue</AppText>
+      </View>
       <View style={{ gap: 8 }}>
         <AppText variant="label">MOBILE NUMBER</AppText>
         <View style={styles.phoneRow}>
@@ -67,7 +70,9 @@ export function LoginScreen({ navigation }: { readonly navigation?: LoginNavigat
         </View>
         <AppText color="#6f6258">We will text you a 6-digit verification code.</AppText>
       </View>
-      <Button accessibilityLabel="Send verification code" accessibilityHint="Validate the phone number and request an OTP" onPress={sendCode}>{sending ? 'Sending…' : 'Send Code'}</Button>
+      <View style={styles.authActions}>
+        <Button accessibilityLabel="Send verification code" accessibilityHint="Validate the phone number and request an OTP" onPress={sendCode}>{sending ? 'Sending…' : 'Send Code'}</Button>
+      </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <View style={{ flex: 1, height: 1, backgroundColor: '#e3d6c8' }} />
         <AppText variant="label" color="#9a8d82">OR</AppText>
@@ -85,10 +90,13 @@ export function LoginScreen({ navigation }: { readonly navigation?: LoginNavigat
 }
 
 const styles = StyleSheet.create({
-  content: { flexGrow: 1, gap: 16 },
+  content: { flexGrow: 1, gap: 20, paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24 },
+  heading: { gap: 6, marginTop: 12, marginBottom: 8 },
+  displayTitle: { fontSize: 30, lineHeight: 36 },
+  authActions: { marginTop: 4 },
   backButton: { alignItems: 'flex-start', alignSelf: 'flex-start', justifyContent: 'center', minHeight: 44, minWidth: 44 },
   phoneRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 10 },
-  countryCode: { marginTop: 29 },
+  countryCode: { height: 56, marginTop: 26, paddingHorizontal: 14 },
   phoneInput: { flex: 1, minWidth: 0 },
   terms: { textAlign: 'center' },
 });

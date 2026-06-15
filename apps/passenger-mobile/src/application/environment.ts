@@ -48,7 +48,6 @@ export function getAppEnvironment(env: Partial<Record<string, string | undefined
   const profile = getEnvironmentProfile(env.EXPO_PUBLIC_APP_ENV);
   const apiBaseUrl = env.EXPO_PUBLIC_API_BASE_URL ?? profile.apiBaseUrl;
   const sentryDsn = env.EXPO_PUBLIC_SENTRY_DSN ?? profile.sentryDsn;
-
   return {
     ...profile,
     apiBaseUrl,

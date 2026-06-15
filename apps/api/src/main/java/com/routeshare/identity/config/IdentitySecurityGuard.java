@@ -11,17 +11,14 @@ public class IdentitySecurityGuard {
   static final String DEFAULT_PHONE_TOKEN_KEY = "routeshare-local-phone-access-token-key-change-me";
 
   private final Environment environment;
-  private final OtpDevBypassProperties otpBypass;
   private final KeycloakAdminProperties keycloakAdmin;
   private final String phoneTokenSigningKey;
 
   public IdentitySecurityGuard(
       Environment environment,
-      OtpDevBypassProperties otpBypass,
       KeycloakAdminProperties keycloakAdmin,
       @Value("${routeshare.phone-auth.access-token-signing-key:}") String phoneTokenSigningKey) {
     this.environment = environment;
-    this.otpBypass = otpBypass;
     this.keycloakAdmin = keycloakAdmin;
     this.phoneTokenSigningKey = phoneTokenSigningKey == null ? "" : phoneTokenSigningKey.trim();
   }
@@ -30,9 +27,6 @@ public class IdentitySecurityGuard {
   void validateIdentitySecurityConfiguration() {
     if (isLocalLikeProfile()) {
       return;
-    }
-    if (otpBypass.isEnabled()) {
-      throw new IllegalStateException("OTP dev bypass may only be enabled in local/test profiles");
     }
     if (phoneTokenSigningKey.isBlank() || DEFAULT_PHONE_TOKEN_KEY.equals(phoneTokenSigningKey)) {
       throw new IllegalStateException(

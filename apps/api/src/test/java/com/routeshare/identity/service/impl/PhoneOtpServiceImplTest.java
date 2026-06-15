@@ -7,7 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.routeshare.identity.config.OtpDevBypassProperties;
+import com.routeshare.identity.config.NotifyLkProperties;
 import com.routeshare.identity.dto.request.OtpRequest;
 import com.routeshare.identity.dto.request.OtpVerifyRequest;
 import com.routeshare.identity.entity.PhoneOtpChallengeEntity;
@@ -86,7 +86,7 @@ class PhoneOtpServiceImplTest {
   }
 
   @Test
-  void acceptsConfiguredDevBypassOtpCodeWithoutMatchingSmsCode() {
+  void acceptsDemoOtpCodeWhenNotifyLkDemoSenderOtpIsAllowed() {
     var id = UUID.randomUUID();
     var challenge =
         PhoneOtpChallengeEntity.pending(
@@ -108,12 +108,54 @@ class PhoneOtpServiceImplTest {
             new PhoneOtpAccessTokenServiceImpl(
                 "routeshare-test-phone-access-token-key-32chars", clock),
             identities,
-            new OtpDevBypassProperties(true, "000000"));
+            notifyLkProperties(true));
 
     var response = service.verifyOtp(new OtpVerifyRequest(id, "0771234567", "000000"));
 
     assertThat(response.verified()).isTrue();
     assertThat(challenge.getStatus()).isEqualTo("VERIFIED");
+  }
+
+  @Test
+  void sendsSmsAndRejectsDemoOtpCodeWhenNotifyLkDemoSenderOtpIsNotAllowed() {
+    when(challenges.findFirstByPhoneE164AndStatusAndExpiresAtAfterOrderByCreatedAtDesc(
+            PHONE_E164, "PENDING", Instant.parse("2026-06-14T10:00:00Z")))
+        .thenReturn(Optional.empty());
+    when(challenges.save(any(PhoneOtpChallengeEntity.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    var service =
+        new PhoneOtpServiceImpl(
+            challenges,
+            sms,
+            clock,
+            () -> "123456",
+            hasher,
+            new PhoneOtpAccessTokenServiceImpl(
+                "routeshare-test-phone-access-token-key-32chars", clock),
+            identities,
+            notifyLkProperties(false));
+
+    var request = service.requestOtp(new OtpRequest("0771234567"));
+
+    verify(sms).sendOtp(PHONE_E164, "123456", 5);
+
+    var challenge =
+        PhoneOtpChallengeEntity.pending(
+            request.verificationId(),
+            PHONE_E164,
+            hasher.hash("123456"),
+            clock.instant(),
+            clock.instant().plusSeconds(300),
+            clock.instant().plusSeconds(60));
+    when(challenges.findByVerificationIdAndPhoneE164(request.verificationId(), PHONE_E164))
+        .thenReturn(Optional.of(challenge));
+
+    assertThatThrownBy(
+            () ->
+                service.verifyOtp(
+                    new OtpVerifyRequest(request.verificationId(), "0771234567", "000000")))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("Invalid or expired verification code");
   }
 
   @Test
@@ -156,6 +198,18 @@ class PhoneOtpServiceImplTest {
         () -> "999999",
         hasher,
         new PhoneOtpAccessTokenServiceImpl("routeshare-test-phone-access-token-key-32chars", clock),
-        identities);
+        identities,
+        notifyLkProperties(false));
+  }
+
+  private NotifyLkProperties notifyLkProperties(boolean allowDemoSenderForOtp) {
+    return new NotifyLkProperties(
+        false,
+        java.net.URI.create("https://app.notify.lk/api/v1"),
+        "",
+        "",
+        "",
+        allowDemoSenderForOtp,
+        "Your RouteShare verification code is %s. It expires in %d minutes.");
   }
 }

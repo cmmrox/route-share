@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from 'react';
-import { View } from 'react-native';
+import { Keyboard, StyleSheet, View } from 'react-native';
 
 import { useAuthStore } from '../application/auth-store';
 import { createPassengerRuntimeApi } from '../application/providers';
@@ -34,6 +34,7 @@ export function OtpScreen({ route, navigation }: { readonly route?: OtpRoute; re
     if (!isOtpComplete(state)) { dispatch({ type: 'submit_failed', message: 'Enter the 6 digit verification code.' }); return; }
     if (!phone || !currentVerificationId) { dispatch({ type: 'submit_failed', message: 'Verification session expired. Please request a new code.' }); return; }
     try {
+      Keyboard.dismiss();
       setSubmitting(true);
       dispatch({ type: 'submit_started' });
       const response = await createPassengerRuntimeApi().auth.verifyOtp({ verificationId: currentVerificationId, phoneNumber: phone, code: state.code });
@@ -69,11 +70,15 @@ export function OtpScreen({ route, navigation }: { readonly route?: OtpRoute; re
     : `Resend in 0:${Math.ceil(state.resend.remainingMs / 1000).toString().padStart(2, '0')}`;
 
   return (
-    <Screen accessibilityLabel="OTP verification" contentStyle={{ flexGrow: 1 }}>
+    <Screen accessibilityLabel="OTP verification" contentStyle={styles.content}>
       <Button variant="ghost" accessibilityLabel="Back" accessibilityHint="Go back to phone number entry" onPress={() => navigation?.goBack?.()}>←</Button>
-      <AppText variant="display">Enter the code</AppText>
-      <AppText color="#6f6258">We sent it to {phone ? formatSriLankanPhoneForDisplay(phone) : 'your phone'}.</AppText>
-      <OtpField value={state.code} onChangeText={(value) => dispatch({ type: 'change', value })} />
+      <View style={styles.heading}>
+        <AppText variant="display" style={styles.displayTitle}>Enter the code</AppText>
+        <AppText color="#6f6258">Sent to {phone ? formatSriLankanPhoneForDisplay(phone) : 'your phone'}</AppText>
+      </View>
+      <View style={styles.otpArea}>
+        <OtpField value={state.code} onChangeText={(value) => dispatch({ type: 'change', value })} />
+      </View>
       {state.errorMessage ? <Card accessibilityLabel="Verification error"><AppText color="#c0392b">{state.errorMessage}</AppText></Card> : null}
       <View style={{ alignItems: 'center' }}>
         <Button variant="ghost" accessibilityLabel="Resend code" accessibilityHint="Request another code when countdown is ready" onPress={resend}>{resendCopy}</Button>
@@ -83,3 +88,11 @@ export function OtpScreen({ route, navigation }: { readonly route?: OtpRoute; re
     </Screen>
   );
 }
+
+
+const styles = StyleSheet.create({
+  content: { flexGrow: 1, gap: 20, paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24 },
+  heading: { gap: 6, marginTop: 12 },
+  displayTitle: { fontSize: 30, lineHeight: 36 },
+  otpArea: { gap: 12, marginTop: 10 },
+});
