@@ -4,4 +4,12 @@ export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 cd "$(dirname "$0")/.."
 mkdir -p .docker
 export DOCKER_CONFIG="$PWD/.docker"
-docker-compose --env-file .env.example -f infra/docker-compose/docker-compose.yml down
+ENV_FILE=".env.example"
+if [[ -f .env ]]; then
+  ENV_FILE=".env"
+fi
+if docker compose version >/dev/null 2>&1; then
+  docker compose --env-file "$ENV_FILE" -f infra/docker-compose/docker-compose.yml down "$@"
+else
+  docker-compose --env-file "$ENV_FILE" -f infra/docker-compose/docker-compose.yml down "$@"
+fi

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>RouteShare · PPTX Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #1b1410; font-family: "Plus Jakarta Sans", system-ui; color: #1b1410; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @keyframes blink { 50% { opacity: 0 } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1 } 50% { transform: scale(1.5); opacity: .5 } }
+
+  /* Slide = fixed 1920x1080; responsive-scaled to fit viewport via JS */
+  .deck { position: relative; width: 1920px; height: 1080px; transform-origin: top left; }
+  .slide { position: absolute; inset: 0; width: 1920px; height: 1080px; display: none; background: #faf7f2; overflow: hidden; }
+  .slide.active { display: block; }
+
+  .nav { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; gap: 10px; background: rgba(27,20,16,.9); padding: 10px 14px; border-radius: 999px; color: #faf7f2; font-weight: 700; font-size: 13px; }
+  .nav button { background: transparent; color: inherit; border: 0; cursor: pointer; font: inherit; padding: 4px 10px; border-radius: 999px; }
+  .nav button:hover { background: rgba(255,255,255,.12); }
+
+  /* Cover slide */
+  .cover { background: #1b1410; color: #faf7f2; padding: 100px; position: relative; overflow: hidden; }
+  .cover::before { content:""; position:absolute; right:-160px; top:-160px; width:720px; height:720px; border-radius:50%; background:#d66a3b; }
+  .cover::after { content:""; position:absolute; left:-120px; bottom:-200px; width:520px; height:520px; border-radius:50%; background:#0f6e66; opacity:.55; }
+  .cover .content { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+  .cover .meta { font-size: 16px; letter-spacing: .2em; text-transform: uppercase; opacity: .7; font-weight: 700; }
+  .cover h1 { font-family: "Fraunces", serif; font-size: 200px; line-height: .92; letter-spacing: -0.035em; font-weight: 500; margin: 40px 0 0; }
+  .cover .sub { font-size: 26px; line-height: 1.4; max-width: 900px; margin-top: 28px; opacity: .86; }
+  .cover .foot { display: flex; justify-content: space-between; align-items: flex-end; }
+  .cover .stats { display: flex; gap: 72px; }
+  .cover .stats .n { font-family: "Fraunces", serif; font-size: 88px; font-weight: 500; line-height: 1; }
+  .cover .stats .l { font-size: 15px; opacity: .75; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; margin-top: 8px; }
+
+  /* Section slides */
+  .s { display: grid; grid-template-columns: 380px 1fr; height: 1080px; }
+  .s .left { background: #1b1410; color: #faf7f2; padding: 80px 60px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+  .s .left::after { content:""; position:absolute; right:-80px; bottom:-80px; width:260px; height:260px; border-radius:50%; background:#d66a3b; opacity:.35; }
+  .s .num { font-family: "Fraunces", serif; font-size: 180px; line-height: 1; letter-spacing: -0.04em; font-weight: 500; color: #d66a3b; position: relative; }
+  .s .sec-label { font-size: 13px; letter-spacing: .18em; text-transform: uppercase; opacity: .7; font-weight: 700; position: relative; }
+  .s .sec-title { font-family: "Fraunces", serif; font-size: 54px; line-height: 1.02; letter-spacing: -0.02em; font-weight: 500; margin-top: 16px; position: relative; }
+  .s .sec-sub { font-size: 17px; line-height: 1.5; margin-top: 18px; opacity: .8; position: relative; }
+  .s .brand { font-size: 13px; letter-spacing: .16em; text-transform: uppercase; opacity: .5; font-weight: 700; position: relative; }
+
+  .s .right { background: #faf7f2; padding: 80px 80px 60px; display: flex; flex-direction: column; }
+  .s .right-head { font-size: 14px; color: #6b5f56; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; }
+  .s .grid { margin-top: 36px; display: grid; gap: 32px 28px; flex: 1; align-content: start; justify-items: center; }
+  .s .grid.c3 { grid-template-columns: repeat(3, 1fr); }
+  .s .grid.c4 { grid-template-columns: repeat(4, 1fr); }
+  .s .grid.c5 { grid-template-columns: repeat(5, 1fr); }
+
+  .card { display: flex; flex-direction: column; align-items: center; }
+  .frame { width: 280px; height: 604px; border-radius: 28px; overflow: hidden; box-shadow: 0 20px 48px rgba(27,20,16,.12), 0 4px 10px rgba(27,20,16,.06); border: 1px solid #e3ddd2; background: #fff; }
+  .frame.lg { width: 340px; height: 733px; }
+  .frame > * { transform-origin: top left; width: 380px !important; height: 820px !important; }
+  .frame > * { transform: scale(0.7368); }
+  .frame.lg > * { transform: scale(0.8947); }
+  .cap { margin-top: 14px; font-size: 14px; font-weight: 700; text-align: center; }
+  .cap-id { font-family: "JetBrains Mono", monospace; font-size: 11px; color: #9d8c7e; font-weight: 500; margin-top: 3px; letter-spacing: .05em; }
+
+  button, a { pointer-events: none !important; cursor: default !important; }
+</style>
+</head>
+<body>
+<div class="deck" id="deck"></div>
+
+<div class="nav">
+  <button onclick="goToSlide(currentSlide-1)">◀</button>
+  <span id="counter">1 / 10</span>
+  <button onclick="goToSlide(currentSlide+1)">▶</button>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="phone.jsx"></script>
+<script type="text/babel" src="screens-auth.jsx"></script>
+<script type="text/babel" src="screens-home.jsx"></script>
+<script type="text/babel" src="screens-ride.jsx"></script>
+<script type="text/babel" src="screens-account.jsx"></script>
+<script type="text/babel" src="screens-variants.jsx"></script>
+
+<script type="text/babel">
+function Screen({ id, label, children, lg }) {
+  return (
+    <div className="card">
+      <div className={"frame" + (lg ? " lg" : "")}>{children}</div>
+      <div className="cap">{label}</div>
+      <div className="cap-id">{id}</div>
+    </div>
+  );
+}
+
+function Section({ num, label, title, sub, cols, children }) {
+  return (
+    <div className="s">
+      <div className="left">
+        <div>
+          <div className="brand">RouteShare · Passenger</div>
+          <div className="num">{num}</div>
+        </div>
+        <div>
+          <div className="sec-label">{label}</div>
+          <div className="sec-title">{title}</div>
+          <div className="sec-sub">{sub}</div>
+        </div>
+        <div className="brand" style={{opacity:.4}}>Hi-fi mockups · Android · 2026</div>
+      </div>
+      <div className="right">
+        <div className="right-head">Section {num} of 08 · {React.Children.count(children)} screens</div>
+        <div className={`grid c${cols || 3}`}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+const Slides = [
+  // Slide 0 — cover
+  <div className="cover" key="cover">
+    <div className="content">
+      <div>
+        <div className="meta">Business Requirements · Concept Validation</div>
+        <h1>RouteShare.</h1>
+        <div className="sub">A route-based ride sharing platform for Colombo. Drivers publish planned routes; passengers book full or partial overlap. 25 hi-fi Android screens across 8 flows, with two hero variations.</div>
+      </div>
+      <div className="foot">
+        <div className="stats">
+          <div><div className="n">25</div><div className="l">Screens</div></div>
+          <div><div className="n">8</div><div className="l">Flows</div></div>
+          <div><div className="n">2</div><div className="l">Hero variants</div></div>
+        </div>
+        <div style={{textAlign:"right", fontSize:14, opacity:.6, letterSpacing:".14em", fontWeight:700, textTransform:"uppercase"}}>April 2026 · v1.0<br/>Passenger App</div>
+      </div>
+    </div>
+  </div>,
+
+  <Section key="s1" num="01" label="Onboarding" title="Splash & intro" sub="First-run experience. Brand moment, then three intro slides that establish the route-based model." cols={4}>
+    <Screen id="01" label="Splash"><SplashScreen/></Screen>
+    <Screen id="02a" label="Intro · 1 of 3"><OnboardingScreen step={0}/></Screen>
+    <Screen id="02b" label="Intro · 2 of 3"><OnboardingScreen step={1}/></Screen>
+    <Screen id="02c" label="Intro · 3 of 3"><OnboardingScreen step={2}/></Screen>
+  </Section>,
+
+  <Section key="s2" num="02" label="Sign up & profile" title="Account creation" sub="Phone + OTP is the primary path. Profile setup covers name, photo, and emergency contact." cols={3}>
+    <Screen id="03" label="Login" lg><LoginScreen/></Screen>
+    <Screen id="04" label="OTP verification" lg><OtpScreen/></Screen>
+    <Screen id="05" label="Profile setup" lg><ProfileSetupScreen/></Screen>
+  </Section>,
+
+  <Section key="s3" num="03" label="Discover · Variant A" title="Home & search — map-first" sub="Classic ride-hailing pattern. The map is the hero; the where-to panel anchored at the bottom." cols={5}>
+    <Screen id="06" label="Home · map"><HomeScreen/></Screen>
+    <Screen id="07" label="Search places"><SearchScreen/></Screen>
+    <Screen id="08" label="Results · list"><ResultsListScreen/></Screen>
+    <Screen id="09" label="Results · map"><ResultsMapScreen/></Screen>
+    <Screen id="10" label="Ride detail"><RideDetailScreen/></Screen>
+  </Section>,
+
+  <Section key="s4" num="04" label="Discover · Variant B" title="Home & search — commuter dashboard" sub="Content-first alternative. Home surfaces the user's usual commute; results grouped by overlap tier; ride detail in editorial style." cols={3}>
+    <Screen id="06b" label="Home · dashboard" lg><HomeScreenB/></Screen>
+    <Screen id="08b" label="Results · grouped" lg><ResultsListScreenB/></Screen>
+    <Screen id="10b" label="Ride detail · editorial" lg><RideDetailScreenB/></Screen>
+  </Section>,
+
+  <Section key="s5" num="05" label="Book & pay" title="Booking flow" sub="Seat selection, payment method, and booked-waiting state after confirmation." cols={3}>
+    <Screen id="11" label="Seat selection" lg><SeatSelectScreen seatCount={1}/></Screen>
+    <Screen id="12" label="Payment method" lg><PaymentScreen/></Screen>
+    <Screen id="13" label="Booked · waiting" lg><BookedScreen/></Screen>
+  </Section>,
+
+  <Section key="s6" num="06" label="Trip" title="During the trip" sub="Live tracking, early-exit flow, trip completion receipt and driver rating." cols={4}>
+    <Screen id="14" label="In trip · live"><InTripScreen/></Screen>
+    <Screen id="15" label="Get off early"><ExitEarlyScreen/></Screen>
+    <Screen id="16" label="Receipt"><ReceiptScreen/></Screen>
+    <Screen id="17" label="Rate driver"><RateDriverScreen/></Screen>
+  </Section>,
+
+  <Section key="s7" num="07" label="Account" title="Account & history" sub="Profile, trip history, saved places, and notifications." cols={4}>
+    <Screen id="18" label="Trip history"><TripHistoryScreen/></Screen>
+    <Screen id="19" label="Saved places"><SavedPlacesScreen/></Screen>
+    <Screen id="20" label="Account"><AccountScreen/></Screen>
+    <Screen id="23" label="Notifications"><NotificationsScreen/></Screen>
+  </Section>,
+
+  <Section key="s8" num="08" label="Safety & support" title="Safety and help" sub="SOS with emergency contacts, share-trip for friends & family, and the help center." cols={3}>
+    <Screen id="21" label="SOS · emergency" lg><SosScreen/></Screen>
+    <Screen id="22" label="Share trip" lg><ShareTripScreen/></Screen>
+    <Screen id="24" label="Help center" lg><SupportScreen/></Screen>
+  </Section>,
+];
+
+function Deck() {
+  return (
+    <>
+      {Slides.map((S, i) => (
+        <div key={i} className={"slide" + (i === 0 ? " active" : "")} data-slide={i}>{S}</div>
+      ))}
+    </>
+  );
+}
+
+window.currentSlide = 0;
+window.goToSlide = function(i) {
+  const total = Slides.length;
+  i = Math.max(0, Math.min(total - 1, i));
+  window.currentSlide = i;
+  document.querySelectorAll(".slide").forEach((el, idx) => el.classList.toggle("active", idx === i));
+  const c = document.getElementById("counter");
+  if (c) c.textContent = `${i+1} / ${total}`;
+};
+
+ReactDOM.createRoot(document.getElementById("deck")).render(<Deck/>);
+
+// Responsive scaling — fit 1920x1080 into viewport (for preview only; exporter locks size)
+function fit() {
+  const deck = document.getElementById("deck");
+  if (!deck) return;
+  const sx = window.innerWidth / 1920;
+  const sy = window.innerHeight / 1080;
+  const s = Math.min(sx, sy);
+  deck.style.transform = `scale(${s})`;
+  deck.style.left = ((window.innerWidth - 1920 * s) / 2) + "px";
+  deck.style.top = ((window.innerHeight - 1080 * s) / 2) + "px";
+  deck.style.position = "absolute";
+}
+window.addEventListener("resize", fit);
+fit();
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight" || e.key === " ") goToSlide(currentSlide + 1);
+  if (e.key === "ArrowLeft") goToSlide(currentSlide - 1);
+});
+</script>
+</body>
+</html>

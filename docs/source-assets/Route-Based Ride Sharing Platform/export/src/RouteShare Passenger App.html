@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>RouteShare · Passenger App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: "Plus Jakarta Sans", system-ui; }
+  @keyframes blink { 50% { opacity: 0 } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1 } 50% { transform: scale(1.5); opacity: .5 } }
+</style>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+    <rect width="400" height="400" fill="#1b1410"/>
+    <circle cx="320" cy="90" r="150" fill="#d66a3b"/>
+    <g transform="translate(120 140)">
+      <circle cx="0" cy="0" r="14" fill="#faf7f2"/>
+      <path d="M0 0 L70 50 L140 20" stroke="#faf7f2" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="140" cy="20" r="14" fill="#0f6e66" stroke="#faf7f2" stroke-width="6"/>
+    </g>
+    <text x="200" y="290" text-anchor="middle" font-family="serif" font-size="56" font-weight="500" fill="#faf7f2" font-style="italic">RS</text>
+    <text x="200" y="330" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700" fill="#faf7f2" letter-spacing="6">ROUTESHARE</text>
+  </svg>
+</template>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="phone.jsx"></script>
+<script type="text/babel" src="screens-auth.jsx"></script>
+<script type="text/babel" src="screens-home.jsx"></script>
+<script type="text/babel" src="screens-ride.jsx"></script>
+<script type="text/babel" src="screens-account.jsx"></script>
+<script type="text/babel" src="screens-variants.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "dark": false,
+  "accent": "#d66a3b",
+  "showPricing": true,
+  "matchThreshold": 50,
+  "seatCount": 1,
+  "tripState": "searching"
+}/*EDITMODE-END*/;
+
+const ACCENT_OPTIONS = {
+  "Terracotta": "#d66a3b",
+  "Mango":      "#e08b1f",
+  "Teal":       "#0f6e66",
+  "Plum":       "#8c4a6b",
+  "Charcoal":   "#1b1410",
+};
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // Apply theme to :root
+  React.useEffect(() => {
+    document.documentElement.classList.toggle("dark", !!t.dark);
+    document.documentElement.style.setProperty("--accent", t.accent);
+    // derive accent-2 (slightly darker)
+    const m = /^#([\da-f]{6})$/i.exec(t.accent);
+    if (m) {
+      const n = parseInt(m[1], 16);
+      const r = Math.max(0, ((n >> 16) & 0xff) - 20);
+      const g = Math.max(0, ((n >> 8) & 0xff) - 20);
+      const b = Math.max(0, (n & 0xff) - 20);
+      document.documentElement.style.setProperty("--accent-2", `rgb(${r},${g},${b})`);
+    }
+  }, [t.dark, t.accent]);
+
+  const tripState = t.tripState;
+
+  return (
+    <>
+      <DesignCanvas>
+        <DCSection id="intro" title="RouteShare · Passenger App" subtitle="22 screens · 2 variations on the hero flow · Colombo · LKR · Warm & friendly">
+          <DCArtboard id="01" label="Splash" width={380} height={820}><SplashScreen/></DCArtboard>
+          <DCArtboard id="02a" label="Onboarding · 1" width={380} height={820}><OnboardingScreen step={0}/></DCArtboard>
+          <DCArtboard id="02b" label="Onboarding · 2" width={380} height={820}><OnboardingScreen step={1}/></DCArtboard>
+          <DCArtboard id="02c" label="Onboarding · 3" width={380} height={820}><OnboardingScreen step={2}/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="auth" title="Sign up & profile" subtitle="Phone + OTP · social · profile setup">
+          <DCArtboard id="03" label="Login" width={380} height={820}><LoginScreen/></DCArtboard>
+          <DCArtboard id="04" label="OTP verification" width={380} height={820}><OtpScreen/></DCArtboard>
+          <DCArtboard id="05" label="Profile setup" width={380} height={820}><ProfileSetupScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="discover" title="Home & search · Variation A" subtitle="Map-first — the classic ride-hailing pattern">
+          <DCArtboard id="06" label="Home · map" width={380} height={820}><HomeScreen/></DCArtboard>
+          <DCArtboard id="07" label="Search places" width={380} height={820}><SearchScreen/></DCArtboard>
+          <DCArtboard id="08" label="Results · list" width={380} height={820}><ResultsListScreen/></DCArtboard>
+          <DCArtboard id="09" label="Results · map" width={380} height={820}><ResultsMapScreen/></DCArtboard>
+          <DCArtboard id="10" label="Ride detail" width={380} height={820}><RideDetailScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="discover-b" title="Home & search · Variation B" subtitle="Commuter dashboard — content first, map on demand, overlap-tiered results">
+          <DCArtboard id="06b" label="Home · dashboard" width={380} height={820}><HomeScreenB/></DCArtboard>
+          <DCArtboard id="08b" label="Results · grouped" width={380} height={820}><ResultsListScreenB/></DCArtboard>
+          <DCArtboard id="10b" label="Ride detail · editorial" width={380} height={820}><RideDetailScreenB/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="book" title="Book & pay" subtitle="Seat selection · payment · confirmation">
+          <DCArtboard id="11" label={`Seat select · ${t.seatCount}`} width={380} height={820}><SeatSelectScreen seatCount={t.seatCount}/></DCArtboard>
+          <DCArtboard id="12" label="Payment method" width={380} height={820}><PaymentScreen/></DCArtboard>
+          <DCArtboard id="13" label="Booked · waiting" width={380} height={820}><BookedScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="trip" title="During the trip" subtitle="Live tracking · early exit · receipt · rate">
+          <DCArtboard id="14" label="In trip · live" width={380} height={820}><InTripScreen/></DCArtboard>
+          <DCArtboard id="15" label="Get off early" width={380} height={820}><ExitEarlyScreen/></DCArtboard>
+          <DCArtboard id="16" label="Trip complete · receipt" width={380} height={820}><ReceiptScreen/></DCArtboard>
+          <DCArtboard id="17" label="Rate driver" width={380} height={820}><RateDriverScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="account" title="Account & history" subtitle="Profile · trips · saved places · notifications">
+          <DCArtboard id="18" label="Trip history" width={380} height={820}><TripHistoryScreen/></DCArtboard>
+          <DCArtboard id="19" label="Saved places" width={380} height={820}><SavedPlacesScreen/></DCArtboard>
+          <DCArtboard id="20" label="Account" width={380} height={820}><AccountScreen/></DCArtboard>
+          <DCArtboard id="23" label="Notifications" width={380} height={820}><NotificationsScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="safety" title="Safety & support" subtitle="SOS · share trip · help center">
+          <DCArtboard id="21" label="SOS · emergency" width={380} height={820}><SosScreen/></DCArtboard>
+          <DCArtboard id="22" label="Share trip" width={380} height={820}><ShareTripScreen/></DCArtboard>
+          <DCArtboard id="24" label="Help center" width={380} height={820}><SupportScreen/></DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel>
+        <TweakSection label="Theme"/>
+        <TweakToggle label="Dark mode" value={t.dark} onChange={(v) => setTweak("dark", v)}/>
+        <TweakSelect label="Accent color" value={
+          Object.entries(ACCENT_OPTIONS).find(([, v]) => v === t.accent)?.[0] || "Terracotta"
+        } options={Object.keys(ACCENT_OPTIONS)} onChange={(name) => setTweak("accent", ACCENT_OPTIONS[name])}/>
+
+        <TweakSection label="Search & results"/>
+        <TweakSlider label="Match % threshold" value={t.matchThreshold} min={0} max={100} step={5} unit="%" onChange={(v) => setTweak("matchThreshold", v)}/>
+        <TweakToggle label="Show fare breakdown" value={t.showPricing} onChange={(v) => setTweak("showPricing", v)}/>
+
+        <TweakSection label="Booking"/>
+        <TweakSlider label="Seats to book" value={t.seatCount} min={1} max={4} step={1} onChange={(v) => setTweak("seatCount", v)}/>
+        <TweakRadio label="Trip state" value={tripState} options={["searching", "booked", "in-trip", "complete"]} onChange={(v) => setTweak("tripState", v)}/>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

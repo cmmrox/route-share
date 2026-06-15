@@ -7,7 +7,9 @@ services:
       POSTGRES_USER: ${ROUTESHARE_POSTGRES_USER:-routeshare}
       POSTGRES_PASSWORD: ${ROUTESHARE_POSTGRES_PASSWORD:-routeshare_dev_password}
     ports:
-      - "5432:5432"
+      - "${ROUTESHARE_POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - routeshare_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${ROUTESHARE_POSTGRES_USER:-routeshare} -d ${ROUTESHARE_POSTGRES_DB:-routeshare}"]
       interval: 10s
@@ -20,6 +22,8 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - routeshare_redis_data:/data
 
   redpanda:
     image: redpandadata/redpanda:v24.2.7
@@ -50,6 +54,7 @@ services:
       - "8081:8080"
     volumes:
       - ../keycloak/import:/opt/keycloak/data/import:ro
+      - routeshare_keycloak_data:/opt/keycloak/data
 
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z
@@ -61,3 +66,11 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    volumes:
+      - routeshare_minio_data:/data
+
+volumes:
+  routeshare_postgres_data:
+  routeshare_redis_data:
+  routeshare_keycloak_data:
+  routeshare_minio_data:

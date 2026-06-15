@@ -39,3 +39,27 @@ springdoc:
 logging:
   level:
     com.routeshare: INFO
+
+
+routeshare:
+  otp:
+    dev-bypass-enabled: ${ROUTESHARE_OTP_DEV_BYPASS_ENABLED:false}
+    dev-bypass-code: ${ROUTESHARE_OTP_DEV_BYPASS_CODE:}
+  notify-lk:
+    enabled: ${NOTIFY_LK_ENABLED:false}
+    api-base-url: ${NOTIFY_LK_API_BASE_URL:https://app.notify.lk/api/v1}
+    user-id: ${NOTIFY_LK_API_USER_ID:}
+    api-key: ${NOTIFY_LK_API_KEY:}
+    sender-id: ${NOTIFY_LK_SENDER_ID:}
+    allow-demo-sender-for-otp: ${NOTIFY_LK_ALLOW_DEMO_SENDER_FOR_OTP:false}
+    otp-message-template: ${NOTIFY_LK_OTP_MESSAGE_TEMPLATE:Your RouteShare verification code is %s. It expires in %d minutes.}
+
+  keycloak-admin:
+    enabled: ${ROUTESHARE_KEYCLOAK_USER_SYNC_ENABLED:true}
+    server-url: ${ROUTESHARE_KEYCLOAK_SERVER_URL:http://localhost:8081}
+    realm: ${ROUTESHARE_KEYCLOAK_REALM:routeshare}
+    admin-realm: ${ROUTESHARE_KEYCLOAK_ADMIN_REALM:master}
+    client-id: ${ROUTESHARE_KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
+    username: ${ROUTESHARE_KEYCLOAK_ADMIN_USERNAME:${KEYCLOAK_ADMIN:admin}}
+    password: ${ROUTESHARE_KEYCLOAK_ADMIN_PASSWORD:${KEYCLOAK_ADMIN_PASSWORD:admin}}
+    passenger-role: ${ROUTESHARE_KEYCLOAK_PASSENGER_ROLE:PASSENGER}

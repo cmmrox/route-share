@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>RouteShare · Driver App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: "Plus Jakarta Sans", system-ui; }
+  @keyframes blink { 50% { opacity: 0 } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1 } 50% { transform: scale(1.5); opacity: .5 } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="phone.jsx"></script>
+
+<!-- passenger screens needed only for shared utilities (FareRow, MenuRow, TopicCard) -->
+<script type="text/babel" src="screens-ride.jsx"></script>
+<script type="text/babel" src="screens-account.jsx"></script>
+
+<script type="text/babel" src="screens-auth.jsx"></script>
+
+<script type="text/babel" src="driver-primitives.jsx"></script>
+<script type="text/babel" src="driver-auth.jsx"></script>
+<script type="text/babel" src="driver-vehicle.jsx"></script>
+<script type="text/babel" src="driver-home.jsx"></script>
+<script type="text/babel" src="driver-create.jsx"></script>
+<script type="text/babel" src="driver-trip.jsx"></script>
+<script type="text/babel" src="driver-earnings.jsx"></script>
+<script type="text/babel" src="driver-account.jsx"></script>
+<script type="text/babel" src="driver-variants.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "dark": false,
+  "accent": "#d66a3b",
+  "online": true,
+  "showEarnings": true,
+  "verified": true,
+  "bookingMode": "instant",
+  "tripState": "scheduled",
+  "bookedSeats": 2
+}/*EDITMODE-END*/;
+
+const ACCENT_OPTIONS = {
+  "Terracotta": "#d66a3b",
+  "Mango":      "#e08b1f",
+  "Teal":       "#0f6e66",
+  "Plum":       "#8c4a6b",
+  "Charcoal":   "#1b1410",
+};
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  React.useEffect(() => {
+    document.documentElement.classList.toggle("dark", !!t.dark);
+    document.documentElement.style.setProperty("--accent", t.accent);
+    const m = /^#([\da-f]{6})$/i.exec(t.accent);
+    if (m) {
+      const n = parseInt(m[1], 16);
+      const r = Math.max(0, ((n >> 16) & 0xff) - 20);
+      const g = Math.max(0, ((n >> 8) & 0xff) - 20);
+      const b = Math.max(0, (n & 0xff) - 20);
+      document.documentElement.style.setProperty("--accent-2", `rgb(${r},${g},${b})`);
+    }
+  }, [t.dark, t.accent]);
+
+  return (
+    <>
+      <DesignCanvas>
+        <DCSection id="intro" title="RouteShare · Driver App" subtitle="31 screens · 2 variations on the hero flows · Colombo · LKR · Warm & friendly · Sister app to the passenger app">
+          <DCArtboard id="D01" label="Splash" width={380} height={820}><DrSplashScreen/></DCArtboard>
+          <DCArtboard id="D02a" label="Onboarding · Earn" width={380} height={820}><DrOnboardingScreen step={0}/></DCArtboard>
+          <DCArtboard id="D02b" label="Onboarding · Schedule" width={380} height={820}><DrOnboardingScreen step={1}/></DCArtboard>
+          <DCArtboard id="D02c" label="Onboarding · Payout" width={380} height={820}><DrOnboardingScreen step={2}/></DCArtboard>
+          <DCArtboard id="D03" label="Login" width={380} height={820}><DrLoginScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="kyc" title="Driver verification · KYC" subtitle="3-step onboarding for new drivers, then a pending-review screen while documents are checked.">
+          <DCArtboard id="D04" label="KYC 1 · Identity" width={380} height={820}><DrKyc1Screen/></DCArtboard>
+          <DCArtboard id="D05" label="KYC 2 · Licence" width={380} height={820}><DrKyc2Screen/></DCArtboard>
+          <DCArtboard id="D06" label="KYC 3 · Vehicle docs" width={380} height={820}><DrKyc3Screen/></DCArtboard>
+          <DCArtboard id="D07" label="Pending review" width={380} height={820}><DrKycPendingScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="vehicles" title="Vehicle management" subtitle="Drivers can add multiple vehicles. Each needs its own documents and verification.">
+          <DCArtboard id="D08" label="Add vehicle" width={380} height={820}><DrAddVehicleScreen/></DCArtboard>
+          <DCArtboard id="D09" label="Vehicle list" width={380} height={820}><DrVehicleListScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="home-a" title="Home & schedule · Variation A" subtitle="Earnings-hero dashboard — money first, next trip second, today's timeline below.">
+          <DCArtboard id="D10" label="Home · dashboard" width={380} height={820}><DrHomeScreen online={t.online} showEarnings={t.showEarnings}/></DCArtboard>
+          <DCArtboard id="D11" label="Trip list" width={380} height={820}><DrTripListScreen/></DCArtboard>
+          <DCArtboard id="D12" label="Recurring schedule" width={380} height={820}><DrScheduleScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="home-b" title="Home · Variation B" subtitle="Status-board style with prominent online/offline toggle — channels driver intent before showing trips.">
+          <DCArtboard id="D10b" label="Home · status board" width={380} height={820}><DrHomeScreenB online={t.online} showEarnings={t.showEarnings}/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="create-a" title="Create trip · Variation A — Map-first" subtitle="Driver draws the route on the map, then drops to a sheet for schedule and pricing.">
+          <DCArtboard id="D13" label="Step 1 · Route on map" width={380} height={820}><DrCreate1Screen/></DCArtboard>
+          <DCArtboard id="D14" label="Step 2 · Schedule" width={380} height={820}><DrCreate2Screen/></DCArtboard>
+          <DCArtboard id="D15" label={`Step 3 · ${t.bookingMode === "instant" ? "Instant" : "Manual"} booking`} width={380} height={820}><DrCreate3Screen bookingMode={t.bookingMode}/></DCArtboard>
+          <DCArtboard id="D16" label="Trip published" width={380} height={820}><DrPublishedScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="create-b" title="Create trip · Variation B — Form-first" subtitle="For drivers who prefer pickers and waypoint lists. Map is a preview, not the canvas.">
+          <DCArtboard id="D13b" label="Step 1 · Form-first" width={380} height={820}><DrCreate1ScreenB/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="trip-lifecycle" title="Trip lifecycle" subtitle="From scheduled to live to completed. Passenger management, booking approvals, and the on-trip flow.">
+          <DCArtboard id="D17" label="Trip detail" width={380} height={820}><DrTripDetailScreen/></DCArtboard>
+          <DCArtboard id="D18" label="Booking requests" width={380} height={820}><DrBookingRequestsScreen/></DCArtboard>
+          <DCArtboard id="D19" label="Pre-trip checklist" width={380} height={820}><DrPreTripScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="live-a" title="Live trip · Variation A — Map-dominant" subtitle="GPS-app aesthetic. Big turn instructions, passenger strip at the bottom.">
+          <DCArtboard id="D20" label="Live trip · map" width={380} height={820}><DrLiveTripScreen/></DCArtboard>
+          <DCArtboard id="D21" label="Mark boarded" width={380} height={820}><DrBoardingScreen/></DCArtboard>
+          <DCArtboard id="D22" label="Drop off" width={380} height={820}><DrDropOffScreen/></DCArtboard>
+          <DCArtboard id="D23" label="Trip complete" width={380} height={820}><DrTripCompleteScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="live-b" title="Live trip · Variation B — List-dominant" subtitle="Map kept to a strip; passengers listed full-width. Better for drivers carrying 2–4 riders with overlapping stops.">
+          <DCArtboard id="D20b" label="Live · list view" width={380} height={820}><DrLiveTripScreenB/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="earnings" title="Earnings & payout" subtitle="Big hero number, simple breakdown, weekly trend chart. Plus the payout account setup screen.">
+          <DCArtboard id="D24" label="Earnings dashboard" width={380} height={820}><DrEarningsScreen showEarnings={t.showEarnings}/></DCArtboard>
+          <DCArtboard id="D25" label="Payout account" width={380} height={820}><DrPayoutSetupScreen/></DCArtboard>
+          <DCArtboard id="D26" label="Ratings & reviews" width={380} height={820}><DrRatingsScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="account" title="Account & rewards" subtitle="Driver profile, notifications, leaderboard, and tier-based rewards.">
+          <DCArtboard id="D27" label="Account" width={380} height={820}><DrAccountScreen verified={t.verified}/></DCArtboard>
+          <DCArtboard id="D28" label="Notifications" width={380} height={820}><DrNotificationsScreen/></DCArtboard>
+          <DCArtboard id="D31" label="Leaderboard" width={380} height={820}><DrLeaderboardScreen/></DCArtboard>
+        </DCSection>
+
+        <DCSection id="safety" title="Safety & support" subtitle="SOS with priority driver support line.">
+          <DCArtboard id="D29" label="SOS · emergency" width={380} height={820}><DrSosScreen/></DCArtboard>
+          <DCArtboard id="D30" label="Help center" width={380} height={820}><DrSupportScreen/></DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel>
+        <TweakSection label="Theme"/>
+        <TweakToggle label="Dark mode" value={t.dark} onChange={(v) => setTweak("dark", v)}/>
+        <TweakSelect label="Accent color" value={
+          Object.entries(ACCENT_OPTIONS).find(([, v]) => v === t.accent)?.[0] || "Terracotta"
+        } options={Object.keys(ACCENT_OPTIONS)} onChange={(name) => setTweak("accent", ACCENT_OPTIONS[name])}/>
+
+        <TweakSection label="Driver state"/>
+        <TweakToggle label="Online" value={t.online} onChange={(v) => setTweak("online", v)}/>
+        <TweakToggle label="KYC verified" value={t.verified} onChange={(v) => setTweak("verified", v)}/>
+        <TweakToggle label="Show earnings figures" value={t.showEarnings} onChange={(v) => setTweak("showEarnings", v)}/>
+
+        <TweakSection label="Trip & booking"/>
+        <TweakRadio label="Booking mode" value={t.bookingMode} options={["instant", "manual"]} onChange={(v) => setTweak("bookingMode", v)}/>
+        <TweakSelect label="Trip state" value={t.tripState} options={["draft", "published", "scheduled", "live", "complete"]} onChange={(v) => setTweak("tripState", v)}/>
+        <TweakSlider label="Booked seats" value={t.bookedSeats} min={0} max={3} step={1} onChange={(v) => setTweak("bookedSeats", v)}/>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

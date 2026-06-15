@@ -1,6 +1,6 @@
 # RouteShareApp Development Status
 
-2026-06-02 02:35 +0530
+2026-06-15 09:25 +0530
 
 ## Purpose
 
@@ -8,19 +8,51 @@ This file is the first file to read before continuing RouteShareApp development.
 
 ## Current State
 
-- Current Phase: `PHASE_06_5_APP_BACKEND_READINESS_COMPLETED`
-- Current Milestone: `MILESTONE_BACKEND_READY_FOR_PHASE_07`
-- Current Active Task: `Phase 06.5 backend readiness closure completed; next task is Phase 07 Passenger Mobile App`
-- Status: `BACKEND_APP_CONTRACTS_READY_FOR_PHASE_07`
-- Repository Git Status: `Clean after backend coverage/test closure commit`
+- Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation-tasks/<feature-plan-name>/` structure and production-ready task-file rules.
+- Current Phase: `PHASE_07_PASSENGER_MOBILE_APP_STARTED`
+- Current Milestone: `MILESTONE_PASSENGER_TYPED_API_CLIENT_READY`
+- Current Active Task: `Task 01 passenger API contract reconciliation and typed client implemented; native app scaffold/preview evidence continues in Task 02`
+- Status: `PASSENGER_API_CLIENT_CORE_VERIFIED`
+- Repository Git Status: `Working tree has Phase 07 Task 01 passenger mobile/API contract changes plus prior planning/source-asset changes`
 
 ## Estimated Progress
 
-- Completed known implementation tasks: 80
+- Completed known implementation tasks: 81
 - Total known high-level tasks: 95+
-- Estimated overall progress: 63%
+- Estimated overall progress: 64%
 
 > Progress is estimated from known tasks and will change as requirements are added or split into smaller implementation tasks. Phases 00 through 06 are now closed for the Phase 07 gate. Later product areas such as realtime websockets, notifications/support/SOS, real payment-provider integration, full mobile/admin UI implementation, observability, and production hardening remain in their own later phases.
+
+
+## Latest Verification Update — 2026-06-15 09:25 +0530
+
+Status: `PASSENGER_OTP_KEYCLOAK_AND_ANDROID_SMOKE_VERIFIED_WITH_CONFIG_WARNINGS`
+
+Completed in this verification pass:
+
+- Backend phone OTP verification now links/creates a Keycloak user and assigns the `PASSENGER` realm role.
+- Phone OTP access token subject now uses the Keycloak user id instead of a local `phone:+94...` subject.
+- Local live smoke verified Keycloak user creation, role assignment, `/api/v1/auth/me`, and local `identity.app_user.keycloak_subject` mapping.
+- Passenger mobile Login, OTP, Profile Setup, Home, and Account screens were adjusted closer to supplied passenger design references and first-run flow requirements.
+- OTP resend now stores and verifies against the latest backend `verificationId` and has an active countdown.
+- Local/dev passenger app config now enables phone OTP by default because the backend provider path is implemented; staging/production still require explicit provider enablement.
+
+Verification evidence:
+
+- Backend focused tests passed: `KeycloakPhoneVerifiedIdentityServiceTest`, `PhoneOtpServiceImplTest`.
+- Backend full Maven test run completed with no Surefire failures/errors; Testcontainers Docker availability warning remains environment-dependent.
+- Passenger mobile `lint`, `typecheck`, and `test` passed: 16 test files, 62 tests.
+- Passenger mobile E2E scaffold/config gates passed for iOS and Android.
+- Passenger mobile preview build config gates passed for iOS and Android.
+- Expo iOS export bundled successfully from `apps/passenger-mobile/index.ts`.
+- Android emulator `emulator-5554` built, installed, and rendered the app through Metro on port 8081.
+- Android screenshots captured for onboarding and corrected Login screen; Login no longer shows the stale red Phone OTP blocker.
+
+Remaining known issues:
+
+- `expo-doctor` reports one CNG/native-folder warning: native `android/` exists while app config contains prebuild-managed fields.
+- Android dev-client shows a non-fatal Expo CLI websocket warning toast in development; the app still renders.
+- Many later passenger screens remain placeholder-level and still need exact supplied-design implementation: search, results, ride detail, seat selection, payment, booked/waiting, in-trip, receipt, rating, history, safety/SOS, share trip, notifications, and support.
 
 ## Completed So Far
 
@@ -113,7 +145,9 @@ This file is the first file to read before continuing RouteShareApp development.
 
 ## In Progress
 
-- [ ] Phase 06 realtime location and WebSocket foundation is the next implementation phase.
+- [x] Passenger mobile Task 01 typed API client implemented and verified for lint/typecheck/unit tests. Native E2E/preview evidence is deferred to Task 02 Expo scaffold.
+
+- [x] Phase 06 realtime location and WebSocket foundation is complete. Phase 07 Passenger Mobile is in progress.
 
 ## Completed Phase-Gate Closure
 
@@ -128,14 +162,20 @@ This file is the first file to read before continuing RouteShareApp development.
 - [x] Phase 03 — Identity, passenger, driver, KYC/document metadata, vehicle, saved places, trusted contacts, and vehicle review foundation APIs are implemented.
 - [x] Phase 04 — Route publishing and route matching. Route search, schedule rules, route occurrences, and bucket-cell broad filtering are implemented and committed.
 - [x] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking occurrence inventory, idempotency, status history, passenger trip states, immutable fare ledger, payment capture/void/refund, cash collection, receipt foundation, driver earnings, MVP commission, and settlement-balance read models are implemented for the Phase 06 gate.
-- [ ] Phase 06 — Realtime location and WebSocket updates.
+- [x] Phase 06 — Realtime location and WebSocket updates.
 - [x] Phase 06.5 — App Backend Readiness Closure completed.
-- [ ] Phase 07 — Passenger mobile app.
+- [~] Phase 07 — Passenger mobile app in progress: Tasks 01–05 complete; Task 06 profile setup and verification next.
 - [ ] Phase 08 — Driver mobile app.
 - [ ] Phase 09 — Admin web app.
 - [ ] Phase 10 — Hardening, observability, performance, deployment readiness.
 
 ## Latest Verification
+
+- Passenger mobile Task 01:
+  - Command: `pnpm --filter @routeshare/passenger-mobile lint` — passed.
+  - Command: `pnpm --filter @routeshare/passenger-mobile typecheck` — passed.
+  - Command: `pnpm --filter @routeshare/passenger-mobile test` — passed (`3` files, `23` tests).
+  - Native E2E/preview commands intentionally fail with a documented blocker until Task 02 creates the Expo/native scaffold.
 
 - TypeScript contract package:
   - Command: `pnpm install && pnpm --filter @routeshare/api-contracts typecheck`.
@@ -170,7 +210,7 @@ This file is the first file to read before continuing RouteShareApp development.
 
 ## Next Recommended Task
 
-Phase 07 Passenger Mobile App can start after the Phase 06.5 backend readiness commit.
+Continue Phase 07 with Task 06 — profile setup and verification, now that Task 05 onboarding/auth/OTP foundation is complete.
 
 ## Update Rule
 
@@ -248,3 +288,138 @@ Verification:
 - `./mvnw verify` passed.
 - JaCoCo line coverage passed the 80% gate: `92.9078%` measured line coverage (`131` covered / `10` missed across `20` measured classes).
 - Full backend suite: `Tests run: 91, Failures: 0, Errors: 0, Skipped: 1`; skipped test is the Docker/Testcontainers migration smoke test when Docker Desktop Java client is unavailable.
+
+## 2026-06-14 01:32 +0530 — Phase 07 Task 02 Expo passenger app scaffold completed
+
+Passenger Mobile Task 02 is complete for the runnable scaffold/dev-tooling scope. `@routeshare/passenger-mobile` now starts as an Expo React Native TypeScript app with React Navigation, provider composition, environment profiles, strict TypeScript, ESLint/Prettier, Vitest tests, Expo Doctor, EAS preview config, Detox config, and local preview/e2e smoke gates.
+
+Verified:
+
+- `pnpm --filter @routeshare/passenger-mobile lint` passed.
+- `pnpm --filter @routeshare/passenger-mobile typecheck` passed.
+- `pnpm --filter @routeshare/passenger-mobile test` passed (`6` files / `28` tests).
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:ios` passed local scaffold/Detox smoke.
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:android` passed local scaffold/Detox smoke.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:ios` passed local preview config gate.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:android` passed local preview config gate.
+- `pnpm run doctor` passed Expo Doctor `21/21` checks.
+- `pnpm exec expo export --platform web --output-dir /tmp/routeshare-passenger-web-export` passed and rendered the current scaffold UI.
+
+Next step: Task 03 app shell/navigation/state/offline foundation.
+
+
+## 2026-06-14 18:20 +0530 — Phase 07 Task 03 app shell/navigation/state/offline foundation completed
+
+Passenger Mobile Task 03 is complete for the app-shell foundation scope. The app now has typed route contracts for public/protected passenger routes, startup route-guard state logic, offline-aware query/mutation policy, persisted preference defaults/validation, expanded auth state, deep-link prefixes/config, an offline banner, and placeholder shell screens for the full passenger route map.
+
+Verified:
+
+- `pnpm --filter @routeshare/passenger-mobile lint` passed.
+- `pnpm --filter @routeshare/passenger-mobile typecheck` passed.
+- `pnpm --filter @routeshare/passenger-mobile test` passed (`9` files / `40` tests).
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:android` passed local scaffold/Detox smoke.
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:ios` passed local scaffold/Detox smoke.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:android` passed local preview config gate.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:ios` passed local preview config gate.
+
+Notes:
+
+- Task 03 uses placeholder shell screens for route coverage; user-visible production screen designs start in Task 04.
+- Real cloud EAS submissions and full device/simulator Detox flows remain later release-evidence work when credentials/devices are finalized.
+
+Next step: continue with Task 04 — design system and reusable screen components from source assets.
+
+
+## 2026-06-14 19:05 +0530 — Phase 07 Task 04 design system and reusable screen components completed
+
+Passenger Mobile Task 04 is complete for the reusable design-system foundation scope. Added source-asset-matched warm RouteShare tokens, dark palette tokens, semantic/match-tier colors, spacing/radius/shadow/type scales, reusable accessible primitives, RouteShare-specific components, a deterministic map backdrop abstraction, and a redesigned app shell/home preview using those components.
+
+Verified:
+
+- `pnpm --filter @routeshare/passenger-mobile lint` passed.
+- `pnpm --filter @routeshare/passenger-mobile typecheck` passed.
+- `pnpm --filter @routeshare/passenger-mobile test` passed (`11` files / `47` tests).
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:android` passed local scaffold/Detox smoke.
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:ios` passed local scaffold/Detox smoke.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:android` passed local preview config gate.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:ios` passed local preview config gate.
+- Android native debug assemble passed: `./gradlew app:assembleDebug -x lint -x test --configure-on-demand --build-cache -PreactNativeDevServerPort=8082 -PreactNativeArchitectures=arm64-v8a --console=plain`.
+
+Notes: real EAS cloud submissions and full device/simulator Detox flows remain later release evidence once credentials/devices are finalized.
+
+Next step: continue with Task 05 — onboarding/auth Keycloak and OTP experience.
+
+
+## 2026-06-14 19:15 +0530 — Phase 07 Task 05 onboarding/auth completed
+
+Passenger Mobile Task 05 is complete for the first-run auth experience foundation. Implemented real Splash, three-slide Onboarding, Login, and OTP screens; Sri Lankan mobile validation; Keycloak Authorization Code + PKCE URL/token/refresh helpers; secure token persistence/logout helpers; OTP state machine coverage for empty/focused/paste/invalid/resend/throttle/network states; and auth route wiring so public auth routes no longer use the generic shell placeholder.
+
+Verification passed:
+
+- `pnpm --filter @routeshare/passenger-mobile lint`
+- `pnpm --filter @routeshare/passenger-mobile typecheck`
+- `pnpm --filter @routeshare/passenger-mobile test` (`15` files / `57` tests)
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:android`
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:ios`
+- `pnpm --filter @routeshare/passenger-mobile build:preview:android`
+- `pnpm --filter @routeshare/passenger-mobile build:preview:ios`
+- Android debug assemble passed with Gradle: `BUILD SUCCESSFUL in 2s`.
+
+Phone OTP dependency: current config does not assume production phone OTP support. The UI validates phone numbers and documents provider readiness; phone OTP navigation is gated by an explicit environment capability flag.
+
+Next step: Task 06 — profile setup and verification.
+
+## Production External Services
+
+- [ ] Production external service providers selected and integrated. See `docs/development/PRODUCTION_EXTERNAL_SERVICES.md`.
+
+## Public Release Provider Decisions
+
+- Selected providers for public release: Notify.lk SMS/OTP, Google Maps Platform, Cybersource payments, Firebase Cloud Messaging, and Sentry. See `docs/development/SELECTED_PROVIDER_IMPLEMENTATION_GUIDE.md`.
+
+
+## 2026-06-14 — Notify.lk OTP integration update
+
+- Real backend-owned Notify.lk OTP integration is implemented after Task 05.
+- Added `/api/v1/auth/otp/request` and `/api/v1/auth/otp/verify` public endpoints.
+- Added hashed OTP persistence in `identity.phone_otp_challenge` via Flyway `V015__add_phone_otp_challenges.sql`.
+- Passenger mobile Login/OTP screens now call backend OTP endpoints when the passenger phone-OTP capability flag is enabled. Production enablement still requires an approved RouteShare Notify.lk sender ID; `NotifyDEMO` is intentionally blocked for OTP by default.
+- Production enablement still requires an approved RouteShare Notify.lk sender ID; `NotifyDEMO` is intentionally blocked for OTP by default.
+
+Verification: backend targeted tests, backend `spotless:apply spotless:check test`, passenger mobile `typecheck`, `lint`, and `test` passed.
+
+
+## 2026-06-15 02:43 +0530 — Phase 07 Task 06 profile/safety prerequisites completed
+
+Passenger Mobile Task 06 is complete for the app-side profile and safety prerequisite scope. Implemented real RouteShare screens for Profile Setup, Account, Saved Places, Trusted Contacts, and Verification readiness; registered these routes in the typed passenger navigator/deep links; expanded passenger mobile API modules and DTO adapters; and added profile feature modules for validation, avatar handling, backend body mapping, verification copy, and default/primary preference helpers.
+
+Implemented behavior:
+
+- Profile setup saves `fullName`, optional email through `preferences.email`, and `photoUrl` through the backend profile API adapter.
+- Avatar flow validates JPG/PNG/WebP and max 5 MB, exposes progress/cancel/retry-friendly state, and uses initials fallback. Binary storage remains a local/readiness shell until storage/upload endpoints are added.
+- Account menu links to profile, saved places, trusted contacts, and verification.
+- Saved places support list/add/delete/default selection with manual coordinate/address fallback and offline/error/empty states.
+- Trusted contacts support list/add/delete/primary selection with Sri Lankan mobile validation, contact-import permission copy, and SOS/share-trip explanation.
+- Verification uses honest readiness-only copy because live passenger document review/upload backend endpoints are not available in this slice.
+
+Verified:
+
+- `pnpm --filter @routeshare/passenger-mobile lint` passed.
+- `pnpm --filter @routeshare/passenger-mobile typecheck` passed.
+- `pnpm --filter @routeshare/passenger-mobile test` passed.
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:ios` passed.
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:android` passed.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:ios` passed.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:android` passed.
+- Unit suite result: `16` files / `62` tests.
+
+Next step: Task 07 — home, search, location, and route discovery.
+## 2026-06-15 — Local QA/runtime cleanup, OTP bypass, Keycloak profile sync, avatar picker
+
+- Removed duplicate `routeshare-postgres-alt` usage and normalized local Docker to `routeshare-postgres` on host port `5433` so it does not conflict with the existing Odoo Postgres on `5432`.
+- Started and verified local RouteShare services: Postgres, Redis, Keycloak, and MinIO.
+- Added local QA-only OTP bypass configuration: `ROUTESHARE_OTP_DEV_BYPASS_ENABLED=true` with static code `000000` in `.env`; `.env.example` keeps it disabled by default.
+- Fixed passenger profile save so Keycloak standard user fields are synced from saved profile data: first name, last name, and email. Passenger-specific data such as `photoUrl` remains in RouteShare DB because the current Keycloak realm drops arbitrary custom attributes.
+- Replaced the passenger profile image placeholder flow with real Expo image picker wiring and avatar preview.
+- Installed Maestro on the Mac and added repeatable emulator QA scripts under `scripts/qa-*.sh` plus flows/reports under `qa/`.
+- Verification completed: backend focused tests pass, backend `spotless:check test` exits 0, passenger mobile lint/typecheck/tests pass, and Maestro Android smoke passes on `emulator-5554`.

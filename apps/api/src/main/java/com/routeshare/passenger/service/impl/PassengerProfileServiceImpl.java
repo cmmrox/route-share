@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
+import com.routeshare.identity.service.PassengerIdentityProfileSyncService;
 import com.routeshare.passenger.dto.request.PassengerProfileRequest;
 import com.routeshare.passenger.dto.response.PassengerProfileResponse;
 import com.routeshare.passenger.mapper.PassengerMapper;
@@ -26,11 +27,15 @@ public class PassengerProfileServiceImpl implements PassengerProfileService {
   private final PassengerProfileRepository profiles;
   private final ObjectMapper mapper;
   private final PassengerMapper passengerMapper;
+  private final PassengerIdentityProfileSyncService profileSyncService;
 
   @Transactional
   public PassengerProfileResponse upsert(PassengerProfileRequest req) {
     var app = identityFacade.upsertFromToken(current.requireCurrentUser());
-    profiles.upsert(app.appUserId(), req.fullName(), req.photoUrl(), json(req.preferences()));
+    var preferences = req.preferences() == null ? Map.<String, Object>of() : req.preferences();
+    profiles.upsert(app.appUserId(), req.fullName(), req.photoUrl(), json(preferences));
+    profileSyncService.syncPassengerProfile(
+        app.keycloakSubject(), req.fullName(), req.photoUrl(), preferences);
     return get().orElseThrow();
   }
 

@@ -7,18 +7,82 @@ export type ApiEndpoint = { method: HttpMethod; path: string };
 export const passengerApiEndpoints = [
   {
     "method": "GET",
-    "path": "/api/v1/app/config"
-  },
-  {
-    "method": "GET",
     "path": "/api/v1/auth/me"
   },
   {
-    "method": "GET",
-    "path": "/api/v1/passenger/bookings"
+    "method": "POST",
+    "path": "/api/v1/auth/otp/request"
   },
   {
     "method": "POST",
+    "path": "/api/v1/auth/otp/verify"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/profile"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/passenger/profile"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/saved-places"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/passenger/saved-places"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/passenger/saved-places/{savedPlaceId}"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/passenger/saved-places/{savedPlaceId}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/saved-places/{savedPlaceId}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/trusted-contacts"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/passenger/trusted-contacts"
+  },
+  {
+    "method": "DELETE",
+    "path": "/api/v1/passenger/trusted-contacts/{contactId}"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/passenger/trusted-contacts/{contactId}"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/trusted-contacts/{contactId}"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/passenger/ride-searches"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/ride-searches/{searchId}/results"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/ride-searches/{searchId}/results/{resultId}"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/passenger/bookings"
+  },
+  {
+    "method": "GET",
     "path": "/api/v1/passenger/bookings"
   },
   {
@@ -30,8 +94,20 @@ export const passengerApiEndpoints = [
     "path": "/api/v1/passenger/bookings/{bookingId}/cancel"
   },
   {
+    "method": "GET",
+    "path": "/api/v1/passenger/trips/current"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/trips/{tripId}/live-state"
+  },
+  {
     "method": "POST",
-    "path": "/api/v1/passenger/bookings/{bookingId}/early-drop-off"
+    "path": "/api/v1/passenger/bookings/{bookingId}/share-link"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/passenger/sos-events"
   },
   {
     "method": "POST",
@@ -39,31 +115,31 @@ export const passengerApiEndpoints = [
   },
   {
     "method": "GET",
-    "path": "/api/v1/passenger/bookings/{bookingId}/receipt"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/bookings/{bookingId}/share"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/bookings/{bookingId}/share-link"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/notification-preferences"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/passenger/notification-preferences"
-  },
-  {
-    "method": "GET",
     "path": "/api/v1/passenger/notifications"
   },
   {
     "method": "POST",
-    "path": "/api/v1/passenger/notifications/{notificationId}/read"
+    "path": "/api/v1/passenger/support/tickets"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/support/tickets"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/app/config"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/passenger/profile/avatar-upload"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/verification/status"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/passenger/verification/documents"
   },
   {
     "method": "GET",
@@ -86,60 +162,36 @@ export const passengerApiEndpoints = [
     "path": "/api/v1/passenger/payments/intents"
   },
   {
-    "method": "GET",
-    "path": "/api/v1/passenger/profile"
+    "method": "POST",
+    "path": "/api/v1/passenger/bookings/{bookingId}/early-drop-off"
   },
   {
-    "method": "PUT",
-    "path": "/api/v1/passenger/profile"
+    "method": "GET",
+    "path": "/api/v1/passenger/bookings/{bookingId}/receipt"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/trips/history"
   },
   {
     "method": "POST",
-    "path": "/api/v1/passenger/profile/avatar-upload"
+    "path": "/api/v1/passenger/bookings/{bookingId}/share"
+  },
+  {
+    "method": "POST",
+    "path": "/api/v1/passenger/notifications/{notificationId}/read"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/notification-preferences"
+  },
+  {
+    "method": "PUT",
+    "path": "/api/v1/passenger/notification-preferences"
   },
   {
     "method": "POST",
     "path": "/api/v1/passenger/push-registrations"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/ride-searches"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/ride-searches/{searchId}/results"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/ride-searches/{searchId}/results/{resultId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/saved-places"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/saved-places"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/v1/passenger/saved-places/{savedPlaceId}"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/passenger/saved-places/{savedPlaceId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/sos-events"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/support/tickets"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/support/tickets"
   },
   {
     "method": "GET",
@@ -148,42 +200,6 @@ export const passengerApiEndpoints = [
   {
     "method": "POST",
     "path": "/api/v1/passenger/support/tickets/{ticketId}/messages"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/trips/current"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/trips/history"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/trips/{tripId}/live-state"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/trusted-contacts"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/trusted-contacts"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/v1/passenger/trusted-contacts/{contactId}"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/passenger/trusted-contacts/{contactId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/verification/documents"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/verification/status"
   }
 ] as const satisfies readonly ApiEndpoint[];
 

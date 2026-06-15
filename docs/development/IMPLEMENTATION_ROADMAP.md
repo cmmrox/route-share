@@ -15,6 +15,22 @@ This file tracks the long-term implementation roadmap. It is more stable than `D
 
 ---
 
+## Implementation Planning Standard
+
+All future high-level feature plans must follow `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md`.
+
+Required pattern:
+
+```text
+docs/development/implementation-tasks/<feature-plan-name>/
+```
+
+Each feature folder must include a high-level `README.md` and one numbered task file per production-ready implementation slice. Every task file must include architecture/design notes, API/database/configuration impacts, development steps, QA test cases, verification commands, done criteria, and expected file changes.
+
+A task is complete only when that feature slice is ready to ship to production. Do not split a user-visible production feature so that one task implements only the happy path and another later task adds required API wiring, error handling, QA, authorization, database behavior, or release readiness.
+
+---
+
 ## Phase 00 — Project Architecture and File Structure
 
 Status: `COMPLETED`
@@ -267,20 +283,20 @@ Deliverable:
 
 ## Phase 07 — Passenger Mobile App
 
-Status: `NOT_STARTED`
+Status: `IN_PROGRESS`
 
-API Contract Gate: `OPEN` — `docs/api/passenger-app.openapi.json` has been expanded from requirements/designs; backend must implement or intentionally map/defer each path before mobile screens are wired.
+API Contract Gate: `PASSENGER_CORE_VERIFIED` — `docs/api/passenger-app.openapi.json` has been expanded from requirements/designs; backend must implement or intentionally map/defer each path before mobile screens are wired.
 
 Goal: Build passenger app against stable backend APIs.
 
 Tasks:
 
-- [ ] Reconcile passenger OpenAPI contract with implemented backend endpoints and generate typed client.
-- [ ] Scaffold Expo React Native app.
-- [ ] Add Keycloak login with PKCE.
-- [ ] Add secure token storage and refresh/logout handling.
-- [ ] Add profile/avatar/optional verification flow.
-- [ ] Add saved places/trusted contacts UI wired to backend.
+- [x] Reconcile passenger OpenAPI contract with implemented backend endpoints and generate typed client.
+- [x] Scaffold Expo React Native app.
+- [x] Add Keycloak login with PKCE. *(Task 05 complete; backend-owned Notify.lk OTP verified in dev.)*
+- [x] Add secure token storage and refresh/logout handling. *(Task 05 foundation complete.)*
+- [x] Add profile/avatar/optional verification flow. *(Task 06 complete; verification remains readiness-only until backend document review endpoints are added.)*
+- [x] Add saved places/trusted contacts UI wired to backend. *(Task 06 complete.)*
 - [ ] Add ride search/results/detail UI.
 - [ ] Add booking flow with idempotency key handling.
 - [ ] Add payment method, payment intent, receipt, and trip history UI.
@@ -295,15 +311,15 @@ Tasks:
 
 Status: `NOT_STARTED`
 
-API Contract Gate: `OPEN` — `docs/api/driver-app.openapi.json` has been expanded from requirements/designs; backend must implement or intentionally map/defer each path before mobile screens are wired.
+API Contract Gate: `OPEN_FOR_PHASE_08_DRIVER_RECHECK` — `docs/api/driver-app.openapi.json` has been expanded from requirements/designs; backend must implement or intentionally map/defer each path before mobile screens are wired.
 
 Goal: Build driver app against stable backend APIs.
 
 Tasks:
 
 - [ ] Reconcile driver OpenAPI contract with implemented backend endpoints and generate typed client.
-- [ ] Scaffold Expo React Native app.
-- [ ] Add Keycloak login with PKCE.
+- [x] Scaffold Expo React Native app.
+- [x] Add Keycloak login with PKCE. *(Task 05 complete; backend-owned Notify.lk OTP verified in dev.)*
 - [ ] Add driver application/KYC/document upload flow.
 - [ ] Add vehicle registration/document flow.
 - [ ] Add route creation/publish/list/detail/share/recurring flow.
@@ -319,7 +335,7 @@ Tasks:
 
 Status: `NOT_STARTED`
 
-API Contract Gate: `OPEN` — `docs/api/admin-web.openapi.json` has been expanded from requirements/designs/product ops gaps; backend must implement or intentionally map/defer each path before admin web screens are wired.
+API Contract Gate: `OPEN_FOR_PHASE_09_ADMIN_RECHECK` — `docs/api/admin-web.openapi.json` has been expanded from requirements/designs/product ops gaps; backend must implement or intentionally map/defer each path before admin web screens are wired.
 
 Goal: Build admin operations web app.
 
@@ -391,3 +407,63 @@ Phase 06 may start next: realtime location ingestion/cache/events/WebSocket foun
 - [x] Rechecked all roadmap sections before Phase 06 for stale incomplete markers.
 - [x] Phase 00, 01, 02, 03, 04, 05, and 05.5 now show complete/complete-for-gate status consistently.
 - [x] Remaining unchecked work starts at Phase 06 or belongs to later mobile/admin/hardening phases.
+
+
+## Phase 07 Task 01 update — 2026-06-14 00:16 +0530
+
+- Passenger mobile contract reconciliation is documented in `docs/api/PASSENGER_MOBILE_CONTRACT_RECONCILIATION.md`.
+- `@routeshare/passenger-mobile` now has a typed API client, endpoint modules, DTO adapters, base URL config, and unit tests.
+- Native E2E/preview verification remains for Task 02 because the Expo/native scaffold is not implemented yet.
+
+## Phase 07 Task 02 update — 2026-06-14 01:32 +0530
+
+- Passenger mobile Expo scaffold is implemented and runnable.
+- Added React Navigation shell, provider stack, environment profiles, app config, EAS/Detox config, lint/typecheck/test/doctor scripts, and local preview/e2e smoke gates.
+- Web export/render smoke passed from `/tmp/routeshare-passenger-web-export`.
+- Task 03 may now start on real passenger screen flows.
+
+
+## Phase 07 Task 03 update — 2026-06-14 18:20 +0530
+
+- Passenger mobile app shell/navigation/state/offline foundation is implemented and verified.
+- Added full typed passenger route map, deep-link config, startup route guard, preference defaults/validation, offline-aware query/mutation policy, expanded auth store, offline banner, and route placeholder shell screens.
+- Verification passed: lint, typecheck, unit tests (`9` files / `40` tests), local iOS/Android e2e smoke gates, and local iOS/Android preview config gates.
+- Next: Task 04 design system and reusable screen components from source assets.
+
+
+## Phase 07 Task 04 update — 2026-06-14 19:05 +0530
+
+- Passenger mobile design-system foundation is implemented and verified.
+- Added `src/design-system/` tokens, reusable primitives, RouteShare components, deterministic map backdrop abstraction, and source-asset-matched home/shell previews.
+- Verification passed: lint, typecheck, unit tests (`11` files / `47` tests), local iOS/Android e2e smoke gates, local iOS/Android preview config gates, and Android debug assemble.
+- Next: Task 05 onboarding/auth Keycloak and OTP experience.
+
+
+## Phase 07 Task 05 update — 2026-06-14 19:15 +0530
+
+- Passenger mobile onboarding/auth foundation is implemented and verified.
+- Added auth feature modules for Sri Lankan phone validation, OTP state machine, Keycloak PKCE token exchange/refresh helpers, secure token storage/logout helpers, and provider capability config.
+- Added real Splash, Onboarding, Login, and OTP screens and wired auth routes in `RootShell`.
+- Verification passed: lint, typecheck, unit tests (`15` files / `57` tests), local iOS/Android e2e smoke gates, local iOS/Android preview config gates, and Android debug assemble.
+- Phone OTP remains provider-dependent and is explicitly gated by config rather than faked.
+- Next: Task 06 profile setup and verification.
+
+
+## Phase 07 Task 06 update — 2026-06-15 02:43 +0530
+
+Completed passenger profile and safety prerequisite management. Added profile setup, account summary, saved places, trusted contacts, and verification readiness screens; wired route registration and deep links for these screens; expanded typed passenger DTOs/adapters/API modules for profile, saved places, trusted contacts, and verification status; added profile feature validation, avatar preparation/upload simulation, backend body adapters, primary/default preference helpers, and Task 06 unit coverage.
+
+Verification passed:
+
+- `pnpm --filter @routeshare/passenger-mobile lint`
+- `pnpm --filter @routeshare/passenger-mobile typecheck`
+- `pnpm --filter @routeshare/passenger-mobile test`
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:ios`
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:android`
+- `pnpm --filter @routeshare/passenger-mobile build:preview:ios`
+- `pnpm --filter @routeshare/passenger-mobile build:preview:android`
+- Unit suite result: `16` files / `62` tests.
+
+Notes: verification document submission and avatar binary storage are honest readiness/local shells until production storage/document-review APIs are implemented. Real device/simulator Detox and remote EAS submission remain later release evidence under the existing release-evidence blocker.
+
+Next: Task 07 — home, search, location, and route discovery.

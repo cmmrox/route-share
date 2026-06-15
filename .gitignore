@@ -11,3 +11,15 @@ node_modules/
 *.log
 infra/data/
 .docker/
+
+# Expo local state
+.expo/
+apps/*/.expo/
+
+# Local Hermes runtime artifacts
+.hermes/runtime/
+# Local QA/runtime outputs
+qa/reports/
+# Expo prebuild/native outputs are generated for local dev-client builds
+apps/passenger-mobile/android/
+apps/passenger-mobile/ios/

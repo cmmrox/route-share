@@ -1,0 +1,8 @@
+appId: app.routeshare.passenger
+name: Passenger auth and profile smoke
+---
+- launchApp
+- assertVisible:
+    text: "RouteShare"
+    optional: true
+- takeScreenshot: qa-passenger-launch

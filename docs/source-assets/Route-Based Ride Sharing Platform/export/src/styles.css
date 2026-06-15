@@ -1,0 +1,333 @@
+/* RouteShare passenger app — warm & friendly design system */
+
+:root {
+  /* Warm neutrals */
+  --bg: #faf7f2;
+  --bg-soft: #f2ede4;
+  --surface: #ffffff;
+  --surface-2: #faf6f0;
+  --ink: #1b1410;
+  --ink-2: #3a2f29;
+  --ink-3: #6f6258;
+  --ink-4: #9e948a;
+  --line: #ecdfce;
+  --line-2: #e5d4bc;
+
+  /* Accent: warm terracotta */
+  --accent: #d66a3b;
+  --accent-2: #c55a2d;
+  --accent-soft: #fce9dc;
+
+  /* Secondary: deep teal */
+  --teal: #0f6e66;
+  --teal-soft: #d2ebe6;
+
+  /* Semantic */
+  --success: #3a8a5a;
+  --success-soft: #d9eadb;
+  --warn: #c98a1a;
+  --danger: #c0392b;
+  --danger-soft: #f7dcd8;
+
+  /* Match colors */
+  --match-full: #2e7d5b;
+  --match-high: #3a8a5a;
+  --match-mid: #c98a1a;
+  --match-low: #9e948a;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgba(30, 20, 10, 0.06);
+  --shadow-md: 0 4px 12px rgba(30, 20, 10, 0.08);
+  --shadow-lg: 0 12px 28px rgba(30, 20, 10, 0.12);
+
+  /* Radius */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+
+  /* Type */
+  --font: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Fraunces", "Plus Jakarta Sans", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+.dark {
+  --bg: #161310;
+  --bg-soft: #1f1a15;
+  --surface: #221d18;
+  --surface-2: #2a241e;
+  --ink: #f4ece0;
+  --ink-2: #e1d4c1;
+  --ink-3: #a89d8f;
+  --ink-4: #766c62;
+  --line: #3a3128;
+  --line-2: #483d32;
+  --accent-soft: #3a1f12;
+  --teal-soft: #153632;
+  --success-soft: #18302a;
+  --danger-soft: #3a1a17;
+}
+
+/* Reset within phone screens */
+.rs * {
+  box-sizing: border-box;
+}
+.rs {
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+.rs button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+}
+
+/* Common building blocks */
+.rs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  transition: transform 0.1s, box-shadow 0.15s;
+}
+.rs-btn.primary {
+  background: var(--ink);
+  color: var(--bg);
+}
+.rs-btn.accent {
+  background: var(--accent);
+  color: #fff;
+}
+.rs-btn.soft {
+  background: var(--bg-soft);
+  color: var(--ink);
+}
+.rs-btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.rs-btn.danger {
+  background: var(--danger);
+  color: #fff;
+}
+.rs-btn:active {
+  transform: scale(0.98);
+}
+.rs-btn.full {
+  width: 100%;
+}
+
+.rs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--bg-soft);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+}
+.rs-chip.accent {
+  background: var(--accent-soft);
+  color: var(--accent-2);
+  border-color: transparent;
+}
+.rs-chip.teal {
+  background: var(--teal-soft);
+  color: var(--teal);
+  border-color: transparent;
+}
+.rs-chip.success {
+  background: var(--success-soft);
+  color: var(--match-full);
+  border-color: transparent;
+}
+
+.rs-card {
+  background: var(--surface);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+}
+
+.rs-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 0;
+}
+
+/* Section label */
+.rs-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+/* Display type */
+.rs-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+}
+
+/* "Map" — CSS-drawn plausible map backdrop (contour lines + soft blobs) */
+.rs-map {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 80% 20%, #d2e8d4 0%, transparent 40%),
+    radial-gradient(ellipse at 20% 85%, #cfe3da 0%, transparent 45%),
+    radial-gradient(ellipse at 60% 60%, #e9ddc4 0%, transparent 55%),
+    linear-gradient(180deg, #eef2e4 0%, #e6ecd7 100%);
+  overflow: hidden;
+}
+.dark .rs-map {
+  background:
+    radial-gradient(ellipse at 80% 20%, #1f2b28 0%, transparent 40%),
+    radial-gradient(ellipse at 20% 85%, #24302b 0%, transparent 45%),
+    radial-gradient(ellipse at 60% 60%, #2a251c 0%, transparent 55%),
+    linear-gradient(180deg, #1c201b 0%, #181a14 100%);
+}
+
+.rs-map::before,
+.rs-map::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    repeating-linear-gradient(52deg, transparent 0 18px, rgba(0, 0, 0, 0.04) 18px 19px),
+    repeating-linear-gradient(-38deg, transparent 0 24px, rgba(0, 0, 0, 0.03) 24px 25px);
+  opacity: 0.6;
+}
+.rs-map::after {
+  background:
+    radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.35) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.3) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 70%, rgba(255, 255, 255, 0.3) 0 2px, transparent 3px);
+  opacity: 0.5;
+}
+
+/* Road strokes overlay (absolute-positioned divs) */
+.rs-road {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+}
+.dark .rs-road {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Match % meter */
+.rs-match-ring {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.rs-match-ring svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+.rs-match-ring .pct {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bottom sheet */
+.rs-sheet {
+  background: var(--surface);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+}
+.rs-sheet-grab {
+  width: 36px;
+  height: 4px;
+  background: var(--line-2);
+  border-radius: 2px;
+  margin: 10px auto 8px;
+}
+
+/* Avatar */
+.rs-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* Seat pictogram */
+.seat {
+  width: 22px;
+  height: 26px;
+  border-radius: 6px 6px 4px 4px;
+  position: relative;
+  background: var(--bg-soft);
+  border: 1.5px solid var(--line-2);
+}
+.seat.filled {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.seat.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.seat.driver {
+  background: transparent;
+  border-color: var(--line-2);
+  border-style: dashed;
+}
+
+/* Scrollbar kill for in-frame scrolls */
+.rs-scroll::-webkit-scrollbar {
+  display: none;
+}
+.rs-scroll {
+  scrollbar-width: none;
+}
+
+/* Text helpers */
+.t-xs { font-size: 11px; }
+.t-sm { font-size: 13px; }
+.t-md { font-size: 15px; }
+.t-lg { font-size: 17px; }
+.t-xl { font-size: 20px; }
+.t-2xl { font-size: 26px; }
+.t-3xl { font-size: 34px; }
+.fw-5 { font-weight: 500; }
+.fw-6 { font-weight: 600; }
+.fw-7 { font-weight: 700; }
+.muted { color: var(--ink-3); }
+.muted-2 { color: var(--ink-4); }
+.tab { font-variant-numeric: tabular-nums; }

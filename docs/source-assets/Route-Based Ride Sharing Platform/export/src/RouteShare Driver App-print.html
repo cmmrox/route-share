@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>RouteShare · Driver App · Print</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #f0eee9;
+    font-family: "Plus Jakarta Sans", system-ui;
+    color: #1b1410;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @keyframes blink { 50% { opacity: 0 } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1 } 50% { transform: scale(1.5); opacity: .5 } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+
+  .print-doc { max-width: 1100px; margin: 0 auto; padding: 32px 40px 60px; }
+
+  .cover {
+    min-height: 900px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 60px 48px;
+    background: #1b1410;
+    color: #faf7f2;
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+    break-after: page;
+  }
+  .cover::after {
+    content: "";
+    position: absolute; right: -120px; top: -120px;
+    width: 480px; height: 480px; border-radius: 50%;
+    background: #d66a3b; opacity: .85;
+  }
+  .cover::before {
+    content: "";
+    position: absolute; left: -120px; bottom: -200px;
+    width: 360px; height: 360px; border-radius: 50%;
+    background: #0f6e66; opacity: .5;
+  }
+  .cover-meta { position: relative; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; opacity: .65; font-weight: 700; }
+  .cover-title { position: relative; font-family: "Fraunces", serif; font-size: 88px; line-height: .95; letter-spacing: -0.03em; font-weight: 500; margin-top: 24px; }
+  .cover-sub { position: relative; font-size: 18px; line-height: 1.4; max-width: 540px; margin-top: 20px; opacity: .82; }
+  .cover-foot { position: relative; display: flex; justify-content: space-between; align-items: flex-end; }
+  .cover-stats { display: flex; gap: 40px; }
+  .cover-stats > div .n { font-family: "Fraunces", serif; font-size: 44px; font-weight: 500; line-height: 1; }
+  .cover-stats > div .l { font-size: 11px; opacity: .7; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; margin-top: 6px; }
+
+  .section { break-before: page; padding-top: 32px; }
+  .section:first-of-type { break-before: auto; }
+  .sec-label { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #d66a3b; font-weight: 800; }
+  .sec-title { font-family: "Fraunces", serif; font-size: 40px; line-height: 1.05; letter-spacing: -0.02em; font-weight: 500; margin: 6px 0 6px; }
+  .sec-sub { font-size: 14px; color: #6b5f56; max-width: 720px; line-height: 1.5; }
+  .sec-rule { height: 1px; background: #e3ddd2; margin: 24px 0 28px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 36px 28px;
+    justify-items: center;
+  }
+  .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card { width: 100%; display: flex; flex-direction: column; align-items: center; break-inside: avoid; }
+  .card-frame { width: 300px; height: 647px; border-radius: 28px; overflow: hidden; box-shadow: 0 10px 28px rgba(27,20,16,.08), 0 2px 6px rgba(27,20,16,.04); border: 1px solid #e3ddd2; background: #fff; }
+  .card-frame > * { transform: scale(0.789); transform-origin: top left; width: 380px !important; height: 820px !important; }
+  .card-label { margin-top: 14px; text-align: center; font-size: 13px; font-weight: 700; letter-spacing: -0.005em; }
+  .card-id { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #9d8c7e; font-weight: 500; margin-top: 2px; letter-spacing: .04em; }
+
+  .page-foot { margin-top: 40px; display: flex; justify-content: space-between; font-size: 10px; color: #9d8c7e; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; border-top: 1px solid #e3ddd2; padding-top: 12px; }
+
+  button, a { pointer-events: none !important; cursor: default !important; }
+
+  @page { size: A3 portrait; margin: 12mm; }
+  @media print {
+    html, body { background: #faf7f2; }
+    .print-doc { padding: 0; }
+    .cover { padding: 50px 40px; min-height: calc(100vh - 24mm); }
+    .section { padding-top: 0; }
+    .card-frame { box-shadow: 0 4px 12px rgba(27,20,16,.08) !important; }
+    .grid { gap: 26px 18px; }
+    .card-frame { width: 260px; height: 561px; }
+    .card-frame > * { transform: scale(0.684); }
+  }
+</style>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+    <rect width="400" height="400" fill="#1b1410"/>
+    <circle cx="320" cy="90" r="150" fill="#d66a3b"/>
+    <g transform="translate(150 150)">
+      <rect x="-40" y="-26" width="80" height="52" rx="12" fill="#faf7f2"/>
+      <circle cx="-22" cy="30" r="9" fill="#faf7f2"/>
+      <circle cx="22" cy="30" r="9" fill="#faf7f2"/>
+    </g>
+    <text x="200" y="300" text-anchor="middle" font-family="serif" font-size="44" font-weight="500" fill="#faf7f2" font-style="italic">Driver</text>
+    <text x="200" y="336" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="700" fill="#faf7f2" letter-spacing="6">ROUTESHARE</text>
+  </svg>
+</template>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="phone.jsx"></script>
+<script type="text/babel" src="screens-ride.jsx"></script>
+<script type="text/babel" src="screens-account.jsx"></script>
+<script type="text/babel" src="screens-auth.jsx"></script>
+<script type="text/babel" src="driver-primitives.jsx"></script>
+<script type="text/babel" src="driver-auth.jsx"></script>
+<script type="text/babel" src="driver-vehicle.jsx"></script>
+<script type="text/babel" src="driver-home.jsx"></script>
+<script type="text/babel" src="driver-create.jsx"></script>
+<script type="text/babel" src="driver-trip.jsx"></script>
+<script type="text/babel" src="driver-earnings.jsx"></script>
+<script type="text/babel" src="driver-account.jsx"></script>
+<script type="text/babel" src="driver-variants.jsx"></script>
+
+<script type="text/babel">
+function Screen({ id, label, children }) {
+  return (
+    <div className="card">
+      <div className="card-frame">{children}</div>
+      <div className="card-label">{label}</div>
+      <div className="card-id">{id}</div>
+    </div>
+  );
+}
+
+function Section({ num, label, title, sub, cols, children }) {
+  return (
+    <section className="section">
+      <div className="sec-label">{num} · {label}</div>
+      <div className="sec-title">{title}</div>
+      <div className="sec-sub">{sub}</div>
+      <div className="sec-rule"/>
+      <div className={`grid ${cols === 2 ? "cols-2" : cols === 4 ? "cols-4" : ""}`}>
+        {children}
+      </div>
+      <div className="page-foot">
+        <span>RouteShare Driver App · Hi-fi mockups</span>
+        <span>{title}</span>
+      </div>
+    </section>
+  );
+}
+
+function Doc() {
+  return (
+    <div className="print-doc">
+      <div className="cover">
+        <div>
+          <div className="cover-meta">Business Requirements · Driver App · Android</div>
+          <div className="cover-title">RouteShare<br/>Driver<br/>App.</div>
+          <div className="cover-sub">For people who already drive every day — publish your planned route and let passengers join. 31 hi-fi screens across 13 flows, plus two hero variations on home, create-trip and live-trip.</div>
+        </div>
+        <div className="cover-foot">
+          <div className="cover-stats">
+            <div><div className="n">31</div><div className="l">Screens</div></div>
+            <div><div className="n">13</div><div className="l">Flows</div></div>
+            <div><div className="n">3</div><div className="l">Hero variants</div></div>
+          </div>
+          <div style={{textAlign:"right", fontSize:11, opacity:.6, letterSpacing:".12em", fontWeight:700, textTransform:"uppercase"}}>May 2026<br/>v1.0</div>
+        </div>
+      </div>
+
+      <Section num="01" label="Onboarding & login" title="Driver onboarding" sub="Splash, three driver-focused intro slides, and phone login." cols={3}>
+        <Screen id="D01" label="Splash"><DrSplashScreen/></Screen>
+        <Screen id="D02a" label="Intro · Earn"><DrOnboardingScreen step={0}/></Screen>
+        <Screen id="D02b" label="Intro · Schedule"><DrOnboardingScreen step={1}/></Screen>
+        <Screen id="D02c" label="Intro · Payout"><DrOnboardingScreen step={2}/></Screen>
+        <Screen id="D03" label="Login"><DrLoginScreen/></Screen>
+      </Section>
+
+      <Section num="02" label="KYC verification" title="Document verification" sub="Three-step KYC: identity, driving licence, vehicle docs — plus a pending-review state." cols={4}>
+        <Screen id="D04" label="KYC 1 · Identity"><DrKyc1Screen/></Screen>
+        <Screen id="D05" label="KYC 2 · Licence"><DrKyc2Screen/></Screen>
+        <Screen id="D06" label="KYC 3 · Vehicle"><DrKyc3Screen/></Screen>
+        <Screen id="D07" label="Pending review"><DrKycPendingScreen/></Screen>
+      </Section>
+
+      <Section num="03" label="Vehicles" title="Vehicle management" sub="Drivers can register multiple vehicles. Each has its own documents and seat capacity.">
+        <Screen id="D08" label="Add vehicle"><DrAddVehicleScreen/></Screen>
+        <Screen id="D09" label="Vehicle list"><DrVehicleListScreen/></Screen>
+      </Section>
+
+      <Section num="04" label="Home · Variant A" title="Home dashboard — earnings hero" sub="Money first, next trip second, today's timeline below. The default home for active drivers.">
+        <Screen id="D10" label="Home · dashboard"><DrHomeScreen online={true} showEarnings={true}/></Screen>
+        <Screen id="D11" label="Trip list"><DrTripListScreen/></Screen>
+        <Screen id="D12" label="Recurring schedule"><DrScheduleScreen/></Screen>
+      </Section>
+
+      <Section num="05" label="Home · Variant B" title="Home — status board" sub="Alternative pattern with a prominent online/offline toggle. Better for drivers who go on and off frequently." cols={2}>
+        <Screen id="D10b · online" label="Home · online"><DrHomeScreenB online={true} showEarnings={true}/></Screen>
+        <Screen id="D10b · offline" label="Home · offline"><DrHomeScreenB online={false} showEarnings={true}/></Screen>
+      </Section>
+
+      <Section num="06" label="Create trip · Variant A" title="Publish a trip — map-first" sub="Drawer the route on the map, then schedule, then seats and pricing. The default for new drivers." cols={4}>
+        <Screen id="D13" label="Route on map"><DrCreate1Screen/></Screen>
+        <Screen id="D14" label="Schedule"><DrCreate2Screen/></Screen>
+        <Screen id="D15" label="Seats & price"><DrCreate3Screen bookingMode="instant"/></Screen>
+        <Screen id="D16" label="Published"><DrPublishedScreen/></Screen>
+      </Section>
+
+      <Section num="07" label="Create trip · Variant B" title="Publish a trip — form-first" sub="For drivers who prefer pickers and waypoint lists. Map kept as a preview only." cols={2}>
+        <Screen id="D13b" label="Form-first"><DrCreate1ScreenB/></Screen>
+        <Screen id="D15m" label="Manual approval mode"><DrCreate3Screen bookingMode="manual"/></Screen>
+      </Section>
+
+      <Section num="08" label="Trip lifecycle" title="Before the trip" sub="Trip detail, booking-requests inbox for manual-approval mode, and the safety checklist.">
+        <Screen id="D17" label="Trip detail"><DrTripDetailScreen/></Screen>
+        <Screen id="D18" label="Booking requests"><DrBookingRequestsScreen/></Screen>
+        <Screen id="D19" label="Pre-trip checklist"><DrPreTripScreen/></Screen>
+      </Section>
+
+      <Section num="09" label="Live trip · Variant A" title="On the road — map-dominant" sub="GPS-app aesthetic. Big turn instructions, passenger strip at the bottom." cols={4}>
+        <Screen id="D20" label="Live · map"><DrLiveTripScreen/></Screen>
+        <Screen id="D21" label="Boarding"><DrBoardingScreen/></Screen>
+        <Screen id="D22" label="Drop off"><DrDropOffScreen/></Screen>
+        <Screen id="D23" label="Trip complete"><DrTripCompleteScreen/></Screen>
+      </Section>
+
+      <Section num="10" label="Live trip · Variant B" title="On the road — list-dominant" sub="Map reduced to a strip; passengers listed full-width. Better for multi-pickup recurring trips." cols={2}>
+        <Screen id="D20b" label="Live · list view"><DrLiveTripScreenB/></Screen>
+        <Screen id="D26r" label="Ratings & reviews"><DrRatingsScreen/></Screen>
+      </Section>
+
+      <Section num="11" label="Earnings" title="Earnings & payouts" sub="Big hero number, weekly trend chart, next-payout card, and the bank account setup screen.">
+        <Screen id="D24" label="Earnings dashboard"><DrEarningsScreen showEarnings={true}/></Screen>
+        <Screen id="D25" label="Payout account"><DrPayoutSetupScreen/></Screen>
+        <Screen id="D26" label="Ratings"><DrRatingsScreen/></Screen>
+      </Section>
+
+      <Section num="12" label="Account & rewards" title="Profile & community" sub="Driver profile (with KYC badge), notifications, and the weekly leaderboard.">
+        <Screen id="D27" label="Account"><DrAccountScreen verified={true}/></Screen>
+        <Screen id="D28" label="Notifications"><DrNotificationsScreen/></Screen>
+        <Screen id="D31" label="Leaderboard"><DrLeaderboardScreen/></Screen>
+      </Section>
+
+      <Section num="13" label="Safety & support" title="When things go wrong" sub="SOS with priority driver line, and the driver-specific help center." cols={2}>
+        <Screen id="D29" label="SOS · emergency"><DrSosScreen/></Screen>
+        <Screen id="D30" label="Help center"><DrSupportScreen/></Screen>
+      </Section>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Doc/>);
+
+// (auto-print disabled for Canva bundle)
+</script>
+</body>
+</html>

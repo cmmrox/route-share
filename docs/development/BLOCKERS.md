@@ -1,6 +1,6 @@
 # RouteShareApp Blockers
 
-Last Updated: 2026-06-02 00:35 +0530
+Last Updated: 2026-06-15 09:25 +0530
 
 ## Purpose
 
@@ -17,7 +17,45 @@ Blocker Status Values:
 
 ## Active Blockers
 
-No active blocker prevents starting Phase 06 after the verified pre-Phase-06 commit.
+### Blocker 009 — Passenger mobile Expo native/prebuild config needs a decision
+
+Status: `OPEN`
+Severity: `MEDIUM`
+
+Description:
+
+`expo-doctor` reports that native project folders are present while `app.config.ts` still contains fields normally synced by Expo prebuild/CNG. EAS Build will not automatically sync fields such as scheme, orientation, userInterfaceStyle, ios, android, and plugins when native folders are committed and treated as source.
+
+Impact:
+
+- Local Android debug build can run, but preview/release build configuration may drift if native projects are not explicitly synchronized.
+- The team must decide whether the passenger app is managed/prebuild-generated or native-folder-owned.
+
+Recommended Action:
+
+- Choose one path:
+  - Managed/CNG path: remove generated native folders from source and use `expo prebuild` during build generation.
+  - Native-owned path: keep native folders and manually synchronize all `app.config.ts` native settings into Android/iOS projects.
+- Re-run `pnpm exec expo-doctor` after the decision.
+
+### Blocker 010 — Passenger mobile later screens remain placeholder-level
+
+Status: `OPEN`
+Severity: `HIGH`
+
+Description:
+
+Login, OTP, Profile Setup, Home, and Account have been aligned closer to supplied designs, but many later passenger screens are still placeholder-level rather than exact implementations of the supplied UI/flow.
+
+Impact:
+
+- The passenger app cannot yet be called fully implemented from creation through the full ride lifecycle.
+- Exact user journey QA is limited until Search, Results, Ride Detail, Seat Selection, Payment, Booked/Waiting, In-Trip, Receipt, Rating, History, Safety/SOS, Share Trip, Notifications, and Support are implemented.
+
+Recommended Action:
+
+- Continue Phase 07 screen implementation in route-flow order: Search -> Results -> Ride Detail -> Seat Selection -> Payment -> Booked/Waiting -> In-Trip -> Receipt -> Rating.
+- Keep running lint/typecheck/unit tests and Android emulator screenshots after each screen slice.
 
 ## Resolved Blockers
 
@@ -49,6 +87,25 @@ Progress 2026-06-01 23:22 +0530:
 ---
 
 ## Deferred / Later-Phase Risks
+
+
+### Blocker 008 — Passenger mobile native E2E and preview build commands need Expo scaffold
+
+Status: `DEFERRED`
+Severity: `MEDIUM`
+
+Description:
+
+Task 01 implemented the pure TypeScript passenger API client and contract reconciliation before UI work. The required native commands currently fail through `apps/passenger-mobile/scripts/native-blocker.mjs` because the Expo/native app scaffold, iOS/Android device automation, and preview build pipeline belong to Task 02.
+
+Impact:
+
+- Task 01 typed client can be linted, typechecked, and unit-tested.
+- Full iOS/Android E2E and preview release evidence cannot be produced until Task 02 replaces the blocker scripts with real Expo/native commands.
+
+Recommended Action:
+
+- In Task 02, scaffold the Expo app and replace `test:e2e:ios`, `test:e2e:android`, `build:preview:ios`, and `build:preview:android` with real commands.
 
 ### Blocker 003 — Full backend completion still requires larger product workflows
 
@@ -222,3 +279,75 @@ Impact:
 Recommended resolution:
 
 - Add and complete `Phase 06.5 — App Backend Readiness Closure`, or explicitly reduce/feature-flag app scopes before starting UI implementation.
+
+## Blocker 008 — Passenger mobile native scaffold missing
+
+Status: `RESOLVED_FOR_SCAFFOLD` as of 2026-06-14 01:32 +0530
+
+Task 02 replaced the Task 01 explicit native blockers with a runnable Expo scaffold, Detox config, EAS preview config, and local smoke gates.
+
+Resolved evidence:
+
+- Expo app config loads.
+- Expo Doctor passes `21/21` checks.
+- Web export/render smoke passes.
+- `test:e2e:ios`, `test:e2e:android`, `build:preview:ios`, and `build:preview:android` now pass local scaffold/config gates.
+
+Remaining release-evidence follow-up:
+
+- Run real simulator/device Detox tests after native projects/devices are generated.
+- Submit real EAS preview builds after EAS project credentials and distribution targets are finalized.
+
+
+## Task 03 status 2026-06-14 18:20 +0530
+
+No new blocker was opened for Task 03. Local lint/typecheck/unit test, iOS/Android scaffold e2e smoke gates, and iOS/Android preview config gates passed. Real EAS cloud submissions and full device/simulator Detox execution remain later release-evidence follow-up once credentials/devices are finalized, consistent with Blocker 008's remaining notes.
+
+
+## Task 04 status 2026-06-14 19:05 +0530
+
+No new blocker was opened for Task 04. Local lint/typecheck/unit test, iOS/Android scaffold e2e smoke gates, iOS/Android preview config gates, and Android native debug assemble passed. Real EAS cloud submissions and full device/simulator Detox execution remain later release-evidence follow-up once credentials/devices are finalized, consistent with Blocker 008's remaining notes.
+
+
+## Task 05 status 2026-06-14 19:15 +0530
+
+No local implementation blocker remains for Task 05. Lint, typecheck, unit tests, iOS/Android scaffold e2e smoke gates, iOS/Android preview config gates, and Android debug assemble all passed.
+
+External dependency noted: production phone OTP requires backend/provider readiness. The app does not fake OTP delivery; phone OTP is gated by an explicit environment capability flag with a user-facing provider dependency message otherwise. Full real-device Detox and remote EAS evidence remain later release evidence once credentials/devices are finalized.
+
+## Blocker 011 — Production external service provider decisions
+
+Status: Partially resolved — providers selected for SMS/maps/payments/push/monitoring; credentials and real integrations still required. Not blocking local/dev implementation that stays behind explicit provider ports and capability flags.
+
+Production release requires selecting/configuring/testing the external providers documented in `docs/development/PRODUCTION_EXTERNAL_SERVICES.md`:
+
+- **Notify.lk** credentials/API details for real phone verification/login.
+- **Google Maps Platform** project/API keys for maps/places/geocoding/directions/route snapping.
+- **Cybersource** merchant credentials/webhook setup and confirmed auth/preauth, capture, void, refund support.
+- S3-compatible object storage provider for KYC/document/profile/support files remains deferred until needed.
+- **Firebase Cloud Messaging** Firebase project/service credentials for push notifications.
+- **Sentry** DSNs/auth token/projects for mobile/backend/admin monitoring.
+- Production PostgreSQL/PostGIS, Redis, Redpanda/Kafka, secrets management, EAS/app-store credentials, domain/DNS/TLS hosting.
+
+Implementation rule: do not fake provider-backed production success. Use ports/adapters and local/dev fakes only when gated and clearly documented.
+
+
+## Blocker 012 — Notify.lk production OTP sender approval
+
+Status: `OPEN_FOR_PRODUCTION`, not blocking local backend/mobile integration.
+
+RouteShare now has a real Notify.lk backend adapter and backend-owned OTP request/verify flow. The current Notify.lk screenshots show active sender ID `NotifyDEMO`; Notify.lk docs warn not to send OTP content through the demo sender.
+
+Required before enabling production phone OTP:
+
+- Obtain/approve a RouteShare-branded Notify.lk sender ID.
+- Set backend environment variables: `NOTIFY_LK_ENABLED=true`, `NOTIFY_LK_API_USER_ID`, `NOTIFY_LK_API_KEY`, and `NOTIFY_LK_SENDER_ID`.
+- Keep `NOTIFY_LK_ALLOW_DEMO_SENDER_FOR_OTP=false` in production.
+- Set the passenger app phone-OTP capability flag only for environments where backend Notify.lk credentials and sender are ready.
+
+
+## Task 06 status 2026-06-15 02:43 +0530
+
+No local implementation blocker remains for Task 06. Lint, typecheck, unit tests, iOS/Android scaffold e2e smoke gates, and iOS/Android preview config gates passed.
+
+Remaining release-evidence follow-ups are covered by existing blockers: full real-device/simulator Detox automation and remote EAS submissions. Production verification document review and avatar binary storage still require provider/backend storage/document endpoints before public-release enablement; the Task 06 UI labels those paths as readiness/local shells rather than fake production success.
