@@ -23,3 +23,7 @@ qa/reports/
 # Expo prebuild/native outputs are generated for local dev-client builds
 apps/passenger-mobile/android/
 apps/passenger-mobile/ios/
+
+# Generated artifact/output staging. Promote useful Markdown summaries into docs/ before commit.
+artifacts/
+qa/runs/

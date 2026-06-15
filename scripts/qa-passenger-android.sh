@@ -5,7 +5,7 @@ export ANDROID_HOME="$ANDROID_SDK_ROOT"
 export PATH="$HOME/.maestro/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH"
 cd "$(dirname "$0")/.."
 DEVICE="${ANDROID_SERIAL:-emulator-5554}"
-FLOW="${1:-qa/maestro/passenger-auth-profile-smoke.yaml}"
+FLOW="${1:-qa/maestro/passenger-mobile/smoke/auth-profile-smoke.yaml}"
 REPORT_DIR="${ROUTESHARE_QA_REPORT_DIR:-$PWD/qa/reports/$(date +%Y%m%d-%H%M%S)}"
 mkdir -p "$REPORT_DIR"
 if ! adb devices | grep -q "^$DEVICE[[:space:]]*device"; then

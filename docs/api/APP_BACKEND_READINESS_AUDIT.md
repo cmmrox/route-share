@@ -10,9 +10,9 @@ Source inputs:
 
 - `docs/source-assets/rideshare-business-requirement.pdf`
 - `docs/source-assets/Route-Based Ride-Sharing-Platform-designs.zip`
-- `docs/implementation/07-PASSENGER-MOBILE-APP.md`
-- `docs/implementation/08-DRIVER-MOBILE-APP.md`
-- `docs/implementation/09-ADMIN-OPS-REPORTING.md`
+- `docs/development/implementation/07-PASSENGER-MOBILE-APP.md`
+- `docs/development/implementation/08-DRIVER-MOBILE-APP.md`
+- `docs/development/implementation/09-ADMIN-OPS-REPORTING.md`
 - `docs/api/passenger-app.openapi.json`
 - `docs/api/driver-app.openapi.json`
 - `docs/api/admin-web.openapi.json`

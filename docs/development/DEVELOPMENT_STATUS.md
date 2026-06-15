@@ -8,7 +8,7 @@ This file is the first file to read before continuing RouteShareApp development.
 
 ## Current State
 
-- Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation-tasks/<feature-plan-name>/` structure and production-ready task-file rules.
+- Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_07_PASSENGER_MOBILE_APP_STARTED`
 - Current Milestone: `MILESTONE_PASSENGER_TYPED_API_CLIENT_READY`
 - Current Active Task: `Task 01 passenger API contract reconciliation and typed client implemented; native app scaffold/preview evidence continues in Task 02`
@@ -225,7 +225,7 @@ If relevant, also update:
 - `DECISION_LOG.md`
 - `REQUIREMENTS_CHANGE_LOG.md`
 - `BLOCKERS.md`
-- `SESSION_SUMMARIES/YYYY-MM-DD-session-summary.md`
+- ``
 
 
 ## 2026-06-01 23:43 +0530 — Phase 05/05.5 continuation before Phase 06
@@ -418,8 +418,8 @@ Next step: Task 07 — home, search, location, and route discovery.
 
 - Removed duplicate `routeshare-postgres-alt` usage and normalized local Docker to `routeshare-postgres` on host port `5433` so it does not conflict with the existing Odoo Postgres on `5432`.
 - Started and verified local RouteShare services: Postgres, Redis, Keycloak, and MinIO.
-- Added local QA-only OTP bypass configuration: `ROUTESHARE_OTP_DEV_BYPASS_ENABLED=true` with static code `000000` in `.env`; `.env.example` keeps it disabled by default.
+- Added local QA-only OTP bypass configuration: `NOTIFY_LK_ALLOW_DEMO_SENDER_FOR_OTP=true` for backend-only local QA; the passenger app does not receive or autofill a dev OTP bypass code, and `.env.example` must stay safe for commits.
 - Fixed passenger profile save so Keycloak standard user fields are synced from saved profile data: first name, last name, and email. Passenger-specific data such as `photoUrl` remains in RouteShare DB because the current Keycloak realm drops arbitrary custom attributes.
 - Replaced the passenger profile image placeholder flow with real Expo image picker wiring and avatar preview.
-- Installed Maestro on the Mac and added repeatable emulator QA scripts under `scripts/qa-*.sh` plus flows/reports under `qa/`.
+- Installed Maestro on the Mac and added repeatable emulator QA scripts under `scripts/qa-*.sh` plus flows under `qa/maestro/`; generated reports remain ignored under `qa/reports/`.
 - Verification completed: backend focused tests pass, backend `spotless:check test` exits 0, passenger mobile lint/typecheck/tests pass, and Maestro Android smoke passes on `emulator-5554`.

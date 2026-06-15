@@ -98,7 +98,7 @@ Files To Create:
 - `docs/development/REQUIREMENTS_CHANGE_LOG.md`
 - `docs/development/BLOCKERS.md`
 - `docs/development/QUALITY_STANDARDS.md`
-- `docs/development/SESSION_SUMMARIES/2026-05-31-session-summary.md`
+- `2026-05-31-session-summary.md`
 
 Verification:
 
@@ -246,7 +246,7 @@ Files Created/Updated:
 - `docs/architecture/BACKEND-MODULAR-MONOLITH-SERVICE-IMPL-FACADE.md`
 - `docs/development/QUALITY_STANDARDS.md`
 - `docs/development/DECISION_LOG.md`
-- `docs/implementation/00-PROJECT-ARCHITECTURE-AND-FILE-STRUCTURE.md`
+- `docs/development/implementation/00-PROJECT-ARCHITECTURE-AND-FILE-STRUCTURE.md`
 - `apps/api/pom.xml`
 - `apps/api/src/main/java/com/routeshare/common/mapper/RouteShareMapperConfig.java`
 - `apps/api/src/main/java/com/routeshare/**/controller/**`
@@ -827,15 +827,15 @@ Documented the project-wide implementation planning pattern requested for future
 Changes:
 
 - Added `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` as the source of truth for feature-level implementation planning.
-- Updated `docs/development/IMPLEMENTATION_ROADMAP.md` to require `docs/development/implementation-tasks/<feature-plan-name>/` for every high-level feature plan.
+- Updated `docs/development/IMPLEMENTATION_ROADMAP.md` to require `docs/development/implementation/tasks/<feature-plan-name>/` for every high-level feature plan.
 - Updated `docs/development/QUALITY_STANDARDS.md` with the release-slice planning standard.
 - Updated `docs/development/DEVELOPMENT_STATUS.md` with a pointer to the new planning standard.
 
 Rule captured:
 
 - Every high-level feature gets its own implementation-task folder.
-- Each task file must be a production-ready release slice with architecture/design notes, API/database/configuration impacts, development steps, QA test cases, verification commands, security/privacy checks, and done criteria.
-- Do not split one user-visible production feature so required API wiring, error handling, QA, authorization, database behavior, or release readiness is left to a later task.
+- Each task file must be a production-ready release slice with architecture/design notes, API/database/configuration impacts, development steps, a link to the matching `qa/test-cases/` file, verification commands, security/privacy checks, and done criteria.
+- Do not split one user-visible production feature so required API wiring, error handling, linked QA coverage, authorization, database behavior, or release readiness is left to a later task.
 
 Verification:
 
@@ -1189,8 +1189,8 @@ Next Step:
 
 - Removed duplicate `routeshare-postgres-alt` usage and normalized local Docker to `routeshare-postgres` on host port `5433` so it does not conflict with the existing Odoo Postgres on `5432`.
 - Started and verified local RouteShare services: Postgres, Redis, Keycloak, and MinIO.
-- Added local QA-only OTP bypass configuration: `ROUTESHARE_OTP_DEV_BYPASS_ENABLED=true` with static code `000000` in `.env`; `.env.example` keeps it disabled by default.
+- Added local QA-only OTP bypass configuration: `NOTIFY_LK_ALLOW_DEMO_SENDER_FOR_OTP=true` for backend-only local QA; the passenger app does not receive or autofill a dev OTP bypass code, and `.env.example` must stay safe for commits.
 - Fixed passenger profile save so Keycloak standard user fields are synced from saved profile data: first name, last name, and email. Passenger-specific data such as `photoUrl` remains in RouteShare DB because the current Keycloak realm drops arbitrary custom attributes.
 - Replaced the passenger profile image placeholder flow with real Expo image picker wiring and avatar preview.
-- Installed Maestro on the Mac and added repeatable emulator QA scripts under `scripts/qa-*.sh` plus flows/reports under `qa/`.
+- Installed Maestro on the Mac and added repeatable emulator QA scripts under `scripts/qa-*.sh` plus flows under `qa/maestro/`; generated reports remain ignored under `qa/reports/`.
 - Verification completed: backend focused tests pass, backend `spotless:check test` exits 0, passenger mobile lint/typecheck/tests pass, and Maestro Android smoke passes on `emulator-5554`.

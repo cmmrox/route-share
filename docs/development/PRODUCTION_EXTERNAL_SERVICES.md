@@ -61,7 +61,7 @@ Implementation rule: for the selected providers above, future feature tasks shou
 Current repo evidence:
 
 - `docs/development/IMPLEMENTATION_ROADMAP.md` marks local Keycloak and Keycloak JWT role converter as foundation items.
-- `docs/implementation/11-AUTH-KEYCLOAK-USER-MANAGEMENT.md` documents the one-user-many-roles model.
+- `docs/development/implementation/11-AUTH-KEYCLOAK-USER-MANAGEMENT.md` documents the one-user-many-roles model.
 - Passenger mobile Task 05 added Keycloak PKCE/token/refresh helper foundation.
 
 Why needed:

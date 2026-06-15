@@ -22,12 +22,12 @@ All future high-level feature plans must follow `docs/development/IMPLEMENTATION
 Required pattern:
 
 ```text
-docs/development/implementation-tasks/<feature-plan-name>/
+docs/development/implementation/tasks/<feature-plan-name>/
 ```
 
-Each feature folder must include a high-level `README.md` and one numbered task file per production-ready implementation slice. Every task file must include architecture/design notes, API/database/configuration impacts, development steps, QA test cases, verification commands, done criteria, and expected file changes.
+Each feature folder must include a high-level `README.md` and one numbered task file per production-ready implementation slice. Every task file must include architecture/design notes, API/database/configuration impacts, development steps, a link to the matching `qa/test-cases/` file, verification commands, done criteria, and expected file changes.
 
-A task is complete only when that feature slice is ready to ship to production. Do not split a user-visible production feature so that one task implements only the happy path and another later task adds required API wiring, error handling, QA, authorization, database behavior, or release readiness.
+A task is complete only when that feature slice is ready to ship to production. Do not split a user-visible production feature so that one task implements only the happy path and another later task adds required API wiring, error handling, linked QA coverage, authorization, database behavior, or release readiness.
 
 ---
 

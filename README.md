@@ -5,14 +5,18 @@ RouteShareApp is a route-based ride-sharing platform with passenger, driver, and
 ## Repository layout
 
 - `apps/api` — Spring Boot 3 / Java 21 backend modular monolith.
-- `apps/passenger-mobile` — future Expo passenger app.
-- `apps/driver-mobile` — future Expo driver app.
-- `apps/admin-web` — future Next.js admin/ops web app.
-- `packages/api-contracts` — generated/shared API contracts later.
-- `packages/shared-types` — shared TypeScript types later.
+- `apps/passenger-mobile` — Expo React Native passenger app.
+- `apps/driver-mobile` — driver app workspace placeholder.
+- `apps/admin-web` — admin/ops web workspace placeholder.
+- `packages/api-contracts` — shared TypeScript API contract/client package.
+- `packages/shared-types` — shared TypeScript types package placeholder.
 - `infra/docker-compose` — local infrastructure: PostgreSQL/PostGIS, Redis, Redpanda, Keycloak, MinIO.
-- `scripts` — developer helper scripts.
-- `docs` — architecture, implementation, database, API, and development tracking documents.
+- `infra/keycloak` — local Keycloak realm/import configuration.
+- `scripts` — developer and QA helper scripts.
+- `qa` — committed QA automation flows and wrappers; generated reports are ignored under `qa/reports/`.
+- `docs` — architecture, implementation, API, development tracking, QA summaries, and source reference material.
+
+See `docs/development/implementation/00-PROJECT-ARCHITECTURE-AND-FILE-STRUCTURE.md` for the canonical file/folder rules and `docs/development/REPOSITORY_ORGANIZATION_PLAN.md` for commit hygiene rules.
 
 ## Backend quick start
 
@@ -28,3 +32,22 @@ Backend health:
 ```bash
 curl http://localhost:8080/actuator/health
 ```
+
+## Passenger mobile quick checks
+
+```bash
+pnpm --filter @routeshare/passenger-mobile lint
+pnpm --filter @routeshare/passenger-mobile typecheck
+pnpm --filter @routeshare/passenger-mobile test
+```
+
+## Commit hygiene
+
+Before committing, run:
+
+```bash
+git status --short --ignored
+git add -n .
+```
+
+Only source, configuration examples, repeatable scripts/flows, and documentation should be staged. Keep `.env`, `node_modules`, build outputs, `qa/reports/`, `.hermes/runtime/`, `.docker/`, `.DS_Store`, and generated `artifacts/` out of git.

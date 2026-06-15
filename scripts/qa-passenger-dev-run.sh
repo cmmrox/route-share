@@ -17,4 +17,4 @@ adb -s "$DEVICE" reverse tcp:8082 tcp:8082 || true
   cd "$APP_DIR"
   EXPO_PUBLIC_APP_ENV=simulator EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8080 EXPO_PUBLIC_AUTH_PHONE_OTP_SUPPORTED=true EXPO_NO_METRO_WORKSPACE_ROOT=1 pnpm exec expo run:android --port 8082 --variant debug
 )
-exec "$PWD/scripts/qa-passenger-android.sh" "${1:-qa/maestro/passenger-auth-profile-smoke.yaml}"
+exec "$PWD/scripts/qa-passenger-android.sh" "${1:-qa/maestro/passenger-mobile/smoke/auth-profile-smoke.yaml}"

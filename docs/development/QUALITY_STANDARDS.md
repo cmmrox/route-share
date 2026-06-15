@@ -10,10 +10,10 @@ This file defines the coding and architecture standards for RouteShareApp. All i
 Before implementing any new high-level feature, create or update the feature implementation-task folder defined by `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md`:
 
 ```text
-docs/development/implementation-tasks/<feature-plan-name>/
+docs/development/implementation/tasks/<feature-plan-name>/
 ```
 
-Each task file must describe a production-ready release slice. The task is not complete until implementation, tests, QA cases, verification commands, architecture/API/database/configuration impacts, and done criteria are satisfied.
+Each task file must describe a production-ready release slice. The task is not complete until implementation, tests, linked QA cases, verification commands, architecture/API/database/configuration impacts, and done criteria are satisfied.
 
 Do not treat planning tasks as partial placeholders. If a task owns a user-visible feature area, that task must include required error states, authorization, validation, persistence/API behavior, observability, privacy/security checks, and release QA for that area.
 

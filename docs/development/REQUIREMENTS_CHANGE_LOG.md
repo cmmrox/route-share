@@ -66,4 +66,4 @@ Affected Files:
 - `docs/development/REQUIREMENTS_CHANGE_LOG.md`
 - `docs/development/BLOCKERS.md`
 - `docs/development/QUALITY_STANDARDS.md`
-- `docs/development/SESSION_SUMMARIES/`
+- ``

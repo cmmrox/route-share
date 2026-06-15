@@ -11,7 +11,7 @@ Use this standard before implementing any new backend, mobile, web, infrastructu
 Every high-level feature must have a dedicated implementation-task folder:
 
 ```text
-docs/development/implementation-tasks/<feature-plan-name>/
+docs/development/implementation/tasks/<feature-plan-name>/
 ```
 
 The feature folder is the source of truth for implementation execution. It must contain a high-level feature index and one task file per production-ready implementation slice.
@@ -19,32 +19,50 @@ The feature folder is the source of truth for implementation execution. It must 
 ## Required folder structure
 
 ```text
-docs/development/implementation-tasks/<feature-plan-name>/
+docs/development/implementation/
   README.md
-  01-task-name.md
-  02-task-name.md
-  03-task-name.md
+  00-PROJECT-ARCHITECTURE-AND-FILE-STRUCTURE.md
+  01-FOUNDATION-SETUP.md
   ...
-  release-readiness-checklist.md   # required for public/user-facing or production-impacting features
+  tasks/
+    <feature-plan-name>/
+      README.md
+      01-task-name.md
+      02-task-name.md
+      03-task-name.md
+      ...
+      release-readiness-checklist.md
+
+qa/test-cases/
+  <feature-plan-name>/
+    README.md
+    01-task-name-qa.md
+    02-task-name-qa.md
+    03-task-name-qa.md
 ```
 
 Naming rules:
 
 - Use lowercase kebab-case for `<feature-plan-name>`.
-- Prefix task files with zero-padded numbers: `01-`, `02-`, `03-`.
-- Use descriptive filenames that identify the full feature slice.
+- Prefix implementation task files with zero-padded numbers: `01-`, `02-`, `03-`.
+- Keep QA test case files under `qa/test-cases/<feature-plan-name>/` with the same task prefix and a `-qa.md` suffix.
+- Development task files link to QA files; detailed QA cases do not live in `docs/development/`.
 - Keep task ordering deterministic and implementation-friendly.
 
 Example:
 
 ```text
-docs/development/implementation-tasks/07-passenger-mobile-app/
+docs/development/implementation/tasks/07-passenger-mobile-app/
   README.md
   01-passenger-api-contract-reconciliation-and-typed-client.md
   02-expo-app-scaffold-dev-tooling-release-pipeline.md
-  03-app-shell-navigation-state-and-offline-foundation.md
   ...
   release-readiness-checklist.md
+
+qa/test-cases/07-passenger-mobile-app/
+  README.md
+  01-passenger-api-contract-reconciliation-and-typed-client-qa.md
+  02-expo-app-scaffold-dev-tooling-release-pipeline-qa.md
 ```
 
 ## README.md requirements
@@ -81,9 +99,7 @@ Required sections:
 ## UI / UX requirements
 ## Implementation steps
 ## Files expected to change
-## Automated test requirements
-## QA test cases
-## Manual QA requirements
+## QA reference
 ## Verification commands
 ## Security, privacy, and observability checks
 ## Done criteria
@@ -149,21 +165,28 @@ Any task with persistence impact must include:
 - Repository/service changes required by the migration.
 - Integration tests or migration smoke tests.
 
-## QA test case format
+## QA split rule
 
-Every task file must include explicit QA test cases using this format:
+Detailed QA test cases, manual QA steps, device/platform matrices, and evidence requirements belong under `qa/test-cases/<feature-plan-name>/`, not under `docs/development/`.
+
+Each development task should contain only a compact `## QA reference` section that links to the matching QA file.
+
+QA files should use this structure:
 
 ```markdown
-### QA-01: Title
+# QA — Task NN: Task Title
 
-- Preconditions:
-- Steps:
-- Expected result:
-- Automation target:
-- Manual evidence required:
+## Related implementation task
+## Scope
+## Preconditions
+## Automated test coverage
+## Test cases
+## Manual checks
+## Evidence to collect
+## Pass/fail criteria
 ```
 
-QA must cover success and failure paths. For public-release features, include platform/device matrix coverage.
+Daily execution logs, screenshots, XML reports, and run artifacts must not be committed. Keep them under ignored `qa/reports/` or local-only ignored `qa/runs/`.
 
 ## Verification command requirements
 
@@ -218,7 +241,8 @@ git commit -m "docs: add implementation tasks for <feature>"
 
 ## Review checklist before starting implementation
 
-- [ ] Feature folder exists under `docs/development/implementation-tasks/<feature-plan-name>/`.
+- [ ] Feature folder exists under `docs/development/implementation/tasks/<feature-plan-name>/`.
+- [ ] Matching QA folder exists under `qa/test-cases/<feature-plan-name>/`.
 - [ ] `README.md` describes the feature plan and task sequence.
 - [ ] Every task file is independently production-release-ready.
 - [ ] API, database, configuration, and architecture impacts are documented.
