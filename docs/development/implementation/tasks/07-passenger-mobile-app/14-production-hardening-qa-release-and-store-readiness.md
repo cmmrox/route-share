@@ -66,4 +66,4 @@ git commit -m "feat(passenger-mobile): complete production hardening, qa release
 
 ## QA reference
 
-QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/14-production-hardening-qa-release-and-store-readiness-qa.md`.
+QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/14-production-hardening-qa-release-and-store-readiness-qa.md`. Required Maestro automation: create/update `qa/maestro/passenger-mobile/release/task14-production-hardening-store-readiness-release.yaml` and rerun the full committed smoke/regression suite; run on emulator/device and fix-rerun until pass before closing the task.

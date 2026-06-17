@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import type { PropsWithChildren, ReactNode } from 'react';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { AccessibilityRole, StyleProp, TextStyle, TextInput as TextInputInstance, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -91,7 +92,7 @@ export function ListRow({ title, subtitle, leading, trailing, onPress, accessibi
 }
 
 export function StatCard({ label, value, tone = 'teal' }: { readonly label: string; readonly value: string; readonly tone?: 'teal' | 'accent' | 'success' }) { const color = tone === 'accent' ? t.colors.accent : tone === 'success' ? t.semantic.success : t.colors.teal; return <Card style={styles.stat}><AppText variant="display" color={color}>{value}</AppText><AppText variant="label" color={t.colors.ink3}>{label}</AppText></Card>; }
-export function ProgressBar({ value, accessibilityLabel = 'Progress' }: { readonly value: number; readonly accessibilityLabel?: string }) { const pct = Math.max(0, Math.min(100, value)); return <View accessibilityRole="progressbar" accessibilityLabel={accessibilityLabel} accessibilityValue={{ min: 0, max: 100, now: Math.round(value) }} style={styles.progress}><View style={[styles.progressFill, { width: `${pct}%` as `${number}%` }]} /></View>; }
+export function ProgressBar({ value, accessibilityLabel = 'Progress', style }: { readonly value: number; readonly accessibilityLabel?: string; readonly style?: StyleProp<ViewStyle> }) { const pct = Math.max(0, Math.min(100, value)); return <View accessibilityRole="progressbar" accessibilityLabel={accessibilityLabel} accessibilityValue={{ min: 0, max: 100, now: Math.round(value) }} style={[styles.progress, style]}><View style={[styles.progressFill, { width: `${pct}%` as `${number}%` }]} /></View>; }
 export function ToastView({ message, tone = 'success' }: { readonly message: string; readonly tone?: 'success' | 'danger' | 'warn' }) { const color = tone === 'danger' ? t.semantic.danger : tone === 'warn' ? t.semantic.warn : t.semantic.success; return <View accessibilityRole="alert" style={[styles.toast, { borderColor: color }]}><AppText variant="label">{message}</AppText></View>; }
 export function ConfirmDialog({ visible, title, message, onCancel, onConfirm }: { readonly visible: boolean; readonly title: string; readonly message: string; readonly onCancel: () => void; readonly onConfirm: () => void }) { return <Modal transparent visible={visible}><View style={styles.dialogBackdrop}><Card style={styles.dialog}><AppText variant="title">{title}</AppText><AppText>{message}</AppText><View style={styles.actions}><Button variant="secondary" accessibilityLabel="Cancel" accessibilityHint="Dismiss confirmation" onPress={onCancel}>Cancel</Button><Button accessibilityLabel="Confirm" accessibilityHint="Confirm this action" onPress={onConfirm}>Confirm</Button></View></Card></View></Modal>; }
 export function LoadingState({ label = 'Loading' }: { readonly label?: string }) { return <View accessibilityRole="progressbar" accessibilityLabel={label} style={styles.state}><ActivityIndicator color={t.colors.accent} /><AppText>{label}</AppText></View>; }
@@ -106,7 +107,24 @@ export function FareRow({ label, amount, emphasized = false }: { readonly label:
 export function PaymentRow({ brand, last4, selected, onPress }: { readonly brand: string; readonly last4: string; readonly selected?: boolean; readonly onPress?: () => void }) { return <ListRow title={brand} subtitle={`•••• ${last4}`} onPress={onPress} accessibilityLabel={`${brand} ending ${last4}`} accessibilityHint="Select payment method" trailing={<Chip selected={!!selected}>{selected ? 'Selected' : 'Use'}</Chip>} />; }
 export function SeatPlan({ seats, onToggle }: { readonly seats: readonly { readonly id: string; readonly label: string; readonly state: 'driver' | 'taken' | 'free' | 'selected' | 'disabled' }[]; readonly onToggle?: (id: string) => void }) { return <View accessibilityLabel="Seat plan" style={styles.seatGrid}>{seats.map(seat => { const disabled = seat.state === 'driver' || seat.state === 'taken' || seat.state === 'disabled'; return <Pressable key={seat.id} accessibilityRole="button" accessibilityLabel={`${seat.label} ${seat.state}`} accessibilityHint={disabled ? 'Seat is not available' : 'Toggle seat selection'} accessibilityState={{ disabled, selected: seat.state === 'selected' }} disabled={disabled} onPress={() => onToggle?.(seat.id)} style={[styles.touchTarget, styles.seat, seatStyle(seat.state)]}><AppText variant="label">{seat.label}</AppText></Pressable>; })}</View>; }
 export function SosButton({ onPress }: { readonly onPress?: () => void }) { return <Pressable accessibilityRole="button" accessibilityLabel="SOS emergency help" accessibilityHint="Call emergency support and share your trip" accessibilityState={{ disabled: !onPress }} disabled={!onPress} onPress={onPress} style={[styles.touchTarget, styles.sos]}><AppText variant="label" color="#ffffff">SOS</AppText></Pressable>; }
-export function MapBackdrop({ showRoute = true, children }: PropsWithChildren<{ readonly showRoute?: boolean }>) { return <View accessibilityLabel="Route map preview" style={styles.map}><View style={styles.mapGrid} />{showRoute ? <View style={styles.mapRoute} /> : null}<View style={styles.mapPin} />{children}</View>; }
+export function MapBackdrop({ showRoute = true, children }: PropsWithChildren<{ readonly showRoute?: boolean }>) {
+  const center = { latitude: 6.9271, longitude: 79.8612 };
+  const route = [{ latitude: 6.909, longitude: 79.909 }, center];
+  return (
+    <View accessibilityLabel="Google route map preview" style={styles.map}>
+      <MapView
+        accessibilityLabel="Google map"
+        initialRegion={{ ...center, latitudeDelta: 0.08, longitudeDelta: 0.08 }}
+        provider="google"
+        style={StyleSheet.absoluteFill}
+      >
+        {showRoute ? <Polyline coordinates={route} strokeColor={t.colors.accent} strokeWidth={5} /> : null}
+        <Marker coordinate={center} title="RouteShare map center" />
+      </MapView>
+      {children}
+    </View>
+  );
+}
 export function MapOverlayCard({ children, style }: PropsWithChildren<{ readonly style?: StyleProp<ViewStyle> }>) { return <Card style={[styles.overlay, style]}>{children}</Card>; }
 
 function buttonStyle(variant: 'primary' | 'secondary' | 'ghost' | 'danger', disabled: boolean, selected: boolean): ViewStyle { if (disabled) return styles.disabled; if (selected) return styles.selected; if (variant === 'secondary') return styles.secondaryButton; if (variant === 'ghost') return styles.ghostButton; if (variant === 'danger') return styles.dangerButton; return styles.primaryButton; }

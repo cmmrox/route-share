@@ -34,7 +34,10 @@ qa/
       README.md
       NN-task-name-qa.md
   maestro/
-    *.yaml
+    <app>/
+      smoke/*.yaml
+      regression/*.yaml
+      release/*.yaml
   reports/    # ignored generated evidence
   runs/       # ignored local daily run notes
 ```
@@ -46,11 +49,13 @@ qa/
 3. Per-feature implementation tasks live in `docs/development/implementation/tasks/<feature-plan-name>/`.
 4. QA plans and task-level test cases live in `qa/test-cases/<feature-plan-name>/`.
 5. Development task files link to QA files; detailed QA cases do not live inside `docs/development/`.
-6. Repeatable QA automation flows are committed under `qa/maestro/`.
-7. Daily QA run logs, screenshots, generated reports, XML, PDFs, and temporary summaries are not committed. Keep them under ignored `qa/reports/`, `qa/runs/`, or `artifacts/`.
-8. Important completion status from QA is summarized into `docs/development/DEVELOPMENT_STATUS.md`, `docs/development/TASK_LOG.md`, or `docs/development/BLOCKERS.md` so other developers see the current application state without noisy run logs.
-9. Session-summary folders are not used. Durable information belongs in task logs, status, roadmap, decisions, blockers, or requirements docs.
-10. Never commit secrets or local state: `.env`, `.env.*` except `.env.example`, `.DS_Store`, `.hermes/runtime`, `.docker`, `node_modules`, build outputs, Expo `.expo`, native generated `android/ios`, and generated QA/artifact output.
+6. Mobile development task files and matching QA files must also name the required Maestro YAML path under `qa/maestro/<app>/<suite>/`.
+7. Repeatable QA automation flows are committed under `qa/maestro/`.
+8. For mobile tasks, task-mapped Maestro automation must run on emulator/device and pass after any needed fix-rerun loop before the task is marked complete, unless an explicit blocker is recorded.
+9. Daily QA run logs, screenshots, generated reports, XML, PDFs, and temporary summaries are not committed. Keep them under ignored `qa/reports/`, `qa/runs/`, or `artifacts/`.
+10. Important completion status from QA is summarized into `docs/development/DEVELOPMENT_STATUS.md`, `docs/development/TASK_LOG.md`, or `docs/development/BLOCKERS.md` so other developers see the current application state without noisy run logs.
+11. Session-summary folders are not used. Durable information belongs in task logs, status, roadmap, decisions, blockers, or requirements docs.
+12. Never commit secrets or local state: `.env`, `.env.*` except `.env.example`, `.DS_Store`, `.hermes/runtime`, `.docker`, `node_modules`, build outputs, Expo `.expo`, native generated `android/ios`, and generated QA/artifact output.
 
 ## Commit hygiene checklist
 

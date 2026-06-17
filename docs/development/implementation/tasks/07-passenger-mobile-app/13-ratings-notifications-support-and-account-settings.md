@@ -65,4 +65,4 @@ git commit -m "feat(passenger-mobile): complete ratings, notifications, support,
 
 ## QA reference
 
-QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/13-ratings-notifications-support-and-account-settings-qa.md`.
+QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/13-ratings-notifications-support-and-account-settings-qa.md`. Required Maestro automation: create/update `qa/maestro/passenger-mobile/regression/task13-ratings-notifications-support-account-settings.yaml`; run on emulator/device and fix-rerun until pass before closing the task.

@@ -1,6 +1,6 @@
 # RouteShareApp Blockers
 
-Last Updated: 2026-06-15 09:25 +0530
+Last Updated: 2026-06-16 (Android Task 07 Search-screen device QA green)
 
 ## Purpose
 
@@ -16,6 +16,43 @@ Blocker Status Values:
 ---
 
 ## Active Blockers
+
+### Blocker 011 — Google Maps Platform keys required for Task 07 production map/search
+
+Status: `IN_PROGRESS`
+Severity: `HIGH`
+
+Description:
+
+Task 07 includes Home Map A, current location, Search Places, suggestions, and coordinate-based route discovery. This is a production RouteShare application stage, so fake maps, placeholder geocoding, or manual-only search cannot be treated as a complete implementation.
+
+Required configuration:
+
+```env
+GOOGLE_MAPS_ENABLED=true
+GOOGLE_MAPS_SERVER_API_KEY=...
+EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY=...
+EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY=...
+```
+
+Impact:
+
+- Task 07 cannot be marked production-release-complete until Google Maps/Places credentials are supplied, implemented, and verified on real Android/iOS dev-client builds.
+- Task 08 Results Map and Task 11 live trip tracking will depend on the same map foundation.
+
+Recommended Action:
+
+- Obtain/configure Google Maps Platform server, Android, and iOS keys with the required APIs enabled and appropriate restrictions.
+- Rebuild/reinstall the Expo dev client after setting native Android/iOS map keys.
+- Capture Android and iOS runtime evidence under ignored `qa/reports/` before closing Task 07.
+
+Progress 2026-06-16 09:50 +0530:
+
+- Google Maps keys were supplied and stored in local `.env`; values are intentionally not committed or printed.
+- Backend passenger place-search proxy endpoints were implemented for Google Places autocomplete/details using the server key.
+- Passenger mobile API and Search screen now call backend Places endpoints and require selected Google-backed places to resolve coordinates before ride search.
+- Direct Google Places API smoke returned HTTP 200 with suggestions.
+- Remaining to close: rebuild/reinstall Android/iOS dev clients with native map keys and capture device runtime evidence.
 
 ### Blocker 009 — Passenger mobile Expo native/prebuild config needs a decision
 
@@ -351,3 +388,19 @@ Required before enabling production phone OTP:
 No local implementation blocker remains for Task 06. Lint, typecheck, unit tests, iOS/Android scaffold e2e smoke gates, and iOS/Android preview config gates passed.
 
 Remaining release-evidence follow-ups are covered by existing blockers: full real-device/simulator Detox automation and remote EAS submissions. Production verification document review and avatar binary storage still require provider/backend storage/document endpoints before public-release enablement; the Task 06 UI labels those paths as readiness/local shells rather than fake production success.
+
+
+Android native rebuild progress 2026-06-16 10:05 +0530:
+
+- Android native Maps SDK key wiring was added to the checked-in native project.
+- Android debug build completed successfully.
+- Rebuilt APK installed successfully on emulator.
+- Emulator UI dump confirmed a native Google Map view renders in the app shell.
+- Remaining blocker scope: authenticated Search screen device QA for Google Places autocomplete/details and coordinate-backed ride search evidence.
+
+Android Search-screen device QA progress 2026-06-16 (later):
+
+- Backend startup bug fixed: `GooglePlaceSearchService` was missing `@Autowired` on its production constructor, so the API failed to start; the Places proxy now boots.
+- Full Android regression (`qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml`) now PASSES end-to-end on `emulator-5554` against the real Google Places integration. The SearchResults handoff carried real resolved coordinates (pickup `6.9336686, 79.8500469`; dropoff `6.8649081, 79.8996789`). Evidence under ignored `qa/reports/20260616-224636/`.
+- Maestro flows corrected to drive the real Google-Places suggestion-selection UX (tap "Search pickup/destination places" → tap `📍` suggestion → "Search shared rides"); `hideKeyboard` removed because Android Maestro sends BACK.
+- Remaining to close Blocker 011: iOS simulator/device runtime evidence for the same map/place/search path.

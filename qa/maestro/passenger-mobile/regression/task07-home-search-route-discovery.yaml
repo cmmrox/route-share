@@ -1,0 +1,84 @@
+appId: app.routeshare.passenger
+name: Passenger Task 07 home search route discovery regression
+---
+# Clean-state Android regression for Task 07. Requires local backend OTP demo mode
+# (NOTIFY_LK_ALLOW_DEMO_SENDER_FOR_OTP=true), Metro on 8082, API on 8080,
+# and adb reverse or emulator API base URL configured by the QA wrapper.
+- clearState
+- launchApp
+# First launch after clearState forces the Metro dev client to (re)download/build the
+# JS bundle, which can exceed 30s cold. Allow generous time for the first screen.
+- extendedWaitUntil:
+    visible: Skip
+    timeout: 180000
+- tapOn: Skip
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: Welcome back
+    timeout: 30000
+- tapOn: Sri Lankan mobile number
+- inputText: 770000042
+- pressKey: Enter
+- tapOn: Send Code
+- extendedWaitUntil:
+    visible: Enter the code
+    timeout: 30000
+- tapOn: One-time passcode
+- inputText: "000000"
+- pressKey: Enter
+- tapOn: Verify OTP
+- extendedWaitUntil:
+    visible: Tell us about you
+    timeout: 30000
+- tapOn: First name
+- eraseText
+- inputText: QA
+- pressKey: Enter
+- tapOn: Last name
+- eraseText
+- inputText: Passenger
+- pressKey: Enter
+- tapOn: Email
+- eraseText
+- inputText: qa.passenger@example.test
+- pressKey: Enter
+- scrollUntilVisible:
+    element: Continue
+    direction: DOWN
+    timeout: 10000
+- tapOn: Continue
+- extendedWaitUntil:
+    visible: "Where to.*"
+    timeout: 30000
+- tapOn: Enter destination
+- extendedWaitUntil:
+    visible: Pickup location
+    timeout: 15000
+- assertVisible: Pickup location
+- assertVisible: Destination
+# Task 07 resolves Google-backed places with coordinates before search. Type into a
+# field to trigger type-to-search Places autocomplete, then tap a 📍 suggestion so
+# the pickup/dropoff gain a placeId that submitSearch resolves to coordinates.
+# Note: do not use hideKeyboard here. On Android Maestro sends BACK for hideKeyboard,
+# which pops the Search screen back to Home. pressKey: Enter dismisses the keyboard.
+- tapOn: Pickup location
+- inputText: Colombo Fort
+- extendedWaitUntil:
+    visible: "Select place.*"
+    timeout: 20000
+# Dismiss the keyboard first: while the soft keyboard is up, the first tap on a
+# suggestion only dismisses the keyboard and never reaches the row's onPress.
+- pressKey: Enter
+- tapOn: "Select place.*"
+- tapOn: Destination
+- inputText: Nugegoda
+- extendedWaitUntil:
+    visible: "Select place.*"
+    timeout: 20000
+- pressKey: Enter
+- tapOn: "Select place.*"
+- tapOn: Search for shared rides
+- extendedWaitUntil:
+    visible: Available rides
+    timeout: 30000
+- takeScreenshot: qa-passenger-task07-regression

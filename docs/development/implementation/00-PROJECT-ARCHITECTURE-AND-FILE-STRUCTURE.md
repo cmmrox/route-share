@@ -60,17 +60,23 @@ RouteShareApp/
 ├── scripts/                             # local dev and QA helpers
 ├── qa/
 │   ├── README.md
-│   ├── maestro/                         # committed repeatable Maestro flows
+│   ├── test-cases/                      # committed manual/functional QA specifications
+│   ├── maestro/                         # committed repeatable Maestro flows by app/suite
+│   │   └── passenger-mobile/
+│   │       ├── smoke/
+│   │       ├── regression/
+│   │       └── release/
 │   └── reports/                         # ignored generated QA evidence
 ├── docs/
 │   ├── architecture/
 │   ├── api/
 │   ├── database/
 │   ├── development/
-│   │   ├── implementation-tasks/
+│   │   ├── implementation/              # phase plans and task plans
+│   │   │   └── tasks/<feature-plan-name>/
+│   │   ├── DEVELOPMENT_STATUS.md
+│   │   ├── IMPLEMENTATION_ROADMAP.md
 │   │   └── maintenance/status docs only; QA files live under qa/
-│   │   └── maintenance/                 # repo/process maintenance docs
-│   ├── implementation/
 │   └── source-assets/
 └── artifacts/                           # ignored generated/disposable reports/logs/exports
 ```
@@ -83,8 +89,8 @@ RouteShareApp/
 - `packages/` contains reusable workspace packages shared across applications.
 - `infra/` contains reproducible local infrastructure definitions and imports. Runtime volumes/data must not be committed.
 - `scripts/` contains cross-project helper scripts that are safe to run repeatedly.
-- `qa/maestro` contains repeatable QA flows. `qa/reports` is generated evidence and is ignored.
-- `docs/development/implementation-tasks` contains future feature execution plans.
+- `qa/maestro/<app>/<suite>` contains repeatable QA flows. `qa/reports` is generated evidence and is ignored.
+- `docs/development/implementation/tasks/<feature-plan-name>` contains task-level future feature execution plans.
 - QA test cases live under `qa/test-cases/`; generated/daily QA runs are local-only and ignored.
 - `docs/development/maintenance` contains repository/process maintenance decisions.
 - `artifacts/` is ignored and should only hold disposable generated reports, PDFs, logs, screenshots, and tool output.
@@ -158,7 +164,7 @@ Before mobile or web UI consumes backend behavior:
 Committed:
 
 - Repeatable QA scripts: `scripts/qa-*.sh`.
-- Repeatable Maestro flows: `qa/maestro/*.yaml`.
+- Repeatable Maestro flows: `qa/maestro/<app>/<suite>/*.yaml`.
 - QA test-case plans: `qa/test-cases/**/*.md`.
 
 Ignored/generated:

@@ -14,12 +14,15 @@ import com.routeshare.passenger.service.PassengerProfileService;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class PassengerProfileServiceImpl implements PassengerProfileService {
+  private static final Logger log = LoggerFactory.getLogger(PassengerProfileServiceImpl.class);
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
   private final CurrentUserProvider current;
@@ -34,8 +37,15 @@ public class PassengerProfileServiceImpl implements PassengerProfileService {
     var app = identityFacade.upsertFromToken(current.requireCurrentUser());
     var preferences = req.preferences() == null ? Map.<String, Object>of() : req.preferences();
     profiles.upsert(app.appUserId(), req.fullName(), req.photoUrl(), json(preferences));
-    profileSyncService.syncPassengerProfile(
-        app.keycloakSubject(), req.fullName(), req.photoUrl(), preferences);
+    try {
+      profileSyncService.syncPassengerProfile(
+          app.keycloakSubject(), req.fullName(), req.photoUrl(), preferences);
+    } catch (RuntimeException error) {
+      log.warn(
+          "Passenger profile saved but Keycloak profile sync failed for subject {}",
+          app.keycloakSubject(),
+          error);
+    }
     return get().orElseThrow();
   }
 

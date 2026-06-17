@@ -1,0 +1,6 @@
+interface:
+  display_name: "RouteShare Dev Skill"
+  short_description: "Operate safely inside RouteShareApp"
+  default_prompt: "Use $routeshare-dev-skill before changing RouteShareApp code, docs, QA, or configuration."
+policy:
+  allow_implicit_invocation: true

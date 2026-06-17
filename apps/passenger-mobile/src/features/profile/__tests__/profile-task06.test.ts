@@ -42,6 +42,13 @@ describe('Task 06 profile validation and adapters', () => {
     expect(screenSource).not.toContain("file:///avatar.jpg");
   });
 
+  it('returns to Home immediately after a successful profile save', () => {
+    const screenSource = readFileSync(join(process.cwd(), 'src/screens/profile-setup.screen.tsx'), 'utf8');
+
+    expect(screenSource).toContain('setAuthMeAccepted(true)');
+    expect(screenSource).toMatch(/navigation\.reset\(\{[\s\S]*name: 'Home'/);
+  });
+
   it('validates avatar type and size before upload simulation', async () => {
     expect(avatarInitials('CMMROX User')).toBe('CU');
     expect(validateAvatarAsset({ uri: 'file:///a.gif', mimeType: 'image/gif', fileSize: 100 }).ok).toBe(false);

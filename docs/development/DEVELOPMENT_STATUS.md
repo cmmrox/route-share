@@ -1,6 +1,6 @@
 # RouteShareApp Development Status
 
-2026-06-15 09:25 +0530
+2026-06-15 22:35 +0530
 
 ## Purpose
 
@@ -10,19 +10,79 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_07_PASSENGER_MOBILE_APP_STARTED`
-- Current Milestone: `MILESTONE_PASSENGER_TYPED_API_CLIENT_READY`
-- Current Active Task: `Task 01 passenger API contract reconciliation and typed client implemented; native app scaffold/preview evidence continues in Task 02`
-- Status: `PASSENGER_API_CLIENT_CORE_VERIFIED`
-- Repository Git Status: `Working tree has Phase 07 Task 01 passenger mobile/API contract changes plus prior planning/source-asset changes`
+- Current Milestone: `MILESTONE_PASSENGER_HOME_SEARCH_ROUTE_DISCOVERY_BLOCKED_ON_MAP_KEYS_AND_DEVICE_QA`
+- Current Active Task: `Task 07 home, search, location, and route discovery is not production-complete until Google Maps keys, real map/place integration, and device QA evidence are complete`
+- Status: `PASSENGER_TASKS_01_07_UI_ALIGNED_TO_DESIGN_PDF_ANDROID_DEVICE_QA_GREEN`
+- Repository Git Status: `Working tree contains focused Phase 07 Task 07 implementation changes; generated QA reports remain ignored`
+
+## 2026-06-17 — Tasks 01–07 UI alignment to design PDF + green Android device QA
+
+Reworked the passenger screens for Tasks 01–07 to match `docs/source-assets/RouteShare · Passenger App.pdf` and re-verified end-to-end on `emulator-5554` against the real stack (Postgres/Keycloak/Redis, API on 8080, Metro on 8082, Google Maps/Places enabled, demo OTP).
+
+Screens reworked to match the design references:
+
+- Splash: solid brand-orange screen, logo mark, "Share the ride. Share the cost.", "COLOMBO · SRI LANKA".
+- Onboarding: peach illustration card per slide, Skip top-right, dot indicators, Next/Get started (removed the old tag chip + progress bar; titles/body match the PDF).
+- Login: country flag + `+94` box beside the number field, OR divider, Google/email buttons, terms.
+- OTP: "Didn't receive it? Resend in 0:24" line.
+- Profile setup: back button, avatar with overlay "+" badge, uppercase field labels, green "Verified passenger — we'll ask for a photo ID later" note.
+- Home (Map A): "Where to, Nimali?", search bar with Now pill, Home/Office quick cards, clock-icon frequent-route rows. Dashboard B stays behind the `homeVariant` flag (no visible toggle on Map A, per task spec).
+- Search: integrated pickup (teal dot) / dropoff (orange square) field card, swap button, Now/+30/+60 time pills, seat stepper, type-to-search Google Places SUGGESTIONS, SAVED + Use-current-location section.
+- Account: orange header with wallet/saved tiles, grouped lists with chevrons, design-matched subtitles.
+- Saved places: clean list with icons, "Add new place" form toggle, RECENT SEARCHES section with clear.
+
+Bugs found and fixed during device QA:
+
+- Search submit button was incorrectly gated on coordinate-validation (coordinates only resolve on submit via Places details), leaving it permanently disabled. Now enabled when both pickup and dropoff places are chosen.
+- "Now" departure used screen-mount time (in the past) and failed backend future-time validation. submitSearch now floors the departure to `now + 60s`.
+- Suggestion list re-opened after selecting a place. Added an explicit `suggestionsOpen` flag.
+
+Verification:
+
+- `pnpm --filter @routeshare/passenger-mobile typecheck` — passed.
+- `pnpm --filter @routeshare/passenger-mobile lint` — passed.
+- `pnpm --filter @routeshare/passenger-mobile test` — passed (17 files / 72 tests).
+- Android Maestro regression `qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml` — PASS end-to-end (onboarding → login → OTP → profile → Home → Search via real Google Places → Search Results), evidence under ignored `qa/reports/20260617-002329-task07-rework/`.
+- Updated both Task 07 Maestro flows to the type-to-search UX, including dismissing the soft keyboard (pressKey Enter) before tapping a suggestion (first tap otherwise only dismisses the keyboard).
+
+Design serif typeface now bundled and rendering (closes the prior cosmetic gap):
+
+- Added `expo-font` + `@expo-google-fonts/fraunces` + `@expo-google-fonts/plus-jakarta-sans`; fonts load at startup in `App.tsx` (`useFonts`) with the Splash held until ready.
+- Tokens now map `display` → `Fraunces_700Bold` (serif headings, matches the PDF) and the rest → Plus Jakarta Sans. `fontWeight` was removed from the typography variants because Android falls back to a system sans when a named custom family is combined with an explicit weight (weight is baked into the family name).
+- Rebuilt + reinstalled the Android dev client via `expo run:android` so the `expo-font` native module is present; on-device screenshot confirms the Fraunces serif heading renders.
 
 ## Estimated Progress
 
-- Completed known implementation tasks: 81
+- Completed known implementation tasks: 82
 - Total known high-level tasks: 95+
 - Estimated overall progress: 64%
 
 > Progress is estimated from known tasks and will change as requirements are added or split into smaller implementation tasks. Phases 00 through 06 are now closed for the Phase 07 gate. Later product areas such as realtime websockets, notifications/support/SOS, real payment-provider integration, full mobile/admin UI implementation, observability, and production hardening remain in their own later phases.
 
+
+## Latest Verification Update — 2026-06-15 22:35 +0530
+
+Status: `PASSENGER_TASK_07_BLOCKED_ON_GOOGLE_MAPS_KEYS_AND_DEVICE_QA`
+
+Completed in this implementation pass:
+
+- Added passenger ride-search feature module for validation, backend DTO mapping, location fallback state, recent-search privacy-safe retention, and home dashboard model building.
+- Reworked Home into a map/dashboard route-discovery entry with Safety, account/menu, destination CTA, quick saved places, frequent/recent rows, loading/error states, and persisted recent-search reads.
+- Added Search screen for current-location permission request, denied/unavailable manual fallback copy, pickup/dropoff fields, swap, suggestions, future pickup time chips, seat picker, validation errors, backend route-search creation, retry/edit error state, and recent-search clear/save controls.
+- Wired Search into passenger navigation/deep links and typed API modules through `adaptRideSearch`.
+- Added Task 07 unit coverage and Maestro smoke flow under canonical QA folders.
+
+Verification completed locally on Mac:
+
+- `pnpm --filter @routeshare/passenger-mobile lint` — passed.
+- `pnpm --filter @routeshare/passenger-mobile typecheck` — passed.
+- `pnpm --filter @routeshare/passenger-mobile test` — passed (`17` files / `69` tests).
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:ios` — passed scaffold/config gate.
+- `pnpm --filter @routeshare/passenger-mobile test:e2e:android` — passed scaffold/config gate.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:ios` — passed config gate.
+- `pnpm --filter @routeshare/passenger-mobile build:preview:android` — passed config gate.
+
+Next recommended task: Task 08 results list/map filtering and ride detail.
 
 ## Latest Verification Update — 2026-06-15 09:25 +0530
 
@@ -53,6 +113,17 @@ Remaining known issues:
 - `expo-doctor` reports one CNG/native-folder warning: native `android/` exists while app config contains prebuild-managed fields.
 - Android dev-client shows a non-fatal Expo CLI websocket warning toast in development; the app still renders.
 - Many later passenger screens remain placeholder-level and still need exact supplied-design implementation: search, results, ride detail, seat selection, payment, booked/waiting, in-trip, receipt, rating, history, safety/SOS, share trip, notifications, and support.
+
+## 2026-06-16 — Task 07 Android Search-screen device QA green + backend fix
+
+Ran Task 07 (home, search, location, route discovery) device QA on Android `emulator-5554` against the real stack (Postgres/Keycloak/Redis, backend API on 8080 with demo-OTP + Google Maps enabled, Metro on 8082, installed debug dev client).
+
+- Fixed a backend startup bug: `GooglePlaceSearchService` had two constructors with none annotated, so Spring fell back to a missing no-arg constructor and the API would not start. Added `@Autowired` to the production constructor (same class as resolved Blocker 004). Backend `spotless:check` and `compile` pass; API boots and serves Places autocomplete/details.
+- Corrected the stale Maestro flows to drive the implemented Google-Places UX: type query → "Search pickup/destination places" → tap a `📍` suggestion (resolves `placeId`) → "Search shared rides". Removed `hideKeyboard` (Android Maestro maps it to BACK, which popped the Search screen).
+- Regression flow `qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml` now PASSES end-to-end with real Google-resolved coordinates (pickup `6.9336686, 79.8500469`; dropoff `6.8649081, 79.8996789`). Evidence under ignored `qa/reports/20260616-224636/`.
+- Observations (not Task 07 blockers): offline banner is a NetInfo false-positive on the emulator (`clients3.google.com/generate_204` unreachable) and does not block search; the authenticated session is not restored on cold launch (Task 05 scope), so the warm-path smoke flow's precondition is not met by a bare `launchApp`.
+
+Remaining for Task 07 production closure: iOS simulator/device runtime evidence for the same map/place/search path (Blocker 011).
 
 ## Completed So Far
 
@@ -164,7 +235,7 @@ Remaining known issues:
 - [x] Phase 05 — Booking, trip lifecycle, fare, payment, settlement. Booking occurrence inventory, idempotency, status history, passenger trip states, immutable fare ledger, payment capture/void/refund, cash collection, receipt foundation, driver earnings, MVP commission, and settlement-balance read models are implemented for the Phase 06 gate.
 - [x] Phase 06 — Realtime location and WebSocket updates.
 - [x] Phase 06.5 — App Backend Readiness Closure completed.
-- [~] Phase 07 — Passenger mobile app in progress: Tasks 01–05 complete; Task 06 profile setup and verification next.
+- [~] Phase 07 — Passenger mobile app in progress: Tasks 01–07 complete; Task 08 results list/map and ride detail next.
 - [ ] Phase 08 — Driver mobile app.
 - [ ] Phase 09 — Admin web app.
 - [ ] Phase 10 — Hardening, observability, performance, deployment readiness.
@@ -423,3 +494,78 @@ Next step: Task 07 — home, search, location, and route discovery.
 - Replaced the passenger profile image placeholder flow with real Expo image picker wiring and avatar preview.
 - Installed Maestro on the Mac and added repeatable emulator QA scripts under `scripts/qa-*.sh` plus flows under `qa/maestro/`; generated reports remain ignored under `qa/reports/`.
 - Verification completed: backend focused tests pass, backend `spotless:check test` exits 0, passenger mobile lint/typecheck/tests pass, and Maestro Android smoke passes on `emulator-5554`.
+
+
+## 2026-06-16 00:30 +0530 — Phase 07 Task 07 architecture/QA correction
+
+Task 07 implementation remains in progress until strict device automation is green. The mobile ride-search contract was corrected against the live backend controller: `POST /api/v1/passenger/ride-searches` returns `ApiResponse<List<RouteSearchResponse>>`, so passenger mobile now maps create-search results to `RideSearchResult[]` and navigates to Search Results with backend result data.
+
+Repository organization updates:
+
+- Repeatable Maestro flows are organized under `qa/maestro/<app>/<suite>/`.
+- Generated QA evidence remains ignored under `qa/reports/`.
+- Repository/file-structure documentation now points to `docs/development/implementation/tasks/<feature-plan-name>/` and `qa/test-cases/<feature-plan-name>/` instead of mixing QA artifacts into development docs.
+
+Verification passed after correction:
+
+- `pnpm --filter @routeshare/passenger-mobile lint`
+- `pnpm --filter @routeshare/passenger-mobile typecheck`
+- `pnpm --filter @routeshare/passenger-mobile test` — `17` files / `70` tests.
+- Backend `./mvnw -q spotless:check -DskipTests`.
+- Backend `./mvnw -q -DskipTests compile`.
+
+Open blocker:
+
+- Android clean-state Maestro regression still fails around phone-number keyboard/button handling and evidence is captured in ignored `qa/reports/20260616-002925-task07-regression-captured/`. Do not mark Task 07 public-release-complete until this emulator/device path is stable and iOS evidence is captured.
+
+## 2026-06-16 00:45 +0530 — Task 07 production prerequisite correction
+
+Task 07 is a real production application stage, not an MVP/POC fallback stage. Because Task 07 includes Home Map A, current location, Search Places, suggestions, and coordinate-based route discovery, Google Maps Platform keys are now recorded as a blocking prerequisite before the stage can be marked production-release-complete.
+
+Required before closing Task 07:
+
+- `GOOGLE_MAPS_ENABLED=true`
+- `GOOGLE_MAPS_SERVER_API_KEY`
+- `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY`
+- `EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY`
+- Rebuilt/reinstalled Expo dev client with native map keys.
+- Android and iOS runtime evidence showing the real map/place flow.
+
+Do not proceed by treating fake maps, placeholder geocoding, or manual-only search as complete. Manual fallback remains valid only for permission-denied/offline/error handling.
+
+
+
+## 2026-06-16 09:50 +0530 — Task 07 Google Maps implementation pass
+
+Google Maps Platform keys were supplied and stored only in local `.env`. Implemented the production-real Task 07 map/place foundation:
+
+- Backend `/api/v1/passenger/places/autocomplete` and `/api/v1/passenger/places/{placeId}` proxy Google Places API using the server key.
+- Passenger mobile API exposes `places.autocomplete` and `places.details`.
+- Search screen now uses Google Places suggestions and resolves place details to coordinates before creating a ride search.
+- Home map backdrop now uses `react-native-maps` Google provider instead of a static fake map preview.
+- Direct Google Places API smoke test returned HTTP 200 and suggestions.
+
+Verification passed:
+
+- `pnpm --filter @routeshare/passenger-mobile test`
+- `pnpm --filter @routeshare/passenger-mobile lint`
+- `pnpm --filter @routeshare/passenger-mobile typecheck`
+- `apps/api ./mvnw -q spotless:check -DskipTests`
+- `apps/api ./mvnw -q -DskipTests compile`
+
+Remaining blocker before Task 07 production completion: rebuild/reinstall Android and iOS dev clients with native map keys, then capture real device map/place QA evidence.
+
+
+## 2026-06-16 10:05 +0530 — Android native Google Maps rebuild verified
+
+After wiring the native Android Maps SDK key into the checked-in Android project, the Android debug dev client was rebuilt and installed on the emulator.
+
+Native verification passed:
+
+- `android/app/src/main/AndroidManifest.xml` includes `com.google.android.geo.API_KEY` metadata pointing at `@string/google_maps_api_key`.
+- `android/app/build.gradle` injects `google_maps_api_key` from `EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY` via `resValue`.
+- `./gradlew app:assembleDebug -x lint -x test --configure-on-demand --build-cache -PreactNativeDevServerPort=8082 -PreactNativeArchitectures=arm64-v8a --console=plain` completed with `BUILD SUCCESSFUL`.
+- `adb install -r app/build/outputs/apk/debug/app-debug.apk` completed with `Success`.
+- Emulator UI dump after launch shows `Google route map preview`, `Google map`, and native `Google Map` TextureView inside the RouteShare onboarding shell.
+
+Remaining before closing Task 07: complete authenticated passenger Search screen device QA through Google Places autocomplete/details and route-search submission, then save QA evidence under ignored `qa/reports/`.

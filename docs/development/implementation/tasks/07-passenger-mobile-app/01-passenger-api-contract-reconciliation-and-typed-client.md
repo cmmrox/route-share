@@ -89,4 +89,4 @@ Reason: Task 01 is a pure contract/client slice. The Expo/native app scaffold an
 
 ## QA reference
 
-QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/01-passenger-api-contract-reconciliation-and-typed-client-qa.md`.
+QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/01-passenger-api-contract-reconciliation-and-typed-client-qa.md`. No standalone Maestro YAML is required for this pure typed-client slice because no runnable mobile app surface existed yet; Task 02 must add the first emulator/device Maestro app-launch coverage.

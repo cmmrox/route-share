@@ -466,4 +466,6 @@ Verification passed:
 
 Notes: verification document submission and avatar binary storage are honest readiness/local shells until production storage/document-review APIs are implemented. Real device/simulator Detox and remote EAS submission remain later release evidence under the existing release-evidence blocker.
 
-Next: Task 07 — home, search, location, and route discovery.
+In progress: Task 07 — home, search, location, and route discovery. Production completion is blocked until Google Maps Platform keys are supplied, real map/place integration is verified, strict Android Maestro regression is green, and iOS runtime evidence is captured.
+
+Next: obtain/configure Google Maps Platform keys for Task 07, rebuild the dev client, verify real map/place flows on device, stabilize Task 07 device QA, then Task 08 — results list/map filtering and ride detail.

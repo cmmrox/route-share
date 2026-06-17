@@ -65,4 +65,4 @@ git commit -m "feat(passenger-mobile): complete exit early, sos, safety, and eme
 
 ## QA reference
 
-QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/12-exit-early-sos-safety-and-emergency-flows-qa.md`.
+QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/12-exit-early-sos-safety-and-emergency-flows-qa.md`. Required Maestro automation: create/update `qa/maestro/passenger-mobile/regression/task12-exit-early-sos-safety-emergency.yaml`; run on emulator/device and fix-rerun until pass before closing the task.

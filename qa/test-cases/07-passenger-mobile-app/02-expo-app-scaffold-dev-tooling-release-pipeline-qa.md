@@ -22,3 +22,10 @@ This file owns the QA requirements, test cases, manual checks, and evidence expe
 - API client/mutation tests for success, validation error, 401/403, conflict, timeout, malformed JSON, and retry behavior.
 - E2E test for the primary user path in this task and at least one failure/recovery path.
 - Accessibility tests or manual screen-reader evidence for every interactive flow.
+
+## Maestro automation
+
+- Required YAML: `qa/maestro/passenger-mobile/smoke/app-launch-smoke.yaml`.
+- Required YAML: `qa/maestro/passenger-mobile/regression/task02-expo-app-scaffold-dev-tooling-release-pipeline.yaml`.
+- Run with `scripts/qa-passenger-android.sh <yaml-path>` on emulator/device.
+- Every Maestro failure blocks task closure until fixed and rerun to pass, unless a concrete external blocker is recorded.

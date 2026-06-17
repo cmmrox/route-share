@@ -125,7 +125,7 @@ public class RouteServiceImpl implements RouteService {
         routeOccurrenceId);
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
   public List<RouteSearchResponse> search(RouteSearchRequest req) {
     validateSearchRequest(req);
     identityFacade.upsertFromToken(current.requireCurrentUser());

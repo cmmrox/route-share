@@ -1194,3 +1194,140 @@ Next Step:
 - Replaced the passenger profile image placeholder flow with real Expo image picker wiring and avatar preview.
 - Installed Maestro on the Mac and added repeatable emulator QA scripts under `scripts/qa-*.sh` plus flows under `qa/maestro/`; generated reports remain ignored under `qa/reports/`.
 - Verification completed: backend focused tests pass, backend `spotless:check test` exits 0, passenger mobile lint/typecheck/tests pass, and Maestro Android smoke passes on `emulator-5554`.
+
+
+## Phase 07 Task 07 update — 2026-06-15 22:35 +0530
+
+Completed passenger Home, Search, Location, and Route Discovery implementation. Added feature-owned validation, backend ride-search DTO mapping, location permission/fallback state, recent-search repository with privacy-safe retention, and home dashboard model logic. Reworked Home into the Task 07 map/dashboard entry point and added the Search screen with pickup/dropoff, swap, place suggestions, current-location request, manual fallback copy, future pickup time selection, seat selection, backend route-search creation, error/retry messaging, and recent-search save/clear controls. Wired Search into navigation/deep links and typed the ride-search API response adapter.
+
+QA and documentation updates:
+
+- Added `apps/passenger-mobile/src/features/ride-search/__tests__/ride-search-task07.test.ts`.
+- Added `qa/maestro/passenger-mobile/smoke/home-search-route-discovery-smoke.yaml`.
+- Updated Task 07 implementation and QA docs.
+
+Verification passed:
+
+- `pnpm --filter @routeshare/passenger-mobile lint`
+- `pnpm --filter @routeshare/passenger-mobile typecheck`
+- `pnpm --filter @routeshare/passenger-mobile test` — 17 files / 69 tests at first pass; later API contract correction increased this to 70 tests.
+
+Follow-up correction on 2026-06-16:
+
+- Rechecked live backend `PassengerRideSearchController` and corrected mobile `rideSearch.search()` to map the runtime `ApiResponse<List<RouteSearchResponse>>` into `RideSearchResult[]` instead of treating create-search as a persisted `RideSearch` object.
+- Added committed Maestro regression flow `qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml` and hardened `scripts/qa-passenger-android.sh` so failed runs still collect `after.png` and `window.xml` under ignored `qa/reports/`.
+- Verification passed again: passenger mobile lint, typecheck, tests (`17` files / `70` tests), backend `spotless:check`, and backend compile.
+
+Known blocker:
+
+- Android clean-state Maestro regression is not green yet. Latest evidence: `qa/reports/20260616-002925-task07-regression-captured/`. The emulator returns to Android Launcher around phone-number keyboard handling; no RouteShare fatal crash was observed in the checked logcat tail. Keep this as a QA automation/emulator stabilization blocker before marking Task 07 release-complete.
+
+Notes: Task 07 creates route-searches and navigates to the existing Search Results route with backend result data; full results list/map filtering and ride detail remain Task 08. Native device permission screenshots and backend live-route data should be captured as release evidence under ignored `qa/reports/` during release candidate QA.
+
+Next: stabilize Android Maestro Task 07 regression, then proceed to Task 08 — results list/map filtering and ride detail.
+
+## Phase 07 Task 07 production prerequisite correction — 2026-06-16 00:45 +0530
+
+Correction: RouteShare is being built as a real production application, not a MVP/POC. Task 07 includes Home Map A, location/current-location handling, Search Places, suggestions, and coordinate-based route discovery, so Google Maps Platform keys are required before the stage can be called production-release-complete.
+
+Updated docs/config templates:
+
+- `.env.example` now calls out Google Maps Platform as required for production-real Task 07/08/11 map flows.
+- `docs/development/implementation/tasks/07-passenger-mobile-app/07-home-search-location-and-route-discovery.md` now has explicit provider prerequisites and blocker rules.
+- `qa/test-cases/07-passenger-mobile-app/07-home-search-location-and-route-discovery-qa.md` now requires real map/place evidence or a blocked result.
+- `docs/development/BLOCKERS.md` now tracks Blocker 011 for missing Google Maps Platform keys.
+
+Required values:
+
+```env
+GOOGLE_MAPS_ENABLED=true
+GOOGLE_MAPS_SERVER_API_KEY=...
+EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY=...
+EXPO_PUBLIC_GOOGLE_MAPS_IOS_API_KEY=...
+```
+
+Do not mark Task 07 complete with fake maps, placeholder geocoding, or manual-only search. Ask for required provider credentials/access at the relevant stage and treat missing values as blockers.
+
+
+
+## Phase 07 Task 07 Google Maps implementation — 2026-06-16 09:50 +0530
+
+Implemented the real Google Maps/Places foundation for Task 07 after receiving the required provider keys. Secrets were stored in local `.env` only and were not committed.
+
+Changes:
+
+- Added backend Google Maps properties and passenger place-search endpoints for autocomplete/details.
+- Added Google Places API server-key integration through the backend so the server key is not exposed in the mobile bundle.
+- Added passenger mobile `places` API module/types/adapters and contract inventory entries.
+- Replaced seeded/static Search suggestions with backend Google Places search and coordinate resolution before ride-search submission.
+- Changed `MapBackdrop` to render a real `react-native-maps` Google map foundation.
+
+Verification:
+
+- Google Places direct smoke: HTTP 200 with suggestions.
+- Passenger mobile unit suite: 17 files / 72 tests passed.
+- Passenger mobile lint and typecheck passed.
+- Backend Spotless check and compile passed.
+
+Remaining: rebuild/reinstall native dev clients so Android/iOS consume the native Google Maps keys, then collect device evidence under ignored `qa/reports/`.
+
+
+## 2026-06-16 — Developer operating skill and mobile Maestro QA policy
+
+Updated the repository-specific developer operating skill and living docs so mobile implementation tasks require task-mapped Maestro automation.
+
+Files updated:
+
+- `.claude/skills/routeshare-dev-skill/**`
+- `.agents/skills/routeshare-dev-skill/**`
+- `CLAUDE.md`
+- `AGENTS.md`
+- `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md`
+- `docs/development/REPOSITORY_ORGANIZATION_PLAN.md`
+- `docs/development/DECISION_LOG.md`
+- `docs/development/implementation/tasks/07-passenger-mobile-app/*.md`
+- `qa/README.md`
+- `qa/maestro/README.md`
+- `qa/test-cases/07-passenger-mobile-app/*.md`
+
+Policy result:
+
+- Mobile development task files and matching QA files must name required Maestro YAML paths.
+- Runnable mobile tasks must create/update Maestro flows, run them on emulator/device, fix discovered issues, and rerun until pass before task closure.
+- Generated evidence remains ignored under `qa/reports/`; durable status summaries are promoted into development tracking docs.
+- The developer operating skill now has mirrored project-local copies for Claude Code and Codex using `.claude/skills` and the official Codex repo-skill location `.agents/skills`; future skill updates must keep both copies synchronized.
+- Root persistent guidance now exists for both tools: `CLAUDE.md` for Claude Code and `AGENTS.md` for Codex.
+
+---
+
+## 2026-06-17
+
+### Task: Passenger Tasks 01–07 UI alignment to design PDF + Android device QA
+
+Status: `COMPLETED` (Android device QA green; serif display font bundling is a tracked follow-up)
+
+Scope: Audited the implemented passenger screens for Tasks 01–07 against `docs/source-assets/RouteShare · Passenger App.pdf` and reworked them to match the design references; re-ran QA.
+
+Files changed:
+
+- `apps/passenger-mobile/src/screens/splash.screen.tsx`
+- `apps/passenger-mobile/src/screens/onboarding.screen.tsx`
+- `apps/passenger-mobile/src/screens/login.screen.tsx`
+- `apps/passenger-mobile/src/screens/otp.screen.tsx`
+- `apps/passenger-mobile/src/screens/profile-setup.screen.tsx`
+- `apps/passenger-mobile/src/screens/home.screen.tsx`
+- `apps/passenger-mobile/src/screens/search.screen.tsx`
+- `apps/passenger-mobile/src/screens/account.screen.tsx`
+- `apps/passenger-mobile/src/screens/saved-places.screen.tsx`
+- `apps/passenger-mobile/src/design-system/components.tsx` (ProgressBar accepts `style`)
+- `qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml`
+- `qa/maestro/passenger-mobile/smoke/home-search-route-discovery-smoke.yaml`
+
+Bugs fixed during device QA: Search submit button permanently disabled (validation needs coordinates resolved only on submit); "Now" departure used past mount-time and failed backend future-time validation; suggestion list re-opened after selection.
+
+Verification:
+
+- `pnpm --filter @routeshare/passenger-mobile typecheck` / `lint` / `test` (17 files / 72 tests) — all passed.
+- Android Maestro Task 07 regression — PASS end-to-end on `emulator-5554` against the real stack and Google Places; evidence under ignored `qa/reports/20260617-002329-task07-rework/`. Device screenshots confirm Onboarding, Login, and Search match the design references.
+
+Next step: bundle the design's serif display typeface; continue Task 08 (results list/map + ride detail).

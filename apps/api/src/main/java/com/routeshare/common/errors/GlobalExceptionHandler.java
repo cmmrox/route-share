@@ -3,6 +3,8 @@ package com.routeshare.common.errors;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.*;
@@ -14,6 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   ResponseEntity<ApiError> validation(MethodArgumentNotValidException ex, HttpServletRequest req) {
     var fields =
@@ -93,8 +97,11 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   ResponseEntity<ApiError> generic(Exception ex, HttpServletRequest req) {
+    var correlation = correlation(req);
+    log.error(
+        "Unhandled API exception correlationId={} path={}", correlation, req.getRequestURI(), ex);
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .body(ApiError.of("INTERNAL_ERROR", "Unexpected server error", correlation(req)));
+        .body(ApiError.of("INTERNAL_ERROR", "Unexpected server error", correlation));
   }
 
   private String correlation(HttpServletRequest req) {
