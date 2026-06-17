@@ -6,6 +6,40 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ---
 
+## 2026-06-18
+
+### Task: Phase 06.6 (Backend Production Hardening) — Phase A: eventing + observability backbone
+
+Status: `COMPLETED`
+
+Context: Audit found phases 00–06.5 were largely a facade (one `app_backend.workflow_item` table behind ~50 endpoints) with no real provider integrations (only Notify.lk SMS + Google Places). Started a multi-phase backend production-hardening program on branch `feat/backend-production-hardening`.
+
+Files Created:
+
+- `apps/api/.../common/event/` — `DomainEvent`, `DomainEventPublisher`, `entity/EventOutboxEntity`, `repository/EventOutboxRepository`, `impl/OutboxDomainEventPublisher`, `config/EventProperties`, `config/EventingConfig`, `sender/{EventSender,LoggingEventSender,KafkaEventSender}`, `relay/OutboxRelayScheduler`.
+- `apps/api/src/main/resources/db/migration/V016__create_event_outbox.sql` — `common.event_outbox`.
+- `apps/api/src/main/resources/logback-spring.xml` — structured JSON logs under `json`/`prod` profile.
+- `staging.env.example`, `prod.env.example`.
+- `apps/api/src/test/.../common/event/OutboxDomainEventPublisherTest.java`.
+
+Files Changed:
+
+- `apps/api/pom.xml` — add spring-kafka, micrometer-registry-prometheus, sentry-spring-boot-starter-jakarta, logstash-logback-encoder; JaCoCo excludes for event relay/sender + observability.
+- `apps/api/src/main/resources/application.yml` — health probes/readiness+liveness groups, `spring.kafka`, `routeshare.events`, `sentry` config.
+- `.env.example` — object storage, Kafka events, Sentry backend keys.
+
+Fixes:
+
+- Renamed `GooglePlaceSearchService` → `GooglePlaceSearchServiceImpl` to satisfy `PersistenceArchitectureTest` (latent failure introduced by Task 07 maps work, never caught because Task 07 was only verified with `spotless:check -DskipTests compile`).
+
+Verification:
+
+- `./mvnw spotless:apply spotless:check test` — BUILD SUCCESS, `Tests run: 109, Failures: 0, Errors: 0, Skipped: 1` (Testcontainers migration test auto-skips without Docker).
+
+Next step: Phase B — object storage adapter + real KYC/document lifecycle.
+
+---
+
 ## 2026-05-31
 
 ### Task: Create database architecture Mermaid diagram
