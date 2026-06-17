@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class GooglePlaceSearchService implements PlaceSearchService {
+public class GooglePlaceSearchServiceImpl implements PlaceSearchService {
   private static final URI AUTOCOMPLETE_URI =
       URI.create("https://places.googleapis.com/v1/places:autocomplete");
   private static final String DETAILS_URL = "https://places.googleapis.com/v1/places/";
@@ -33,11 +33,11 @@ public class GooglePlaceSearchService implements PlaceSearchService {
   private final HttpClient httpClient;
 
   @Autowired
-  public GooglePlaceSearchService(GoogleMapsProperties properties, ObjectMapper objectMapper) {
+  public GooglePlaceSearchServiceImpl(GoogleMapsProperties properties, ObjectMapper objectMapper) {
     this(properties, objectMapper, HttpClient.newHttpClient());
   }
 
-  GooglePlaceSearchService(
+  GooglePlaceSearchServiceImpl(
       GoogleMapsProperties properties, ObjectMapper objectMapper, HttpClient httpClient) {
     this.properties = properties;
     this.objectMapper = objectMapper;

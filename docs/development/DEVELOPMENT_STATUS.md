@@ -15,6 +15,12 @@ This file is the first file to read before continuing RouteShareApp development.
 - Status: `PASSENGER_TASKS_01_07_UI_ALIGNED_TO_DESIGN_PDF_ANDROID_DEVICE_QA_GREEN`
 - Repository Git Status: `Working tree contains focused Phase 07 Task 07 implementation changes; generated QA reports remain ignored`
 
+## 2026-06-18 — Phase 06.6 Backend Production Hardening started (Phase A done)
+
+A production-readiness audit found the Phase 06.5 "closure" was largely a facade: ~50 endpoints behind one generic `app_backend.workflow_item` table, untyped responses, and no real provider integrations beyond Notify.lk SMS + Google Places (payments `mock_`-only; no FCM/object-storage/Sentry/Kafka). Opened branch `feat/backend-production-hardening` and added `Phase 06.6 — Backend Production Hardening` to the roadmap (Phases A–J).
+
+Phase A complete and verified: transactional event outbox (`common.event_outbox`, V016) + relay scheduler + Kafka/logging senders; observability deps (Micrometer/Prometheus, Sentry backend, structured JSON logs via `json` profile) + readiness/liveness health groups; staging/prod env templates. Also fixed a latent `PersistenceArchitectureTest` failure (renamed `GooglePlaceSearchService` → `GooglePlaceSearchServiceImpl`) that the Task 07 maps work introduced but never ran. `./mvnw spotless:check test` → BUILD SUCCESS, 109 tests pass (1 Testcontainers skip).
+
 ## 2026-06-17 — Tasks 01–07 UI alignment to design PDF + green Android device QA
 
 Reworked the passenger screens for Tasks 01–07 to match `docs/source-assets/RouteShare · Passenger App.pdf` and re-verified end-to-end on `emulator-5554` against the real stack (Postgres/Keycloak/Redis, API on 8080, Metro on 8082, Google Maps/Places enabled, demo OTP).

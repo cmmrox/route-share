@@ -281,6 +281,31 @@ Deliverable:
 
 - Phase 07/08/09 can start without backend-blocked screens, or reduced app scopes are explicitly feature-flagged.
 
+## Phase 06.6 — Backend Production Hardening
+
+Status: `IN_PROGRESS`
+
+Context: A production-readiness audit (2026-06-18) found that the Phase 06.5 "readiness closure" was a facade — ~50 app-facing endpoints (notifications, push, support, SOS, ratings, payment methods, recurring routes, payout, and the entire admin suite) were backed by a single generic `app_backend.workflow_item` table with untyped responses, and the only real external integrations were Notify.lk SMS + Google Places (payments were `mock_`-only, no FCM/object-storage/Sentry/Kafka). This phase rebuilds those into real domain modules with real, credential-gated provider integrations. Delivered on branch `feat/backend-production-hardening` as phased verified commits.
+
+Tasks:
+
+- [x] Phase A — Eventing backbone (transactional outbox + relay + Kafka sender) + observability (Prometheus/Sentry/structured logs/health probes) + staging/prod env templates.
+- [ ] Phase B — Object storage adapter (S3/MinIO) + real KYC/document upload→review→signed-download lifecycle.
+- [ ] Phase C — Cybersource payment gateway (authorize/capture/void/refund/webhooks/tokenization) + real settlement/commission/payout-batch domain.
+- [ ] Phase D — Notifications + FCM push real domain.
+- [ ] Phase E — Support tickets, SOS events, ratings real domains.
+- [ ] Phase F — Recurring routes + driver payout profile real domains.
+- [ ] Phase G — Admin suite rebuild (dashboard/users/verification/trips/bookings/finance/settlements/policies/support/SOS/broadcasts/reports/audit) with Keycloak-synced user mgmt + role granularity.
+- [ ] Phase H — Maps completion (Directions/Distance Matrix/Geocoding) feeding real fare/ETA + match scoring.
+- [ ] Phase I — Performance (matching indexes/perf, N+1, Hikari), security (rate limiting/authz), integration/security/contract/load tests.
+- [ ] Phase J — Deployment readiness (prod containers, migration pipeline, backup/restore, runbooks, staging Keycloak).
+
+Deliverable:
+
+- Every passenger/driver/admin API backed by real domain modeling + real (gated) provider integrations, with tests, performance work, and observability — genuinely production-releasable.
+
+---
+
 ## Phase 07 — Passenger Mobile App
 
 Status: `IN_PROGRESS`
