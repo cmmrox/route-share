@@ -60,6 +60,7 @@
           <exclude>**/event/relay/**</exclude>
           <exclude>**/event/sender/**</exclude>
           <exclude>**/observability/**</exclude>
+          <exclude>**/gateway/impl/**</exclude>
         </excludes>
       </configuration>
       <executions>

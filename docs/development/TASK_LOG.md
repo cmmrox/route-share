@@ -8,6 +8,32 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-18
 
+### Task: Phase 06.6-C — Cybersource payments + real money domain
+
+Status: `COMPLETED`
+
+Context: Payments were internal-ledger only (`provider="mock_"+UUID`); no real gateway, tokenization, webhooks, or configurable commission.
+
+Files Created:
+
+- `payment/gateway`: `PaymentGatewayPort` (+ Authorize/Tokenization records), `impl/CybersourcePaymentGateway` (real REST: authorize/capture/void/refund/tokenize), `impl/CybersourceSigner` (HTTP-Signature digest+HMAC), `impl/CashFallbackPaymentGateway` (default, cash-only, fails closed on card ops), `config/{CybersourceProperties,CommissionProperties,PaymentGatewayConfig}`.
+- Payment methods: `entity/PaymentMethodEntity`, `repository/PaymentMethodRepository`, `service/PaymentMethodService(+Impl)`, `controller/PaymentMethodController` (`/api/v1/passenger/payment-methods`), `dto/{AddPaymentMethodRequest,PaymentMethodResponse}`.
+- Webhooks: `entity/PaymentWebhookEventEntity`, `repository/PaymentWebhookEventRepository`, `service/PaymentWebhookService(+Impl)`, `controller/PaymentWebhookController` (`/api/v1/payments/webhooks/cybersource`, signature-verified + idempotent).
+- `db/migration/V018__payment_methods_and_webhooks.sql`.
+- Tests: `CybersourceSignerTest`, `CommissionPropertiesTest`, `PaymentMethodServiceImplTest` (+ updated payment tests).
+
+Files Changed:
+
+- `PaymentServiceImpl` routes authorize/capture/void/refund through the gateway (skips provider for `cash_` references), writes PLATFORM_COMMISSION + DRIVER_EARNING ledger entries on settlement, uses configurable commission rate. `PaymentIntentRequest` gains optional `paymentMethodId`.
+- `SecurityConfig` permits `/api/v1/payments/webhooks/**`. `application.yml` + `.env.example` gain `routeshare.cybersource.*` and `routeshare.commission.default-rate`. `pom.xml` JaCoCo excludes `**/gateway/impl/**`.
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 130, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase D — notifications + FCM push.
+
+
 ### Task: Phase 06.6-B — Object storage + real KYC/document lifecycle
 
 Status: `COMPLETED`

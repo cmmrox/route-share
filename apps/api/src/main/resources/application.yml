@@ -80,6 +80,18 @@ routeshare:
     allow-demo-sender-for-otp: ${NOTIFY_LK_ALLOW_DEMO_SENDER_FOR_OTP:false}
     otp-message-template: ${NOTIFY_LK_OTP_MESSAGE_TEMPLATE:Your RouteShare verification code is %s. It expires in %d minutes.}
 
+  cybersource:
+    enabled: ${CYBERSOURCE_ENABLED:false}
+    environment: ${CYBERSOURCE_ENVIRONMENT:sandbox}
+    merchant-id: ${CYBERSOURCE_MERCHANT_ID:}
+    key-id: ${CYBERSOURCE_KEY_ID:}
+    shared-secret: ${CYBERSOURCE_SHARED_SECRET:}
+    capture-mode: ${CYBERSOURCE_CAPTURE_MODE:manual}
+    webhook-secret: ${CYBERSOURCE_WEBHOOK_SECRET:}
+
+  commission:
+    default-rate: ${ROUTESHARE_COMMISSION_DEFAULT_RATE:0.10}
+
   object-storage:
     enabled: ${OBJECT_STORAGE_ENABLED:false}
     endpoint: ${OBJECT_STORAGE_ENDPOINT:http://localhost:9000}

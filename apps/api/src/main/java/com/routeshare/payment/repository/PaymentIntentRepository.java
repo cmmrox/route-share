@@ -28,6 +28,18 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntentEnti
       @Param("fromStatus") String fromStatus,
       @Param("toStatus") String toStatus);
 
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE payment.payment_intent
+      SET status = :status, updated_at = now()
+      WHERE provider_reference = :providerReference
+      """,
+      nativeQuery = true)
+  int updateStatusByProviderReference(
+      @Param("providerReference") String providerReference, @Param("status") String status);
+
   default Optional<PaymentIntentView> transitionStatus(
       long paymentIntentId, String fromStatus, String toStatus) {
     int updated = updateStatus(paymentIntentId, fromStatus, toStatus);
