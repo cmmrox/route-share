@@ -12,9 +12,12 @@ import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.payment.dto.request.PaymentIntentRequest;
+import com.routeshare.payment.gateway.config.CommissionProperties;
+import com.routeshare.payment.gateway.impl.CashFallbackPaymentGateway;
 import com.routeshare.payment.repository.FareLedgerRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository.PaymentIntentView;
+import com.routeshare.payment.repository.PaymentMethodRepository;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.Set;
@@ -31,8 +34,18 @@ class PaymentServiceTest {
       org.mockito.Mockito.mock(PaymentIntentRepository.class);
   private final FareLedgerRepository fareLedger =
       org.mockito.Mockito.mock(FareLedgerRepository.class);
+  private final PaymentMethodRepository paymentMethods =
+      org.mockito.Mockito.mock(PaymentMethodRepository.class);
   private final PaymentServiceImpl service =
-      new PaymentServiceImpl(current, identityFacade, bookingFacade, paymentIntents, fareLedger);
+      new PaymentServiceImpl(
+          current,
+          identityFacade,
+          bookingFacade,
+          paymentIntents,
+          fareLedger,
+          new CashFallbackPaymentGateway(),
+          new CommissionProperties(new BigDecimal("0.10")),
+          paymentMethods);
 
   @BeforeEach
   void setUp() {
@@ -66,7 +79,7 @@ class PaymentServiceTest {
         .thenReturn(
             new PaymentIntentView("MOCK", "mock_reference", "REQUIRES_CAPTURE", amount, "LKR"));
 
-    var response = service.createIntent(new PaymentIntentRequest(99L));
+    var response = service.createIntent(new PaymentIntentRequest(99L, null));
 
     assertThat(response).containsEntry("amount", amount);
     assertThat(response).containsEntry("currency", "LKR");
@@ -92,7 +105,7 @@ class PaymentServiceTest {
         .thenReturn(
             new PaymentIntentView("MOCK", "mock_reference", "REQUIRES_CAPTURE", amount, "LKR"));
 
-    service.createIntent(new PaymentIntentRequest(99L));
+    service.createIntent(new PaymentIntentRequest(99L, null));
 
     verify(fareLedger).recordEstimateIfAbsent(99L, amount, "LKR", "BOOKING_FARE_ESTIMATE");
   }
@@ -108,7 +121,7 @@ class PaymentServiceTest {
                 new PaymentIntentView(
                     "MOCK", "mock_reference", "REQUIRES_CAPTURE", amount, "LKR")));
 
-    var response = service.createIntent(new PaymentIntentRequest(99L));
+    var response = service.createIntent(new PaymentIntentRequest(99L, null));
 
     assertThat(response).containsEntry("providerReference", "mock_reference");
     verify(fareLedger).recordEstimateIfAbsent(99L, amount, "LKR", "BOOKING_FARE_ESTIMATE");
@@ -118,7 +131,7 @@ class PaymentServiceTest {
   void deniesPaymentIntentForBookingNotOwnedByCurrentPassenger() {
     when(bookingFacade.findFareEstimateForPassengerBooking(99L, 7L)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> service.createIntent(new PaymentIntentRequest(99L)))
+    assertThatThrownBy(() -> service.createIntent(new PaymentIntentRequest(99L, null)))
         .isInstanceOf(AccessDeniedException.class)
         .hasMessageContaining("Booking does not belong");
   }

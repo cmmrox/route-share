@@ -8,9 +8,12 @@ import com.routeshare.payment.dto.request.FareAdjustmentRequest;
 import com.routeshare.payment.dto.request.PaymentIntentRequest;
 import com.routeshare.payment.dto.request.PaymentLifecycleRequest;
 import com.routeshare.payment.dto.response.ReceiptResponse;
+import com.routeshare.payment.gateway.PaymentGatewayPort;
+import com.routeshare.payment.gateway.config.CommissionProperties;
 import com.routeshare.payment.repository.FareLedgerRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository.PaymentIntentView;
+import com.routeshare.payment.repository.PaymentMethodRepository;
 import com.routeshare.payment.service.PaymentService;
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,12 +34,17 @@ public class PaymentServiceImpl implements PaymentService {
   static final String PAYMENT_REFUNDED = "PAYMENT_REFUNDED";
   static final String CASH_COLLECTED = "CASH_COLLECTED";
   static final String FARE_ADJUSTMENT_REQUESTED = "FARE_ADJUSTMENT_REQUESTED";
+  static final String PLATFORM_COMMISSION = "PLATFORM_COMMISSION";
+  static final String DRIVER_EARNING = "DRIVER_EARNING";
 
   private final CurrentUserProvider current;
   private final IdentityFacade identityFacade;
   private final BookingFacade bookingFacade;
   private final PaymentIntentRepository paymentIntents;
   private final FareLedgerRepository fareLedger;
+  private final PaymentGatewayPort gateway;
+  private final CommissionProperties commission;
+  private final PaymentMethodRepository paymentMethods;
 
   @Override
   @Transactional
@@ -53,22 +61,45 @@ public class PaymentServiceImpl implements PaymentService {
 
     fareLedger.recordEstimateIfAbsent(
         req.bookingId(), amount, DEFAULT_CURRENCY, BOOKING_FARE_ESTIMATE);
-    var intent =
-        paymentIntents
-            .findActiveByBookingId(req.bookingId())
-            .orElseGet(
-                () ->
-                    paymentIntents.create(
-                        req.bookingId(), "mock_" + UUID.randomUUID(), amount, DEFAULT_CURRENCY));
-    return toResponse(intent);
+
+    var existing = paymentIntents.findActiveByBookingId(req.bookingId());
+    if (existing.isPresent()) {
+      return toResponse(existing.get());
+    }
+
+    String providerReference;
+    if (req.paymentMethodId() != null) {
+      // Card payment: authorize against the stored, tokenized instrument.
+      var method =
+          paymentMethods
+              .findByIdAndAppUserId(req.paymentMethodId(), app.appUserId())
+              .orElseThrow(
+                  () ->
+                      new AccessDeniedException("Payment method does not belong to current user"));
+      var auth =
+          gateway.authorize(
+              new PaymentGatewayPort.AuthorizeCommand(
+                  req.bookingId(), amount, DEFAULT_CURRENCY, method.getToken()));
+      providerReference = auth.providerReference();
+    } else {
+      // Cash payment: local reference, no external authorization.
+      providerReference = "cash_" + UUID.randomUUID();
+    }
+    return toResponse(
+        paymentIntents.create(req.bookingId(), providerReference, amount, DEFAULT_CURRENCY));
   }
 
   @Override
   @Transactional
   public Map<String, Object> capture(long paymentIntentId, PaymentLifecycleRequest req) {
     var intent = transition(paymentIntentId, "REQUIRES_CAPTURE", "CAPTURED");
+    long bookingId = requireBookingId(intent);
+    if (intent.providerReference() != null && !intent.providerReference().startsWith("cash_")) {
+      gateway.capture(intent.providerReference(), intent.amount(), intent.currency());
+    }
     fareLedger.recordPaymentLifecycleIfAbsent(
-        requireBookingId(intent), PAYMENT_CAPTURED, intent.amount(), intent.currency());
+        bookingId, PAYMENT_CAPTURED, intent.amount(), intent.currency());
+    recordSettlement(bookingId, intent.amount(), intent.currency());
     return toResponse(intent);
   }
 
@@ -76,6 +107,9 @@ public class PaymentServiceImpl implements PaymentService {
   @Transactional
   public Map<String, Object> voidIntent(long paymentIntentId, PaymentLifecycleRequest req) {
     var intent = transition(paymentIntentId, "REQUIRES_CAPTURE", "VOIDED");
+    if (intent.providerReference() != null && !intent.providerReference().startsWith("cash_")) {
+      gateway.voidAuthorization(intent.providerReference());
+    }
     fareLedger.recordPaymentLifecycleIfAbsent(
         requireBookingId(intent), PAYMENT_VOIDED, intent.amount(), intent.currency());
     return toResponse(intent);
@@ -85,6 +119,9 @@ public class PaymentServiceImpl implements PaymentService {
   @Transactional
   public Map<String, Object> refund(long paymentIntentId, PaymentLifecycleRequest req) {
     var intent = transition(paymentIntentId, "CAPTURED", "REFUNDED");
+    if (intent.providerReference() != null && !intent.providerReference().startsWith("cash_")) {
+      gateway.refund(intent.providerReference(), intent.amount(), intent.currency());
+    }
     fareLedger.recordPaymentLifecycleIfAbsent(
         requireBookingId(intent), PAYMENT_REFUNDED, intent.amount().negate(), intent.currency());
     return toResponse(intent);
@@ -104,6 +141,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
     fareLedger.recordPaymentLifecycleIfAbsent(
         bookingId, CASH_COLLECTED, req.amount(), DEFAULT_CURRENCY);
+    recordSettlement(bookingId, req.amount(), DEFAULT_CURRENCY);
     return Map.of(
         "bookingId",
         bookingId,
@@ -113,6 +151,21 @@ public class PaymentServiceImpl implements PaymentService {
         req.amount(),
         "currency",
         DEFAULT_CURRENCY);
+  }
+
+  /**
+   * Writes audit ledger rows splitting a settled amount into platform commission and net earning.
+   */
+  private void recordSettlement(long bookingId, BigDecimal gross, String currency) {
+    BigDecimal commissionAmount = commission.commissionOn(gross);
+    BigDecimal net = gross.subtract(commissionAmount);
+    if (commissionAmount.signum() > 0) {
+      fareLedger.recordPaymentLifecycleIfAbsent(
+          bookingId, PLATFORM_COMMISSION, commissionAmount, currency);
+    }
+    if (net.signum() > 0) {
+      fareLedger.recordPaymentLifecycleIfAbsent(bookingId, DRIVER_EARNING, net, currency);
+    }
   }
 
   @Override
@@ -170,12 +223,12 @@ public class PaymentServiceImpl implements PaymentService {
     if (gross == null) {
       gross = BigDecimal.ZERO;
     }
-    BigDecimal commission = gross.multiply(new BigDecimal("0.10"));
-    BigDecimal net = gross.subtract(commission);
+    BigDecimal commissionAmount = commission.commissionOn(gross);
+    BigDecimal net = gross.subtract(commissionAmount);
     return Map.of(
         "currency", DEFAULT_CURRENCY,
         "grossEarnings", gross,
-        "platformCommission", commission,
+        "platformCommission", commissionAmount,
         "settlementBalance", net,
         "totalEarnings", net);
   }

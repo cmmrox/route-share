@@ -20,7 +20,7 @@ class PassengerPaymentAliasControllerTest {
   @Test
   void passengerPaymentIntentDelegatesToPaymentService() {
     var controller = new PassengerPaymentController(payments);
-    var request = new PaymentIntentRequest(30L);
+    var request = new PaymentIntentRequest(30L, null);
     when(payments.createIntent(request))
         .thenReturn(
             Map.of("status", "REQUIRES_CAPTURE", "amount", BigDecimal.TEN, "currency", "LKR"));

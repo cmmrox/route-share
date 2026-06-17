@@ -11,9 +11,12 @@ import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.payment.dto.request.CashCollectionRequest;
 import com.routeshare.payment.dto.request.PaymentLifecycleRequest;
+import com.routeshare.payment.gateway.config.CommissionProperties;
+import com.routeshare.payment.gateway.impl.CashFallbackPaymentGateway;
 import com.routeshare.payment.repository.FareLedgerRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository;
 import com.routeshare.payment.repository.PaymentIntentRepository.PaymentIntentView;
+import com.routeshare.payment.repository.PaymentMethodRepository;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.Set;
@@ -29,8 +32,18 @@ class PaymentLifecycleServiceTest {
       org.mockito.Mockito.mock(PaymentIntentRepository.class);
   private final FareLedgerRepository fareLedger =
       org.mockito.Mockito.mock(FareLedgerRepository.class);
+  private final PaymentMethodRepository paymentMethods =
+      org.mockito.Mockito.mock(PaymentMethodRepository.class);
   private final PaymentServiceImpl service =
-      new PaymentServiceImpl(current, identityFacade, bookingFacade, paymentIntents, fareLedger);
+      new PaymentServiceImpl(
+          current,
+          identityFacade,
+          bookingFacade,
+          paymentIntents,
+          fareLedger,
+          new CashFallbackPaymentGateway(),
+          new CommissionProperties(new BigDecimal("0.10")),
+          paymentMethods);
 
   @BeforeEach
   void setUp() {
@@ -56,6 +69,12 @@ class PaymentLifecycleServiceTest {
     assertThat(response).containsEntry("status", "CAPTURED");
     verify(fareLedger)
         .recordPaymentLifecycleIfAbsent(99L, "PAYMENT_CAPTURED", new BigDecimal("1200.00"), "LKR");
+    // capture also records the platform commission split (10% of 1200.00) and net driver earning
+    verify(fareLedger)
+        .recordPaymentLifecycleIfAbsent(
+            99L, "PLATFORM_COMMISSION", new BigDecimal("120.00"), "LKR");
+    verify(fareLedger)
+        .recordPaymentLifecycleIfAbsent(99L, "DRIVER_EARNING", new BigDecimal("1080.00"), "LKR");
   }
 
   @Test
