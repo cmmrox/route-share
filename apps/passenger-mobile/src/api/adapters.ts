@@ -1,4 +1,4 @@
-import type { Booking, Coordinate, PassengerProfile, PaymentIntent, RideSearchResult, SavedPlace, TrustedContact } from './types';
+import type { Booking, Coordinate, PassengerProfile, PaymentIntent, RideSearch, RideSearchResult, SavedPlace, TrustedContact, PlaceSuggestion } from './types';
 
 const asRecord = (value: unknown): Record<string, unknown> => (value && typeof value === 'object' ? (value as Record<string, unknown>) : {});
 const stringFrom = (...values: unknown[]) => String(values.find((value) => typeof value === 'string' || typeof value === 'number') ?? '');
@@ -57,11 +57,33 @@ export const adaptTrustedContact = (input: unknown): TrustedContact => {
   return contact;
 };
 
-export const adaptRideSearchResult = (input: unknown): RideSearchResult => {
+export const adaptRideSearch = (input: unknown): RideSearch => {
   const source = asRecord(input);
   return {
-    resultId: stringFrom(source.resultId, source.searchResultId, source.id),
-    rideId: stringFrom(source.rideId, source.routeId, source.tripId),
+    searchId: stringFrom(source.searchId, source.rideSearchId, source.id),
+    status: typeof source.status === 'string' ? source.status : undefined,
+    requestedDepartureAt: typeof source.requestedDepartureAt === 'string' ? source.requestedDepartureAt : undefined,
+    seatsRequested: numberFrom(source.seatsRequested),
+    raw: input
+  };
+};
+
+export const adaptRideSearchResult = (input: unknown): RideSearchResult => {
+  const source = asRecord(input);
+  const routePlanId = stringFrom(source.routePlanId);
+  const routeOccurrenceId = stringFrom(source.routeOccurrenceId);
+  return {
+    resultId: stringFrom(source.resultId, source.searchResultId, source.id, routeOccurrenceId),
+    rideId: stringFrom(source.rideId, source.routeId, source.tripId, routePlanId),
+    originLabel: typeof source.originLabel === "string" ? source.originLabel : undefined,
+    destinationLabel: typeof source.destinationLabel === "string" ? source.destinationLabel : undefined,
+    departureTime: typeof source.departureTime === "string" ? source.departureTime : undefined,
+    availableSeats: numberFrom(source.availableSeats),
+    matchScore: numberFrom(source.score),
+    overlapPercent: numberFrom(source.overlapPercent),
+    pickupDistanceMeters: numberFrom(source.pickupDistanceMeters),
+    dropoffDistanceMeters: numberFrom(source.dropoffDistanceMeters),
+    explanation: typeof source.explanation === "string" ? source.explanation : undefined,
     fareEstimateLkr: numberFrom(source.fareEstimateLkr, source.estimatedFare, source.fareEstimate),
     pickupEtaMinutes: numberFrom(source.pickupEtaMinutes, source.etaMinutes),
     raw: input
@@ -90,3 +112,16 @@ export const adaptPaymentIntent = (input: unknown): PaymentIntent => {
     status: typeof source.status === 'string' ? source.status : undefined
   };
 };
+
+
+export function adaptPlaceSuggestion(input: unknown): PlaceSuggestion {
+  const record = asRecord(input);
+  const coordinateInput = record.coordinate ?? record.location;
+  const place: PlaceSuggestion = {
+    placeId: stringFrom(record.placeId, record.id) || 'unknown-place',
+    label: stringFrom(record.label, record.name, record.displayName) || 'Selected place',
+    address: typeof record.address === 'string' ? record.address : typeof record.formattedAddress === 'string' ? record.formattedAddress : undefined,
+  };
+  if (coordinateInput) place.coordinate = adaptCoordinate(coordinateInput);
+  return place;
+}

@@ -39,6 +39,12 @@ qa/test-cases/
     01-task-name-qa.md
     02-task-name-qa.md
     03-task-name-qa.md
+
+qa/maestro/
+  <app>/
+    smoke/*.yaml
+    regression/taskNN-task-name.yaml
+    release/taskNN-task-name-release.yaml
 ```
 
 Naming rules:
@@ -46,6 +52,7 @@ Naming rules:
 - Use lowercase kebab-case for `<feature-plan-name>`.
 - Prefix implementation task files with zero-padded numbers: `01-`, `02-`, `03-`.
 - Keep QA test case files under `qa/test-cases/<feature-plan-name>/` with the same task prefix and a `-qa.md` suffix.
+- For mobile tasks, keep Maestro flow files under `qa/maestro/<app>/<suite>/` and include the task number in regression/release flow names unless the flow is a shared smoke explicitly linked by each covered task.
 - Development task files link to QA files; detailed QA cases do not live in `docs/development/`.
 - Keep task ordering deterministic and implementation-friendly.
 
@@ -63,6 +70,10 @@ qa/test-cases/07-passenger-mobile-app/
   README.md
   01-passenger-api-contract-reconciliation-and-typed-client-qa.md
   02-expo-app-scaffold-dev-tooling-release-pipeline-qa.md
+
+qa/maestro/passenger-mobile/
+  smoke/auth-profile-smoke.yaml
+  regression/task07-home-search-route-discovery.yaml
 ```
 
 ## README.md requirements
@@ -108,6 +119,12 @@ Required sections:
 
 If a section does not apply, keep the section and explicitly state `Not applicable for this task`.
 
+For mobile tasks, `## QA reference` must link to:
+
+- the matching `qa/test-cases/<feature-plan-name>/NN-task-name-qa.md` file;
+- every Maestro YAML flow that must be created, updated, or run for the task, such as `qa/maestro/passenger-mobile/regression/taskNN-task-name.yaml`;
+- any temporary exception when a task has no runnable mobile surface yet.
+
 ## Production-ready task rule
 
 A task must be scoped so that once it is completed, that feature area is ready to ship to production.
@@ -134,6 +151,7 @@ Each task must include and complete all relevant items below:
 - API contract updates or reconciliation where relevant.
 - Observability: useful logs/metrics/errors without leaking secrets or private data.
 - Automated tests: unit, integration, contract, component, and/or E2E as appropriate.
+- Mobile task Maestro automation: task-mapped flow exists or is updated, runs on emulator/device, and is rerun after fixes until pass.
 - Manual QA cases for platform/device/native behavior that cannot be fully automated.
 - iOS and Android QA for mobile tasks.
 - Browser/responsive QA for web tasks.
@@ -171,6 +189,8 @@ Detailed QA test cases, manual QA steps, device/platform matrices, and evidence 
 
 Each development task should contain only a compact `## QA reference` section that links to the matching QA file.
 
+For mobile QA, that compact section must also name the required Maestro YAML path. Do not leave mobile automation implied or only described in prose. If a flow is shared across tasks, each task and QA file must explicitly link the shared flow and state which task behavior it covers.
+
 QA files should use this structure:
 
 ```markdown
@@ -180,11 +200,19 @@ QA files should use this structure:
 ## Scope
 ## Preconditions
 ## Automated test coverage
+## Maestro automation
 ## Test cases
 ## Manual checks
 ## Evidence to collect
 ## Pass/fail criteria
 ```
+
+The `## Maestro automation` section must list:
+
+- the expected YAML path under `qa/maestro/<app>/<suite>/`;
+- whether the file already exists or must be created/updated during implementation;
+- the emulator/device command to run it;
+- the fix-rerun rule: every Maestro failure blocks task closure until the issue is fixed and the flow passes, unless a documented external blocker prevents execution.
 
 Daily execution logs, screenshots, XML reports, and run artifacts must not be committed. Keep them under ignored `qa/reports/` or local-only ignored `qa/runs/`.
 
@@ -200,6 +228,7 @@ pnpm --filter @routeshare/passenger-mobile typecheck
 pnpm --filter @routeshare/passenger-mobile test
 pnpm --filter @routeshare/passenger-mobile test:e2e:ios
 pnpm --filter @routeshare/passenger-mobile test:e2e:android
+scripts/qa-passenger-android.sh qa/maestro/passenger-mobile/regression/taskNN-task-name.yaml
 ```
 
 ```bash

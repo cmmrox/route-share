@@ -22,3 +22,8 @@ This file owns the QA requirements, test cases, manual checks, and evidence expe
 - API client/mutation tests for success, validation error, 401/403, conflict, timeout, malformed JSON, and retry behavior.
 - E2E test for the primary user path in this task and at least one failure/recovery path.
 - Accessibility tests or manual screen-reader evidence for every interactive flow.
+
+## Maestro automation
+
+- No standalone Maestro YAML is required for this pure typed-client slice because no runnable mobile app surface existed yet.
+- Task 02 must add the first emulator/device Maestro app-launch coverage.

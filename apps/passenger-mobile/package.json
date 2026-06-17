@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "expo start --dev-client",
+    "start:android:local": "expo start --dev-client --port 8082 --host lan",
+    "start:android:local:clear": "expo start --dev-client --port 8082 --host lan --clear",
     "start:web": "expo start --web",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit --pretty false",
@@ -17,6 +19,8 @@
     "doctor": "expo-doctor"
   },
   "dependencies": {
+    "@expo-google-fonts/fraunces": "^0.4.1",
+    "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/metro-runtime": "^56.0.15",
     "@react-navigation/native": "^7.3.1",
     "@react-navigation/native-stack": "^7.17.3",
@@ -26,6 +30,7 @@
     "expo": "^56.0.11",
     "expo-auth-session": "^56.0.14",
     "expo-constants": "^56.0.18",
+    "expo-font": "~56.0.7",
     "expo-image": "^56.0.11",
     "expo-image-picker": "^56.0.17",
     "expo-linking": "^56.0.14",

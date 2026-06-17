@@ -5,7 +5,7 @@ import type { ComponentType } from 'react';
 import { useMemo } from 'react';
 
 import { AppShellPlaceholderScreen, OfflineBanner } from './app-shell-screens';
-import { AccountScreen, HomeScreen, LoginScreen, OnboardingScreen, OtpScreen, ProfileSetupScreen, SavedPlacesScreen, SplashScreen, TrustedContactsScreen, VerificationScreen } from '../screens';
+import { AccountScreen, HomeScreen, LoginScreen, OnboardingScreen, OtpScreen, ProfileSetupScreen, SavedPlacesScreen, SearchScreen, SplashScreen, TrustedContactsScreen, VerificationScreen } from '../screens';
 import { useAuthStore, resolveTokenStatus } from './auth-store';
 import { useNetworkState } from './network-state';
 import { passengerLinking, passengerRouteNames, type PassengerRootStackParamList, type PassengerRouteName } from './navigation';
@@ -28,6 +28,7 @@ type RouteScreenComponent = ComponentType<any>;
 const ROUTE_COMPONENTS: Partial<Record<PassengerRouteName, RouteScreenComponent>> = {
   ...AUTH_ROUTE_COMPONENTS,
   Home: HomeScreen,
+  Search: SearchScreen,
   ProfileSetup: ProfileSetupScreen,
   Account: AccountScreen,
   SavedPlaces: SavedPlacesScreen,

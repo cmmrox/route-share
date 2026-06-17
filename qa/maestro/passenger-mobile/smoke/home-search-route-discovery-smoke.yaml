@@ -1,0 +1,39 @@
+appId: app.routeshare.passenger
+name: Passenger home search route discovery smoke
+---
+# Assumes the passenger is already authenticated and profile-complete.
+# Use the regression Task 07 flow for clean-state onboarding/auth/profile coverage.
+- launchApp
+- extendedWaitUntil:
+    visible: "Where to.*"
+    timeout: 30000
+- assertVisible: Enter destination
+- tapOn: Enter destination
+- extendedWaitUntil:
+    visible: Pickup location
+    timeout: 15000
+- assertVisible: Pickup location
+- assertVisible: Destination
+# Task 07 resolves Google-backed places (📍 suggestions) so pickup/dropoff gain
+# coordinates before search. Type to trigger autocomplete; do not use hideKeyboard
+# (Android BACK pops the screen); pressKey: Enter dismisses the keyboard.
+- tapOn: Pickup location
+- inputText: Colombo Fort
+- extendedWaitUntil:
+    visible: "Select place.*"
+    timeout: 20000
+# Dismiss the keyboard first so the suggestion tap reaches the row's onPress.
+- pressKey: Enter
+- tapOn: "Select place.*"
+- tapOn: Destination
+- inputText: Nugegoda
+- extendedWaitUntil:
+    visible: "Select place.*"
+    timeout: 20000
+- pressKey: Enter
+- tapOn: "Select place.*"
+- tapOn: Search for shared rides
+- extendedWaitUntil:
+    visible: Available rides
+    timeout: 30000
+- takeScreenshot: qa-passenger-home-search

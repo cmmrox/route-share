@@ -66,4 +66,4 @@ git commit -m "feat(passenger-mobile): complete results list, results map, filte
 
 ## QA reference
 
-QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/08-results-list-map-filtering-and-ride-detail-qa.md`.
+QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/08-results-list-map-filtering-and-ride-detail-qa.md`. Required Maestro automation: create/update `qa/maestro/passenger-mobile/regression/task08-results-list-map-filtering-ride-detail.yaml`; run on emulator/device and fix-rerun until pass before closing the task.

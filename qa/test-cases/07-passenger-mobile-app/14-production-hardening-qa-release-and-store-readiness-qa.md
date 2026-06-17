@@ -23,3 +23,10 @@ This file owns the QA requirements, test cases, manual checks, and evidence expe
 - API client/mutation tests for success, validation error, 401/403, conflict, timeout, malformed JSON, and retry behavior.
 - E2E test for the primary user path in this task and at least one failure/recovery path.
 - Accessibility tests or manual screen-reader evidence for every interactive flow.
+
+## Maestro automation
+
+- Required release YAML: `qa/maestro/passenger-mobile/release/task14-production-hardening-store-readiness-release.yaml`.
+- Rerun every committed passenger smoke/regression flow before release closure.
+- Run with `scripts/qa-passenger-android.sh <yaml-path>` on emulator/device.
+- Every Maestro failure blocks task closure until fixed and rerun to pass, unless a concrete external blocker is recorded.

@@ -23,12 +23,19 @@ export const routeShareTokens = {
     md: { shadowColor: '#1e140a', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 3 } satisfies ViewStyle,
     lg: { shadowColor: '#1e140a', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.12, shadowRadius: 28, elevation: 6 } satisfies ViewStyle,
   },
+  // Custom fonts are loaded at startup (App.tsx useFonts). React Native needs a single
+  // registered family name per style (weights are baked into the family), so each variant
+  // maps to one loaded Fraunces (serif display) / Plus Jakarta Sans (UI) family.
+  // Custom fonts are loaded at startup (App.tsx useFonts). React Native needs a single
+  // registered family name per style and the weight is baked into the family name — do NOT
+  // also set fontWeight, or Android tries to match family+weight and falls back to a system
+  // sans. Each variant maps to one loaded Fraunces (serif display) / Plus Jakarta Sans (UI).
   typography: {
-    display: { fontFamily: 'Fraunces, Plus Jakarta Sans', fontSize: 28, lineHeight: 34, fontWeight: '800' } satisfies TextStyle,
-    title: { fontFamily: 'Plus Jakarta Sans', fontSize: 22, lineHeight: 28, fontWeight: '800' } satisfies TextStyle,
-    body: { fontFamily: 'Plus Jakarta Sans', fontSize: 16, lineHeight: 24, fontWeight: '400' } satisfies TextStyle,
-    label: { fontFamily: 'Plus Jakarta Sans', fontSize: 13, lineHeight: 18, fontWeight: '700' } satisfies TextStyle,
-    mono: { fontFamily: 'JetBrains Mono', fontSize: 12, lineHeight: 18, fontWeight: '600' } satisfies TextStyle,
+    display: { fontFamily: 'Fraunces_700Bold', fontSize: 28, lineHeight: 34 } satisfies TextStyle,
+    title: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 22, lineHeight: 28 } satisfies TextStyle,
+    body: { fontFamily: 'PlusJakartaSans_400Regular', fontSize: 16, lineHeight: 24 } satisfies TextStyle,
+    label: { fontFamily: 'PlusJakartaSans_700Bold', fontSize: 13, lineHeight: 18 } satisfies TextStyle,
+    mono: { fontFamily: 'PlusJakartaSans_500Medium', fontSize: 12, lineHeight: 18 } satisfies TextStyle,
   },
 } as const;
 

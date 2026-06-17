@@ -80,8 +80,9 @@ export function OtpScreen({ route, navigation }: { readonly route?: OtpRoute; re
         <OtpField value={state.code} onChangeText={(value) => dispatch({ type: 'change', value })} />
       </View>
       {state.errorMessage ? <Card accessibilityLabel="Verification error"><AppText color="#c0392b">{state.errorMessage}</AppText></Card> : null}
-      <View style={{ alignItems: 'center' }}>
-        <Button variant="ghost" accessibilityLabel="Resend code" accessibilityHint="Request another code when countdown is ready" onPress={resend}>{resendCopy}</Button>
+      <View style={styles.resendRow}>
+        <AppText color="#6f6258">{"Didn't receive it? "}</AppText>
+        <Button variant="ghost" accessibilityLabel="Resend code" accessibilityHint="Request another code when countdown is ready" onPress={resend} style={styles.resendButton}>{resendCopy}</Button>
       </View>
       <View style={{ flex: 1 }} />
       <Button accessibilityLabel="Verify OTP" accessibilityHint="Submit the one-time code" disabled={!isOtpComplete(state) || submitting} onPress={verify}>{submitting ? 'Verifying…' : 'Verify'}</Button>
@@ -95,4 +96,6 @@ const styles = StyleSheet.create({
   heading: { gap: 6, marginTop: 12 },
   displayTitle: { fontSize: 30, lineHeight: 36 },
   otpArea: { gap: 12, marginTop: 10 },
+  resendRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
+  resendButton: { paddingHorizontal: 4, paddingVertical: 4 },
 });

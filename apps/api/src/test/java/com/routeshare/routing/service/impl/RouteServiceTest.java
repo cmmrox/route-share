@@ -1,5 +1,6 @@
 package com.routeshare.routing.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,6 +13,7 @@ import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.routing.dto.request.CoordinateRequest;
 import com.routeshare.routing.dto.request.RoutePublishRequest;
+import com.routeshare.routing.dto.request.RouteSearchRequest;
 import com.routeshare.routing.repository.RoutePlanRepository;
 import com.routeshare.vehicle.facade.VehicleFacade;
 import java.time.Clock;
@@ -22,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.annotation.Transactional;
 
 class RouteServiceTest {
   private final CurrentUserProvider current = org.mockito.Mockito.mock(CurrentUserProvider.class);
@@ -76,6 +79,16 @@ class RouteServiceTest {
             org.mockito.ArgumentMatchers.anyLong(),
             org.mockito.ArgumentMatchers.anyLong(),
             org.mockito.ArgumentMatchers.anyInt());
+  }
+
+  @Test
+  void routeSearchAllowsIdentityUpsertTransaction() throws NoSuchMethodException {
+    var searchMethod = RouteServiceImpl.class.getMethod("search", RouteSearchRequest.class);
+
+    var tx = searchMethod.getAnnotation(Transactional.class);
+
+    assertThat(tx).isNotNull();
+    assertThat(tx.readOnly()).isFalse();
   }
 
   private RoutePublishRequest validRequest() {

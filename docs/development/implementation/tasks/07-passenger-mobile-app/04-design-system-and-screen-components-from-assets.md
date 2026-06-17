@@ -86,4 +86,4 @@ Native note: e2e and preview scripts are local scaffold/config gates; real remot
 
 ## QA reference
 
-QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/04-design-system-and-screen-components-from-assets-qa.md`.
+QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/04-design-system-and-screen-components-from-assets-qa.md`. Required Maestro automation: create/update `qa/maestro/passenger-mobile/regression/task04-design-system-screen-components.yaml`; run on emulator/device and fix-rerun until pass before closing the task.

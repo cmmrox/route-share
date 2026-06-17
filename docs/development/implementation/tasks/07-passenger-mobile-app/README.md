@@ -32,3 +32,4 @@
 - Backend passenger paths exist, but several are readiness placeholders; mobile must isolate them behind adapters and honest UX copy.
 - Runtime DTOs differ from OpenAPI in places; Task 01 must happen before UI wiring.
 - Every task must update development tracking docs and link to its QA test case file under `qa/test-cases/`.
+- Every runnable mobile task must create or update the matching Maestro flow under `qa/maestro/passenger-mobile/`, link that YAML path in both the task file and QA case, run it on emulator/device, fix failures, and rerun until pass before the task can be closed.

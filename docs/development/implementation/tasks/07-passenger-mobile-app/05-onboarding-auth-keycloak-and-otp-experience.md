@@ -95,4 +95,4 @@ External dependency note: production phone OTP is gated by `EXPO_PUBLIC_AUTH_PHO
 
 ## QA reference
 
-QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/05-onboarding-auth-keycloak-and-otp-experience-qa.md`.
+QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/05-onboarding-auth-keycloak-and-otp-experience-qa.md`. Required Maestro automation: create/update `qa/maestro/passenger-mobile/regression/task05-onboarding-auth-otp.yaml`; shared smoke coverage may also live in `qa/maestro/passenger-mobile/smoke/auth-profile-smoke.yaml` when explicitly linked by this QA case. Run on emulator/device and fix-rerun until pass before closing the task.

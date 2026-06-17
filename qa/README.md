@@ -30,13 +30,38 @@ qa/maestro/
     release/      # release-candidate store-readiness journeys
 ```
 
-Current executable smoke flow:
+Current executable flows:
 
 ```text
 qa/maestro/passenger-mobile/smoke/auth-profile-smoke.yaml
+qa/maestro/passenger-mobile/smoke/home-search-route-discovery-smoke.yaml
+qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml
 ```
 
-Manual/functional QA specifications remain in `qa/test-cases/`. When a case becomes stable and repeatable, add the executable `.yaml` flow under the matching `qa/maestro/passenger-mobile/<suite>/` folder and link it from the test-case document.
+Manual/functional QA specifications remain in `qa/test-cases/`. When a mobile task has a runnable screen, navigation path, native permission, provider-backed flow, or release-pipeline behavior, add or update the executable `.yaml` flow under the matching `qa/maestro/passenger-mobile/<suite>/` folder and link it from the test-case document.
+
+## Mobile task Maestro rule
+
+Every mobile implementation task must have task-mapped Maestro automation unless the task has no runnable mobile surface yet. The implementation task file and the matching QA test-case file must both name the required YAML path.
+
+Use these path conventions:
+
+```text
+qa/maestro/passenger-mobile/smoke/<critical-path-name>-smoke.yaml
+qa/maestro/passenger-mobile/regression/taskNN-<task-slug>.yaml
+qa/maestro/passenger-mobile/release/taskNN-<task-slug>-release.yaml
+```
+
+The flow can be a shared smoke only when the task explicitly links that smoke flow and states what behavior it covers. Otherwise create or update a task-specific regression flow.
+
+A mobile task is not finished until:
+
+- the relevant Maestro YAML exists or is updated;
+- it runs on emulator/device through `scripts/qa-passenger-android.sh` or the documented platform command;
+- failures found by Maestro are fixed;
+- the flow is rerun until it passes, or a concrete external blocker is recorded in `docs/development/BLOCKERS.md`;
+- generated evidence is saved under ignored `qa/reports/<timestamp>/`;
+- the pass/blocker summary is promoted into `docs/development/DEVELOPMENT_STATUS.md` or `docs/development/TASK_LOG.md`.
 
 ## Tool check
 
@@ -57,6 +82,8 @@ Expected tools on the Mac:
 scripts/qa-passenger-android.sh
 # or directly:
 maestro --device emulator-5554 test qa/maestro/passenger-mobile/smoke/auth-profile-smoke.yaml
+maestro --device emulator-5554 test qa/maestro/passenger-mobile/smoke/home-search-route-discovery-smoke.yaml
+maestro --device emulator-5554 test qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml
 ```
 
 Outputs screenshots and JUnit/log files under ignored `qa/reports/<timestamp>/`.
@@ -67,7 +94,7 @@ Outputs screenshots and JUnit/log files under ignored `qa/reports/<timestamp>/`.
 scripts/qa-passenger-dev-run.sh
 ```
 
-This sets adb reverses so the emulator can reach the local API on `localhost:8080` and Metro on `8082`.
+This sets adb reverses so the emulator can reach the local API on `localhost:8080` and Metro on `8082`. For Expo dev-client Android emulator runs, prefer `EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8080` when Metro bundles the runtime environment; adb reverse remains useful for native/device traffic and localhost assumptions.
 
 ## OTP QA convention
 

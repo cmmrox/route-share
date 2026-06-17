@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuthStore } from '../application/auth-store';
+import type { PassengerRootStackParamList } from '../application/navigation';
 import { createPassengerRuntimeApi } from '../application/providers';
 import { useToast } from '../application/toast';
 import { AppText, Avatar, Button, Card, ErrorState, LoadingState, ProgressBar, Screen, TextField } from '../design-system';
@@ -13,6 +15,7 @@ export function ProfileSetupScreen() {
   const api = useMemo(() => createPassengerRuntimeApi(), []);
   const qc = useQueryClient();
   const { showToast } = useToast();
+  const navigation = useNavigation<NavigationProp<PassengerRootStackParamList>>();
   const setAuthMeAccepted = useAuthStore((auth) => auth.setAuthMeAccepted);
   const profile = useQuery({ queryKey: ['passenger-profile'], queryFn: api.profile.get, retry: false });
   const [firstName, setFirstName] = useState('');
@@ -34,7 +37,12 @@ export function ProfileSetupScreen() {
   const emailValidation = validateEmail(mail);
   const save = useMutation({
     mutationFn: () => api.profile.update(toProfileUpdateBody({ fullName, email: mail, photoUrl: photoUrl ?? source?.photoUrl, referralCode: referral }, source)),
-    onSuccess: (next) => { qc.setQueryData(['passenger-profile'], next); setAuthMeAccepted(true); showToast('Profile saved.'); },
+    onSuccess: (next) => {
+      qc.setQueryData(['passenger-profile'], next);
+      setAuthMeAccepted(true);
+      showToast('Profile saved.');
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+    },
     onError: () => showToast('Profile could not be saved. Try again.'),
   });
   async function chooseAvatar() {
@@ -71,28 +79,27 @@ export function ProfileSetupScreen() {
   if (profile.isError) return <ErrorState message="Profile is unavailable. You can retry when online." onRetry={() => void profile.refetch()} />;
   return (
     <Screen accessibilityLabel="Profile setup" contentStyle={{ flexGrow: 1 }}>
+      <Button variant="ghost" accessibilityLabel="Back" accessibilityHint="Return to the previous screen" onPress={() => navigation.canGoBack() && navigation.goBack()} style={{ alignSelf: 'flex-start' }}>‹</Button>
       <AppText variant="display">Tell us about you</AppText>
       <AppText color="#6f6258">Drivers will see your name and photo.</AppText>
-      <Card style={{ alignItems: 'center', gap: 12 }}>
-        <View style={{ alignItems: 'center' }}>
+      <View style={{ alignItems: 'center', marginVertical: 8 }}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Add profile photo" accessibilityHint="Open photo picker or camera with manual fallback" onPress={() => void chooseAvatar()} style={{ position: 'relative' }}>
           <Avatar name={fullName || 'Passenger'} size={96} imageUri={photoUrl ?? source?.photoUrl} />
-          <View style={{ marginTop: -28, marginLeft: 68, backgroundColor: '#d66a3b', borderRadius: 18, minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#ffffff' }}>
-            <AppText variant="title" color="#ffffff">+</AppText>
+          <View style={{ position: 'absolute', right: -2, bottom: -2, backgroundColor: '#1b1410', borderRadius: 16, width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: '#ffffff' }}>
+            <AppText variant="label" color="#ffffff">+</AppText>
           </View>
-        </View>
-        {progress > 0 && progress < 100 ? <ProgressBar value={progress} accessibilityLabel="Avatar upload progress" /> : null}
-        {avatarError ? <AppText color="#b42318">{avatarError}</AppText> : null}
-        <Button variant="secondary" accessibilityLabel="Add profile photo" accessibilityHint="Open photo picker or camera with manual fallback" onPress={() => void chooseAvatar()}>Add photo</Button>
-      </Card>
-      <TextField label="First name" value={first} onChangeText={setFirstName} error={!first.trim() && !nameValidation.ok ? nameValidation.error : undefined} />
-      <TextField label="Last name" value={last} onChangeText={setLastName} />
-      <TextField label="Email" value={mail} onChangeText={setEmail} error={emailValidation.ok ? undefined : emailValidation.error} />
-      <TextField label="Referral code" value={referral} onChangeText={setReferralCode} placeholder="Optional" />
+        </Pressable>
+        {progress > 0 && progress < 100 ? <ProgressBar value={progress} accessibilityLabel="Avatar upload progress" style={{ marginTop: 12, width: '100%' }} /> : null}
+        {avatarError ? <AppText color="#b42318" style={{ marginTop: 8 }}>{avatarError}</AppText> : null}
+      </View>
+      <TextField label="FIRST NAME" value={first} onChangeText={setFirstName} error={!first.trim() && !nameValidation.ok ? nameValidation.error : undefined} />
+      <TextField label="LAST NAME" value={last} onChangeText={setLastName} />
+      <TextField label="EMAIL" value={mail} onChangeText={setEmail} error={emailValidation.ok ? undefined : emailValidation.error} />
+      <TextField label="REFERRAL CODE (OPTIONAL)" value={referral} onChangeText={setReferralCode} placeholder="Optional" />
       <Card style={{ backgroundColor: '#e6f1ef', borderColor: '#b7d8d2' }}>
-        <AppText variant="title" color="#0f6e66">Verified passenger profiles unlock smoother rides</AppText>
-        <AppText color="#34524e">RouteShare keeps your phone-linked Keycloak identity as the source of truth and stores only passenger profile details here.</AppText>
+        <AppText variant="label" color="#0f6e66">✓ Verified passenger</AppText>
+        <AppText color="#34524e">{"We'll ask for a photo ID later to unlock all rides."}</AppText>
       </Card>
-      <View style={{ flex: 1 }} />
       <Button accessibilityLabel="Continue" disabled={!nameValidation.ok || !emailValidation.ok || save.isPending} onPress={() => save.mutate()}>{save.isPending ? 'Saving…' : 'Continue'}</Button>
     </Screen>
   );

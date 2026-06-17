@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { createPassengerRuntimeApi } from '../application/providers';
 import { useToast } from '../application/toast';
 import { getPassengerAuthProviderConfig, validateSriLankanPhone } from '../features/auth';
-import { AppText, Button, Card, Chip, Screen, TextField } from '../design-system';
+import { AppText, Button, Card, Screen } from '../design-system';
 
 interface LoginNavigation { readonly navigate?: (screen: string, params?: Record<string, unknown>) => void; readonly goBack?: () => void; readonly canGoBack?: () => boolean }
 
@@ -63,12 +63,23 @@ export function LoginScreen({ navigation }: { readonly navigation?: LoginNavigat
       <View style={{ gap: 8 }}>
         <AppText variant="label">MOBILE NUMBER</AppText>
         <View style={styles.phoneRow}>
-          <Chip selected accessibilityLabel="Sri Lanka country code selected" style={styles.countryCode}>+94</Chip>
-          <View style={styles.phoneInput}>
-            <TextField label="" value={phone} onChangeText={(value) => { setPhone(value); setError(undefined); }} placeholder="77 123 4567" error={error} accessibilityLabel="Sri Lankan mobile number" accessibilityHint="Enter your mobile number starting with seven or zero seven" />
+          <View accessibilityLabel="Sri Lanka country code +94" style={styles.countryCode}>
+            <AppText>🇱🇰</AppText>
+            <AppText variant="label">+94</AppText>
           </View>
+          <TextInput
+            accessibilityLabel="Sri Lankan mobile number"
+            accessibilityHint="Enter your mobile number starting with seven or zero seven"
+            keyboardType="phone-pad"
+            value={phone}
+            onChangeText={(value) => { setPhone(value); setError(undefined); }}
+            placeholder="77 123 4567"
+            placeholderTextColor="#9a8d82"
+            style={[styles.phoneInput, error ? styles.phoneInputError : null]}
+          />
         </View>
-        <AppText color="#6f6258">We will text you a 6-digit verification code.</AppText>
+        {error ? <AppText variant="label" color="#b42318">{error}</AppText> : null}
+        <AppText color="#6f6258">{"We'll text you a 6-digit verification code."}</AppText>
       </View>
       <View style={styles.authActions}>
         <Button accessibilityLabel="Send verification code" accessibilityHint="Validate the phone number and request an OTP" onPress={sendCode}>{sending ? 'Sending…' : 'Send Code'}</Button>
@@ -95,8 +106,9 @@ const styles = StyleSheet.create({
   displayTitle: { fontSize: 30, lineHeight: 36 },
   authActions: { marginTop: 4 },
   backButton: { alignItems: 'flex-start', alignSelf: 'flex-start', justifyContent: 'center', minHeight: 44, minWidth: 44 },
-  phoneRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 10 },
-  countryCode: { height: 56, marginTop: 26, paddingHorizontal: 14 },
-  phoneInput: { flex: 1, minWidth: 0 },
+  phoneRow: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+  countryCode: { alignItems: 'center', backgroundColor: '#ffffff', borderColor: '#e3d6c8', borderRadius: 14, borderWidth: 1.5, flexDirection: 'row', gap: 6, height: 56, justifyContent: 'center', paddingHorizontal: 14 },
+  phoneInput: { backgroundColor: '#ffffff', borderColor: '#e3d6c8', borderRadius: 14, borderWidth: 1.5, color: '#1b1410', flex: 1, fontSize: 16, height: 56, minWidth: 0, paddingHorizontal: 16 },
+  phoneInputError: { borderColor: '#b42318' },
   terms: { textAlign: 'center' },
 });

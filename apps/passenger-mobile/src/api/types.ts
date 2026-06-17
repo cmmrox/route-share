@@ -24,7 +24,9 @@ export type PassengerProfile = {
 };
 
 export type SavedPlace = { savedPlaceId: string; label: string; location: Coordinate; address?: string; isDefault?: boolean };
+export type PlaceSuggestion = { placeId: string; label: string; address?: string; coordinate?: Coordinate };
 export type TrustedContact = { contactId: string; name: string; phoneNumber: string; relationship?: string; isPrimary?: boolean };
-export type RideSearchResult = { resultId: string; rideId: string; fareEstimateLkr?: number; pickupEtaMinutes?: number; raw?: unknown };
+export type RideSearch = { searchId: string; status?: string; requestedDepartureAt?: string; seatsRequested?: number; raw?: unknown };
+export type RideSearchResult = { resultId: string; rideId: string; originLabel?: string; destinationLabel?: string; departureTime?: string; availableSeats?: number; matchScore?: number; overlapPercent?: number; pickupDistanceMeters?: number; dropoffDistanceMeters?: number; explanation?: string; fareEstimateLkr?: number; pickupEtaMinutes?: number; raw?: unknown };
 export type Booking = { bookingId: string; rideId?: string; resultId?: string; status?: string; fareEstimateLkr?: number; raw?: unknown };
 export type PaymentIntent = { paymentIntentId: string; clientSecret?: string; amountLkr: number; currency: 'LKR' | string; status?: string };

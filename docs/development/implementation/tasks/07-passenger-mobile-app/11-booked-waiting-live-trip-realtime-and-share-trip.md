@@ -65,4 +65,4 @@ git commit -m "feat(passenger-mobile): complete booked waiting, live trip realti
 
 ## QA reference
 
-QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/11-booked-waiting-live-trip-realtime-and-share-trip-qa.md`.
+QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/11-booked-waiting-live-trip-realtime-and-share-trip-qa.md`. Required Maestro automation: create/update `qa/maestro/passenger-mobile/regression/task11-booked-waiting-live-trip-share-trip.yaml`; run on emulator/device and fix-rerun until pass before closing the task.

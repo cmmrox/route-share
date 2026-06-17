@@ -66,6 +66,14 @@ export const passengerApiEndpoints = [
     "path": "/api/v1/passenger/trusted-contacts/{contactId}"
   },
   {
+    "method": "GET",
+    "path": "/api/v1/passenger/places/autocomplete"
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/passenger/places/{placeId}"
+  },
+  {
     "method": "POST",
     "path": "/api/v1/passenger/ride-searches"
   },

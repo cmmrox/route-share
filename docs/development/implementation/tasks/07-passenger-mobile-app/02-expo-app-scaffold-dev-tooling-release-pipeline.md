@@ -103,4 +103,4 @@ Device automation note:
 
 ## QA reference
 
-QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/02-expo-app-scaffold-dev-tooling-release-pipeline-qa.md`.
+QA test plan and task-specific test cases are maintained outside development docs: `qa/test-cases/07-passenger-mobile-app/02-expo-app-scaffold-dev-tooling-release-pipeline-qa.md`. Required Maestro automation: create/update `qa/maestro/passenger-mobile/smoke/app-launch-smoke.yaml` and `qa/maestro/passenger-mobile/regression/task02-expo-app-scaffold-dev-tooling-release-pipeline.yaml`; run on emulator/device and fix-rerun until pass before closing the task.

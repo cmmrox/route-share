@@ -174,3 +174,54 @@ Operational Note:
 
 - Virtual threads are lightweight, but database connections are still limited. Tune `ROUTESHARE_DB_POOL_MAX_SIZE` based on measured PostgreSQL capacity and production load tests.
 
+---
+
+## Decision 008 — Require task-mapped Maestro automation for mobile implementation tasks
+
+Date: 2026-06-16
+Status: `ACCEPTED`
+
+Decision:
+
+- Every mobile implementation task must name its required Maestro YAML path in both the development task file and matching QA test-case file.
+- If the task changes a runnable mobile screen, navigation path, native permission, provider-backed mobile flow, or release-pipeline behavior, the Maestro flow must be created or updated during that same task.
+- A mobile task cannot be marked complete until the relevant Maestro flow runs on emulator/device, failures are fixed, and the flow is rerun until it passes, unless a concrete external blocker is recorded.
+
+Reason:
+
+- Passenger mobile work must be verified as a real app flow, not only as unit tests or static screenshots.
+- Each production-ready task slice needs repeatable QA evidence that can be rerun after fixes.
+- Keeping the YAML path in both implementation and QA docs prevents automation from becoming detached from the task definition.
+
+Operational Note:
+
+- Generated Maestro evidence stays under ignored `qa/reports/<timestamp>/`.
+- Concise pass/blocker summaries belong in `DEVELOPMENT_STATUS.md`, `TASK_LOG.md`, or `BLOCKERS.md`.
+
+---
+
+## Decision 009 — Maintain Claude Code and Codex project-local operating guidance
+
+Date: 2026-06-16
+Status: `ACCEPTED`
+
+Decision:
+
+- Keep the RouteShare developer operating skill in both project-local skill locations:
+  - `.claude/skills/routeshare-dev-skill/`
+  - `.agents/skills/routeshare-dev-skill/`
+- Keep root persistent guidance in both tool-specific files:
+  - `CLAUDE.md`
+  - `AGENTS.md`
+- Future updates to the developer operating skill must update both mirrors and validate both folders. Future durable operating-guidance updates must keep `CLAUDE.md` and `AGENTS.md` aligned.
+
+Reason:
+
+- The same RouteShare development rules should apply whether work is performed through Claude Code or Codex.
+- Keeping the skill in the repository makes the operating rules portable with the project instead of depending only on user-global skill folders.
+- Root instruction files help each tool load the project rules before deciding which skill to use.
+
+Operational Note:
+
+- Claude Code uses root `CLAUDE.md` as project guidance; Codex reads root `AGENTS.md` as project instructions. Keep both concise and route development work to `routeshare-dev-skill`.
+- If the two skill mirrors drift, copy the intended source copy over the stale mirror, then rerun skill validation for both.

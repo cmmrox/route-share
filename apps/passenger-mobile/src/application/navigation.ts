@@ -1,6 +1,6 @@
 import type { LinkingOptions } from '@react-navigation/native';
 
-import type { Coordinate } from '../api/types';
+import type { Coordinate, RideSearchResult } from '../api/types';
 
 export type PassengerPublicRouteName = 'Splash' | 'Onboarding' | 'Login' | 'Otp';
 export type PassengerProtectedRouteName =
@@ -36,7 +36,7 @@ export type PassengerRootStackParamList = {
   ProfileSetup: undefined;
   Home: undefined;
   Search: { pickup?: Coordinate; dropoff?: Coordinate } | undefined;
-  SearchResults: { searchId: string; pickup?: Coordinate; dropoff?: Coordinate };
+  SearchResults: { searchId: string; pickup?: Coordinate; dropoff?: Coordinate; results?: RideSearchResult[] };
   RideDetail: { searchId: string; resultId: string };
   SeatSelection: { searchId: string; resultId: string };
   Payment: { bookingId: string; paymentIntentId?: string };

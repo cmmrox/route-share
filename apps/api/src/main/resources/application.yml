@@ -42,6 +42,9 @@ logging:
 
 
 routeshare:
+  google-maps:
+    enabled: ${GOOGLE_MAPS_ENABLED:false}
+    server-api-key: ${GOOGLE_MAPS_SERVER_API_KEY:}
   notify-lk:
     enabled: ${NOTIFY_LK_ENABLED:false}
     api-base-url: ${NOTIFY_LK_API_BASE_URL:https://app.notify.lk/api/v1}
