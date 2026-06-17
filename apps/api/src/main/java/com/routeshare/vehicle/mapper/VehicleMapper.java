@@ -1,7 +1,6 @@
 package com.routeshare.vehicle.mapper;
 
 import com.routeshare.common.mapper.RouteShareMapperConfig;
-import com.routeshare.vehicle.dto.request.VehicleDocumentRequest;
 import com.routeshare.vehicle.dto.request.VehicleRequest;
 import com.routeshare.vehicle.dto.response.VehicleDocumentResponse;
 import com.routeshare.vehicle.dto.response.VehicleResponse;
@@ -26,13 +25,4 @@ public interface VehicleMapper {
   @Mapping(target = "seatCount", source = "request.seatCount")
   @Mapping(target = "status", ignore = true)
   VehicleEntity toEntity(long driverProfileId, VehicleRequest request);
-
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "vehicleId", source = "vehicleId")
-  @Mapping(target = "documentType", source = "request.documentType")
-  @Mapping(target = "storageKey", source = "request.storageKey")
-  @Mapping(target = "status", ignore = true)
-  @Mapping(target = "rejectionReason", ignore = true)
-  @Mapping(target = "createdAt", ignore = true)
-  VehicleDocumentEntity toDocumentEntity(long vehicleId, VehicleDocumentRequest request);
 }

@@ -8,6 +8,35 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-18
 
+### Task: Phase 06.6-B — Object storage + real KYC/document lifecycle
+
+Status: `COMPLETED`
+
+Context: Document "uploads" were metadata-only (clients POSTed an arbitrary storage key; no presigned URL, no object verification). Replaced with a real S3-compatible upload lifecycle.
+
+Files Created:
+
+- `storage` module: `service/ObjectStoragePort` (+ `PresignedUpload`), `service/impl/{S3ObjectStorageAdapter,DisabledObjectStorageAdapter}`, `config/{ObjectStorageProperties,ObjectStorageConfig,StoragePropertiesConfig}`, `domain/DocumentUploadPolicy`, `dto/{UploadUrlRequest,UploadUrlResponse,DownloadUrlResponse}`.
+- `passenger` document module: entity/repository/dto/service/impl/controller (`/api/v1/passenger/documents`).
+- `db/migration/V017__document_upload_lifecycle.sql` — adds upload metadata + AWAITING_UPLOAD/SUBMITTED/APPROVED/REJECTED status to driver/vehicle document tables; new `passenger.passenger_document`.
+- Tests: `DocumentUploadPolicyTest`, `DriverDocumentServiceImplTest` (+ updated `VehicleDocumentServiceTest`).
+
+Files Changed:
+
+- Driver + vehicle document entity/repository/service/impl/controller/mapper/dto reworked to the presigned `upload-url → submit → list → download-url` lifecycle with ownership checks and `*.document.submitted` domain events. Removed unused `DocumentMetadataRequest`/`VehicleDocumentRequest`.
+- `pom.xml` — AWS SDK v2 BOM + `s3` + `url-connection-client`.
+- `application.yml` + `.env.example` — `routeshare.object-storage.*`.
+
+Lifecycle: `POST .../documents/upload-url` (validates content-type ∈ {jpeg,png,webp,pdf}, size ≤ 10 MB; reserves row AWAITING_UPLOAD; returns presigned PUT) → client PUTs bytes → `POST .../documents/{id}/submit` (verifies object exists in storage, moves to SUBMITTED, emits event) → `GET .../documents/{id}/download-url` (presigned GET, owner only). When storage disabled, `DisabledObjectStorageAdapter` returns 412 (no faked success).
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 120, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo 80% gate passed.
+
+Next step: Phase C — Cybersource payments + real money domain.
+
+---
+
 ### Task: Phase 06.6 (Backend Production Hardening) — Phase A: eventing + observability backbone
 
 Status: `COMPLETED`

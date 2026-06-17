@@ -290,7 +290,7 @@ Context: A production-readiness audit (2026-06-18) found that the Phase 06.5 "re
 Tasks:
 
 - [x] Phase A — Eventing backbone (transactional outbox + relay + Kafka sender) + observability (Prometheus/Sentry/structured logs/health probes) + staging/prod env templates.
-- [ ] Phase B — Object storage adapter (S3/MinIO) + real KYC/document upload→review→signed-download lifecycle.
+- [x] Phase B — Object storage adapter (S3/MinIO `ObjectStoragePort`) + real KYC/document upload→submit→signed-download lifecycle for driver, vehicle, and passenger documents (V017). Admin review/signed-download lands in Phase G.
 - [ ] Phase C — Cybersource payment gateway (authorize/capture/void/refund/webhooks/tokenization) + real settlement/commission/payout-batch domain.
 - [ ] Phase D — Notifications + FCM push real domain.
 - [ ] Phase E — Support tickets, SOS events, ratings real domains.

@@ -1,8 +1,8 @@
-package com.routeshare.driver.controller;
+package com.routeshare.passenger.controller;
 
 import com.routeshare.common.web.ApiResponse;
-import com.routeshare.driver.dto.response.DriverDocumentResponse;
-import com.routeshare.driver.service.DriverDocumentService;
+import com.routeshare.passenger.dto.response.PassengerDocumentResponse;
+import com.routeshare.passenger.service.PassengerDocumentService;
 import com.routeshare.storage.dto.DownloadUrlResponse;
 import com.routeshare.storage.dto.UploadUrlRequest;
 import com.routeshare.storage.dto.UploadUrlResponse;
@@ -17,12 +17,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/driver/documents")
-@PreAuthorize("hasRole('DRIVER')")
-public class DriverDocumentController {
-  private final DriverDocumentService service;
+@RequestMapping("/api/v1/passenger/documents")
+@PreAuthorize("hasRole('PASSENGER')")
+public class PassengerDocumentController {
+  private final PassengerDocumentService service;
 
-  public DriverDocumentController(DriverDocumentService service) {
+  public PassengerDocumentController(PassengerDocumentService service) {
     this.service = service;
   }
 
@@ -32,12 +32,12 @@ public class DriverDocumentController {
   }
 
   @PostMapping("/{documentId}/submit")
-  ApiResponse<DriverDocumentResponse> submit(@PathVariable long documentId) {
+  ApiResponse<PassengerDocumentResponse> submit(@PathVariable long documentId) {
     return ApiResponse.ok(service.submit(documentId));
   }
 
   @GetMapping
-  ApiResponse<List<DriverDocumentResponse>> list() {
+  ApiResponse<List<PassengerDocumentResponse>> list() {
     return ApiResponse.ok(service.listMine());
   }
 

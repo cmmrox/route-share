@@ -6,7 +6,11 @@ public record VehicleDocumentResponse(
     long id,
     long vehicleId,
     String documentType,
-    String storageKey,
     String status,
+    String contentType,
+    Long fileSizeBytes,
+    String originalFilename,
     String rejectionReason,
+    Instant submittedAt,
+    Instant reviewedAt,
     Instant createdAt) {}
