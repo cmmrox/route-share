@@ -1,7 +1,9 @@
 package com.routeshare.vehicle.controller;
 
 import com.routeshare.common.web.ApiResponse;
-import com.routeshare.vehicle.dto.request.VehicleDocumentRequest;
+import com.routeshare.storage.dto.DownloadUrlResponse;
+import com.routeshare.storage.dto.UploadUrlRequest;
+import com.routeshare.storage.dto.UploadUrlResponse;
 import com.routeshare.vehicle.dto.response.VehicleDocumentResponse;
 import com.routeshare.vehicle.service.VehicleDocumentService;
 import jakarta.validation.Valid;
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/driver/vehicles/{vehicleId}/documents")
-@PreAuthorize("isAuthenticated()")
+@PreAuthorize("hasRole('DRIVER')")
 public class VehicleDocumentController {
   private final VehicleDocumentService service;
 
@@ -24,14 +26,26 @@ public class VehicleDocumentController {
     this.service = service;
   }
 
-  @PostMapping
-  ApiResponse<VehicleDocumentResponse> create(
-      @PathVariable long vehicleId, @Valid @RequestBody VehicleDocumentRequest req) {
-    return ApiResponse.ok(service.create(vehicleId, req));
+  @PostMapping("/upload-url")
+  ApiResponse<UploadUrlResponse> createUploadUrl(
+      @PathVariable long vehicleId, @Valid @RequestBody UploadUrlRequest req) {
+    return ApiResponse.ok(service.createUploadUrl(vehicleId, req));
+  }
+
+  @PostMapping("/{documentId}/submit")
+  ApiResponse<VehicleDocumentResponse> submit(
+      @PathVariable long vehicleId, @PathVariable long documentId) {
+    return ApiResponse.ok(service.submit(vehicleId, documentId));
   }
 
   @GetMapping
   ApiResponse<List<VehicleDocumentResponse>> list(@PathVariable long vehicleId) {
     return ApiResponse.ok(service.listMine(vehicleId));
+  }
+
+  @GetMapping("/{documentId}/download-url")
+  ApiResponse<DownloadUrlResponse> downloadUrl(
+      @PathVariable long vehicleId, @PathVariable long documentId) {
+    return ApiResponse.ok(service.downloadUrl(vehicleId, documentId));
   }
 }

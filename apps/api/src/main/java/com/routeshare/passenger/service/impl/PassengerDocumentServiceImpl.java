@@ -1,15 +1,13 @@
-package com.routeshare.driver.service.impl;
+package com.routeshare.passenger.service.impl;
 
 import com.routeshare.common.event.DomainEvent;
 import com.routeshare.common.event.DomainEventPublisher;
 import com.routeshare.common.security.CurrentUserProvider;
-import com.routeshare.driver.dto.response.DriverDocumentResponse;
-import com.routeshare.driver.entity.DriverDocumentEntity;
-import com.routeshare.driver.mapper.DriverMapper;
-import com.routeshare.driver.repository.DriverDocumentRepository;
-import com.routeshare.driver.repository.DriverProfileRepository;
-import com.routeshare.driver.service.DriverDocumentService;
 import com.routeshare.identity.facade.IdentityFacade;
+import com.routeshare.passenger.dto.response.PassengerDocumentResponse;
+import com.routeshare.passenger.entity.PassengerDocumentEntity;
+import com.routeshare.passenger.repository.PassengerDocumentRepository;
+import com.routeshare.passenger.service.PassengerDocumentService;
 import com.routeshare.storage.config.ObjectStorageProperties;
 import com.routeshare.storage.domain.DocumentUploadPolicy;
 import com.routeshare.storage.dto.DownloadUrlResponse;
@@ -28,14 +26,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
-public class DriverDocumentServiceImpl implements DriverDocumentService {
-  private static final String SCOPE = "driver";
+public class PassengerDocumentServiceImpl implements PassengerDocumentService {
+  private static final String SCOPE = "passenger";
 
   private final CurrentUserProvider current;
   private final IdentityFacade identityFacade;
-  private final DriverProfileRepository drivers;
-  private final DriverDocumentRepository documents;
-  private final DriverMapper driverMapper;
+  private final PassengerDocumentRepository documents;
   private final ObjectStoragePort storage;
   private final ObjectStorageProperties storageProps;
   private final DomainEventPublisher events;
@@ -45,14 +41,13 @@ public class DriverDocumentServiceImpl implements DriverDocumentService {
   @Transactional
   public UploadUrlResponse createUploadUrl(UploadUrlRequest req) {
     DocumentUploadPolicy.validate(req.contentType(), req.fileSizeBytes());
-    long driverProfileId = currentDriverProfileId();
+    long appUserId = currentAppUserId();
     String key =
-        DocumentUploadPolicy.storageKey(
-            SCOPE, driverProfileId, req.documentType(), req.contentType());
+        DocumentUploadPolicy.storageKey(SCOPE, appUserId, req.documentType(), req.contentType());
     var saved =
         documents.save(
-            DriverDocumentEntity.awaitingUpload(
-                driverProfileId,
+            PassengerDocumentEntity.awaitingUpload(
+                appUserId,
                 req.documentType(),
                 key,
                 req.contentType(),
@@ -71,7 +66,7 @@ public class DriverDocumentServiceImpl implements DriverDocumentService {
 
   @Override
   @Transactional
-  public DriverDocumentResponse submit(long documentId) {
+  public PassengerDocumentResponse submit(long documentId) {
     var doc = requireOwned(documentId);
     if (!storage.exists(doc.getStorageKey())) {
       throw new ResponseStatusException(
@@ -79,11 +74,11 @@ public class DriverDocumentServiceImpl implements DriverDocumentService {
           "Uploaded file was not found in storage. Re-upload before submitting.");
     }
     doc.markSubmitted(Instant.now(clock));
-    var response = driverMapper.toDocumentResponse(doc);
+    var response = toResponse(doc);
     events.publish(
         DomainEvent.of(
-            "driver.document.submitted",
-            "driver_document",
+            "passenger.document.submitted",
+            "passenger_document",
             String.valueOf(doc.getId()),
             "{\"documentType\":\"" + doc.getDocumentType() + "\"}"));
     return response;
@@ -91,9 +86,9 @@ public class DriverDocumentServiceImpl implements DriverDocumentService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<DriverDocumentResponse> listMine() {
-    return documents.findByDriverProfileIdOrderByIdDesc(currentDriverProfileId()).stream()
-        .map(driverMapper::toDocumentResponse)
+  public List<PassengerDocumentResponse> listMine() {
+    return documents.findByAppUserIdOrderByIdDesc(currentAppUserId()).stream()
+        .map(this::toResponse)
         .toList();
   }
 
@@ -106,17 +101,27 @@ public class DriverDocumentServiceImpl implements DriverDocumentService {
         storage.createDownloadUrl(doc.getStorageKey(), ttl).toString(), ttl.toSeconds());
   }
 
-  private DriverDocumentEntity requireOwned(long documentId) {
-    long driverProfileId = currentDriverProfileId();
+  private PassengerDocumentEntity requireOwned(long documentId) {
     return documents
-        .findByIdAndDriverProfileId(documentId, driverProfileId)
-        .orElseThrow(() -> new AccessDeniedException("Document does not belong to current driver"));
+        .findByIdAndAppUserId(documentId, currentAppUserId())
+        .orElseThrow(() -> new AccessDeniedException("Document does not belong to current user"));
   }
 
-  private long currentDriverProfileId() {
-    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
-    return drivers
-        .findIdByAppUserId(app.appUserId())
-        .orElseThrow(() -> new AccessDeniedException("Driver profile is required"));
+  private long currentAppUserId() {
+    return identityFacade.upsertFromToken(current.requireCurrentUser()).appUserId();
+  }
+
+  private PassengerDocumentResponse toResponse(PassengerDocumentEntity e) {
+    return new PassengerDocumentResponse(
+        e.getId(),
+        e.getDocumentType(),
+        e.getStatus(),
+        e.getContentType(),
+        e.getFileSizeBytes(),
+        e.getOriginalFilename(),
+        e.getRejectionReason(),
+        e.getSubmittedAt(),
+        e.getReviewedAt(),
+        e.getCreatedAt());
   }
 }

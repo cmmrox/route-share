@@ -1,8 +1,8 @@
-package com.routeshare.driver.dto.response;
+package com.routeshare.passenger.dto.response;
 
 import java.time.Instant;
 
-public record DriverDocumentResponse(
+public record PassengerDocumentResponse(
     long id,
     String documentType,
     String status,

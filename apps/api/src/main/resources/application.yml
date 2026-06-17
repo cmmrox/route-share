@@ -80,6 +80,16 @@ routeshare:
     allow-demo-sender-for-otp: ${NOTIFY_LK_ALLOW_DEMO_SENDER_FOR_OTP:false}
     otp-message-template: ${NOTIFY_LK_OTP_MESSAGE_TEMPLATE:Your RouteShare verification code is %s. It expires in %d minutes.}
 
+  object-storage:
+    enabled: ${OBJECT_STORAGE_ENABLED:false}
+    endpoint: ${OBJECT_STORAGE_ENDPOINT:http://localhost:9000}
+    region: ${OBJECT_STORAGE_REGION:us-east-1}
+    bucket: ${OBJECT_STORAGE_BUCKET:routeshare-documents}
+    access-key: ${OBJECT_STORAGE_ACCESS_KEY:}
+    secret-key: ${OBJECT_STORAGE_SECRET_KEY:}
+    path-style: ${OBJECT_STORAGE_PATH_STYLE:true}
+    presign-ttl-seconds: ${OBJECT_STORAGE_PRESIGN_TTL_SECONDS:900}
+
   events:
     # When false, domain events are still written to common.event_outbox but the relay
     # logs instead of publishing to Kafka. Enable once a broker is reachable.

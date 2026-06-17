@@ -1,4 +1,4 @@
-package com.routeshare.driver.entity;
+package com.routeshare.passenger.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "driver_document", schema = "driver")
+@Table(name = "passenger_document", schema = "passenger")
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class DriverDocumentEntity {
+public class PassengerDocumentEntity {
   public static final String STATUS_AWAITING_UPLOAD = "AWAITING_UPLOAD";
   public static final String STATUS_SUBMITTED = "SUBMITTED";
   public static final String STATUS_APPROVED = "APPROVED";
@@ -25,11 +25,11 @@ public class DriverDocumentEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "driver_document_id")
+  @Column(name = "passenger_document_id")
   private Long id;
 
-  @Column(name = "driver_profile_id", nullable = false)
-  private Long driverProfileId;
+  @Column(name = "app_user_id", nullable = false)
+  private Long appUserId;
 
   @Column(name = "document_type", nullable = false)
   private String documentType;
@@ -64,15 +64,15 @@ public class DriverDocumentEntity {
   @Column(name = "created_at", insertable = false, updatable = false)
   private Instant createdAt;
 
-  public static DriverDocumentEntity awaitingUpload(
-      long driverProfileId,
+  public static PassengerDocumentEntity awaitingUpload(
+      long appUserId,
       String documentType,
       String storageKey,
       String contentType,
       Long fileSizeBytes,
       String originalFilename) {
-    var e = new DriverDocumentEntity();
-    e.driverProfileId = driverProfileId;
+    var e = new PassengerDocumentEntity();
+    e.appUserId = appUserId;
     e.documentType = documentType;
     e.storageKey = storageKey;
     e.contentType = contentType;
