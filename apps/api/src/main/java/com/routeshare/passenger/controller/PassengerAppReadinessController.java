@@ -57,32 +57,9 @@ public class PassengerAppReadinessController {
     return service.create("SOS_EVENT", "PASSENGER", "PASSENGER", null, body);
   }
 
-  @GetMapping("/api/v1/passenger/notifications")
-  public List<Map<String, Object>> notifications() {
-    return service.mine("NOTIFICATION", "PASSENGER");
-  }
-
-  @PostMapping("/api/v1/passenger/notifications/{notificationId}/read")
-  public Map<String, Object> readNotification(@PathVariable long notificationId) {
-    return service.markRead(notificationId);
-  }
-
-  @GetMapping("/api/v1/passenger/notification-preferences")
-  public Map<String, Object> notificationPreferences() {
-    return service.preferences("PASSENGER");
-  }
-
-  @PutMapping("/api/v1/passenger/notification-preferences")
-  public Map<String, Object> updateNotificationPreferences(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.savePreferences("PASSENGER", body);
-  }
-
-  @PostMapping("/api/v1/passenger/push-registrations")
-  public Map<String, Object> pushRegistration(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.pushRegistration("PASSENGER", body);
-  }
+  // Notifications, preferences, and push registrations are served by the real notification module
+  // (PassengerNotificationController); the workflow_item-backed versions were removed in Phase
+  // 06.6-D.
 
   @PostMapping("/api/v1/passenger/support/tickets")
   public Map<String, Object> createSupportTicket(
@@ -107,26 +84,8 @@ public class PassengerAppReadinessController {
         "SUPPORT_MESSAGE", "PASSENGER", "SUPPORT_TICKET", String.valueOf(ticketId), body);
   }
 
-  @GetMapping("/api/v1/passenger/payment-methods")
-  public List<Map<String, Object>> paymentMethods() {
-    return service.mine("PAYMENT_METHOD", "PASSENGER");
-  }
-
-  @PostMapping("/api/v1/passenger/payment-methods")
-  public Map<String, Object> createPaymentMethod(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.create("PAYMENT_METHOD", "PASSENGER", "PASSENGER", null, body);
-  }
-
-  @DeleteMapping("/api/v1/passenger/payment-methods/{paymentMethodId}")
-  public Map<String, Object> deletePaymentMethod(@PathVariable long paymentMethodId) {
-    return service.update(paymentMethodId, Map.of("status", "DELETED"));
-  }
-
-  @PostMapping("/api/v1/passenger/payment-methods/{paymentMethodId}/default")
-  public Map<String, Object> defaultPaymentMethod(@PathVariable long paymentMethodId) {
-    return service.update(paymentMethodId, Map.of("status", "DEFAULT"));
-  }
+  // Payment methods are served by the real tokenized PaymentMethodController (Phase 06.6-C);
+  // the workflow_item-backed versions were removed here to avoid duplicate request mappings.
 
   @PostMapping("/api/v1/passenger/profile/avatar-upload")
   public Map<String, Object> avatarUpload(@RequestBody(required = false) Map<String, Object> body) {

@@ -92,6 +92,11 @@ routeshare:
   commission:
     default-rate: ${ROUTESHARE_COMMISSION_DEFAULT_RATE:0.10}
 
+  push:
+    enabled: ${PUSH_NOTIFICATIONS_ENABLED:false}
+    project-id: ${FIREBASE_PROJECT_ID:}
+    service-account-path: ${FIREBASE_SERVICE_ACCOUNT_JSON:}
+
   object-storage:
     enabled: ${OBJECT_STORAGE_ENABLED:false}
     endpoint: ${OBJECT_STORAGE_ENDPOINT:http://localhost:9000}

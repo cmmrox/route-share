@@ -130,32 +130,8 @@ public class DriverAppReadinessController {
     return service.create("SOS_EVENT", "DRIVER", "DRIVER", null, body);
   }
 
-  @GetMapping("/api/v1/driver/notifications")
-  public List<Map<String, Object>> notifications() {
-    return service.mine("NOTIFICATION", "DRIVER");
-  }
-
-  @PostMapping("/api/v1/driver/notifications/{notificationId}/read")
-  public Map<String, Object> readNotification(@PathVariable long notificationId) {
-    return service.markRead(notificationId);
-  }
-
-  @GetMapping("/api/v1/driver/notification-preferences")
-  public Map<String, Object> notificationPreferences() {
-    return service.preferences("DRIVER");
-  }
-
-  @PutMapping("/api/v1/driver/notification-preferences")
-  public Map<String, Object> updateNotificationPreferences(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.savePreferences("DRIVER", body);
-  }
-
-  @PostMapping("/api/v1/driver/push-registrations")
-  public Map<String, Object> pushRegistration(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.pushRegistration("DRIVER", body);
-  }
+  // Notifications, preferences, and push registrations are served by the real notification module
+  // (DriverNotificationController); the workflow_item-backed versions were removed in Phase 06.6-D.
 
   @PostMapping("/api/v1/driver/support/tickets")
   public Map<String, Object> createSupportTicket(
