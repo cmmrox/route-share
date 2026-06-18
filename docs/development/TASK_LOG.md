@@ -8,6 +8,34 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-18
 
+### Task: Phase 06.6-D — Notifications + FCM push
+
+Status: `COMPLETED`
+
+Context: Notifications/preferences/push registrations were workflow_item shells with no delivery. Built a real notification domain with FCM delivery.
+
+Files Created:
+
+- `notification` module: entities (`Notification`, `NotificationPreference`, `PushRegistration`, `NotificationDeliveryLog`) + repositories; `service/NotificationService(+Impl)`; `facade/NotificationFacade(+Impl)` for cross-module sends; DTOs; `controller/{Passenger,Driver}NotificationController`.
+- `notification/push`: `PushNotificationPort`, `impl/FcmPushAdapter` (Firebase Admin SDK, gated), `impl/LoggingPushAdapter` (default), `config/{PushProperties,PushPropertiesConfig,FirebaseConfig}`.
+- `db/migration/V019__notifications_domain.sql` (new `notification` schema, 4 tables).
+- Test: `NotificationServiceImplTest`.
+
+Files Changed:
+
+- Removed workflow_item-backed notification/preference/push endpoints from `PassengerAppReadinessController` and `DriverAppReadinessController` (now served by the real controllers).
+- **Fixed latent Phase C bug**: removed payment-methods endpoints from `PassengerAppReadinessController` — they duplicated `PaymentMethodController`'s mappings (would fail Spring startup; not caught because no Spring-context test exists).
+- `pom.xml` — firebase-admin 9.4.1; JaCoCo excludes `**/push/impl/**`. `application.yml` + `.env.example` — `routeshare.push.*` / `FIREBASE_SERVICE_ACCOUNT_JSON`.
+
+Behavior: `deliver()` persists a notification, respects per-user push preference, sends to each enabled device via the port, and writes a delivery-log row. Inbox/markRead/preferences/register endpoints are typed and owner-scoped. Push gated by `PUSH_NOTIFICATIONS_ENABLED`; logging fallback otherwise.
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 134, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase E — support tickets, SOS events, ratings.
+
+
 ### Task: Phase 06.6-C — Cybersource payments + real money domain
 
 Status: `COMPLETED`

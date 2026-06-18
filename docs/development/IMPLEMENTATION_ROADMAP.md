@@ -292,7 +292,7 @@ Tasks:
 - [x] Phase A — Eventing backbone (transactional outbox + relay + Kafka sender) + observability (Prometheus/Sentry/structured logs/health probes) + staging/prod env templates.
 - [x] Phase B — Object storage adapter (S3/MinIO `ObjectStoragePort`) + real KYC/document upload→submit→signed-download lifecycle for driver, vehicle, and passenger documents (V017). Admin review/signed-download lands in Phase G.
 - [x] Phase C — Cybersource payment gateway (`PaymentGatewayPort` + real `CybersourcePaymentGateway` authorize/capture/void/refund/tokenize + HTTP-signature, cash fallback), signature-verified idempotent webhook, real payment-methods domain (tokenized), configurable commission + PLATFORM_COMMISSION/DRIVER_EARNING ledger entries (V018). Admin settlement/payout-batch/finance-adjustment land in Phase G.
-- [ ] Phase D — Notifications + FCM push real domain.
+- [x] Phase D — Real notifications domain (notification/preference/push_registration/delivery_log, V019), `PushNotificationPort` with FCM adapter + logging fallback, typed passenger/driver inbox/preferences/push-registration endpoints, `NotificationFacade` for cross-module sends. Removed workflow_item notification shells (and fixed a duplicate payment-methods mapping from Phase C).
 - [ ] Phase E — Support tickets, SOS events, ratings real domains.
 - [ ] Phase F — Recurring routes + driver payout profile real domains.
 - [ ] Phase G — Admin suite rebuild (dashboard/users/verification/trips/bookings/finance/settlements/policies/support/SOS/broadcasts/reports/audit) with Keycloak-synced user mgmt + role granularity.
