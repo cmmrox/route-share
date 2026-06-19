@@ -58,6 +58,20 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
   @Query(
       value =
           """
+      SELECT d.app_user_id
+      FROM booking.booking b
+      JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      WHERE b.booking_id = :bookingId
+        AND b.passenger_app_user_id = :passengerAppUserId
+      """,
+      nativeQuery = true)
+  Optional<Long> findDriverAppUserIdForPassengerBooking(
+      @Param("bookingId") long bookingId, @Param("passengerAppUserId") long passengerAppUserId);
+
+  @Query(
+      value =
+          """
       SELECT status
       FROM booking.booking
       WHERE booking_id = :bookingId

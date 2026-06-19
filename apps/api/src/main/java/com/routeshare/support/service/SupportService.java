@@ -1,0 +1,17 @@
+package com.routeshare.support.service;
+
+import com.routeshare.support.dto.CreateTicketRequest;
+import com.routeshare.support.dto.SupportMessageResponse;
+import com.routeshare.support.dto.SupportTicketResponse;
+import com.routeshare.support.dto.TicketMessageRequest;
+import java.util.List;
+
+public interface SupportService {
+  SupportTicketResponse create(String ownerRole, CreateTicketRequest req);
+
+  List<SupportTicketResponse> listMine();
+
+  SupportTicketResponse getMine(long ticketId);
+
+  SupportMessageResponse addMessage(String senderRole, long ticketId, TicketMessageRequest req);
+}

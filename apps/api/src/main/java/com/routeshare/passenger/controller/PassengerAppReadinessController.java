@@ -46,43 +46,10 @@ public class PassengerAppReadinessController {
     return service.shareBooking(bookingId, body);
   }
 
-  @PostMapping("/api/v1/passenger/bookings/{bookingId}/rating")
-  public Map<String, Object> rateBooking(
-      @PathVariable long bookingId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create("RATING", "PASSENGER", "BOOKING", String.valueOf(bookingId), body);
-  }
-
-  @PostMapping("/api/v1/passenger/sos-events")
-  public Map<String, Object> createSos(@RequestBody(required = false) Map<String, Object> body) {
-    return service.create("SOS_EVENT", "PASSENGER", "PASSENGER", null, body);
-  }
-
-  // Notifications, preferences, and push registrations are served by the real notification module
-  // (PassengerNotificationController); the workflow_item-backed versions were removed in Phase
-  // 06.6-D.
-
-  @PostMapping("/api/v1/passenger/support/tickets")
-  public Map<String, Object> createSupportTicket(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.create("SUPPORT_TICKET", "PASSENGER", "PASSENGER", null, body);
-  }
-
-  @GetMapping("/api/v1/passenger/support/tickets")
-  public List<Map<String, Object>> supportTickets() {
-    return service.mine("SUPPORT_TICKET", "PASSENGER");
-  }
-
-  @GetMapping("/api/v1/passenger/support/tickets/{ticketId}")
-  public Map<String, Object> supportTicket(@PathVariable long ticketId) {
-    return service.get(ticketId);
-  }
-
-  @PostMapping("/api/v1/passenger/support/tickets/{ticketId}/messages")
-  public Map<String, Object> supportTicketMessage(
-      @PathVariable long ticketId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "SUPPORT_MESSAGE", "PASSENGER", "SUPPORT_TICKET", String.valueOf(ticketId), body);
-  }
+  // Ratings, SOS, support tickets, notifications, preferences, and push registrations are served by
+  // the real rating/safety/support/notification modules (Phase 06.6-D/E); their
+  // workflow_item-backed
+  // versions were removed here.
 
   // Payment methods are served by the real tokenized PaymentMethodController (Phase 06.6-C);
   // the workflow_item-backed versions were removed here to avoid duplicate request mappings.

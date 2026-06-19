@@ -29,9 +29,10 @@ class Phase065AppBackendReadinessContractTest {
                 .getMethod("earlyDropOff", long.class, java.util.Map.class)
                 .isAnnotationPresent(PostMapping.class))
         .isTrue();
+    // SOS moved to the real safety module in Phase 06.6-E.
     assertThat(
-            PassengerAppReadinessController.class
-                .getMethod("createSos", java.util.Map.class)
+            com.routeshare.safety.controller.PassengerSosController.class
+                .getDeclaredMethod("raise", com.routeshare.safety.dto.RaiseSosRequest.class)
                 .isAnnotationPresent(PostMapping.class))
         .isTrue();
     assertThat(
