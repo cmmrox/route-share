@@ -123,67 +123,8 @@ public class AdminAppReadinessController {
     return service.all("ADMIN_BOOKING_ACTION");
   }
 
-  @GetMapping("/api/v1/admin/commission-rules")
-  public List<Map<String, Object>> commissionRules() {
-    return service.all("COMMISSION_RULE");
-  }
-
-  @PostMapping("/api/v1/admin/commission-rules")
-  public Map<String, Object> createCommissionRule(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.create("COMMISSION_RULE", "ADMIN", "FINANCE", null, body);
-  }
-
-  @PutMapping("/api/v1/admin/commission-rules/{ruleId}")
-  public Map<String, Object> updateCommissionRule(
-      @PathVariable long ruleId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.update(ruleId, body);
-  }
-
-  @GetMapping("/api/v1/admin/fare-policies")
-  public List<Map<String, Object>> farePolicies() {
-    return service.all("FARE_POLICY");
-  }
-
-  @PostMapping("/api/v1/admin/fare-policies")
-  public Map<String, Object> createFarePolicy(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.create("FARE_POLICY", "ADMIN", "FINANCE", null, body);
-  }
-
-  @PutMapping("/api/v1/admin/fare-policies/{policyId}")
-  public Map<String, Object> updateFarePolicy(
-      @PathVariable long policyId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.update(policyId, body);
-  }
-
-  @GetMapping("/api/v1/admin/settlements/driver-balances")
-  public List<Map<String, Object>> driverBalances() {
-    return service.all("SETTLEMENT_BALANCE");
-  }
-
-  @GetMapping("/api/v1/admin/settlements/payout-batches")
-  public List<Map<String, Object>> payoutBatches() {
-    return service.all("PAYOUT_BATCH");
-  }
-
-  @PostMapping("/api/v1/admin/settlements/payout-batches")
-  public Map<String, Object> createPayoutBatch(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.create("PAYOUT_BATCH", "ADMIN", "FINANCE", null, body);
-  }
-
-  @PostMapping("/api/v1/admin/settlements/payout-batches/{batchId}/mark-paid")
-  public Map<String, Object> markPayoutPaid(
-      @PathVariable long batchId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.update(batchId, withStatus(body, "PAID"));
-  }
-
-  @PostMapping("/api/v1/admin/finance/adjustments")
-  public Map<String, Object> financeAdjustment(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.create("FINANCE_ADJUSTMENT", "ADMIN", "FINANCE", null, body);
-  }
+  // Commission rules, fare policies, settlements/payout batches, and finance adjustments are served
+  // by the real AdminFinanceController (Phase 06.6-G2), backed by the finance schema.
 
   // Admin support (tickets/messages/status) and safety (SOS list/detail/resolve) are served by the
   // real AdminSupportController and AdminSafetyController (Phase 06.6-G), backed by the support and
