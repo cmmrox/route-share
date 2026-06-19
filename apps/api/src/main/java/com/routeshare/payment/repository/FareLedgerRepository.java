@@ -89,6 +89,27 @@ public interface FareLedgerRepository extends JpaRepository<FareLedgerEntryEntit
       nativeQuery = true)
   List<FareLedgerAdminRow> findDriverLedgerRows(@Param("driverAppUserId") long driverAppUserId);
 
+  /** Total DRIVER_EARNING accrued per driver app user (for settlement balances). */
+  @Query(
+      value =
+          """
+      SELECT d.app_user_id AS "driverAppUserId", COALESCE(SUM(f.amount), 0) AS "amount"
+      FROM payment.fare_ledger_entry f
+      JOIN booking.booking b ON b.booking_id = f.booking_id
+      JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      WHERE f.entry_type = 'DRIVER_EARNING'
+      GROUP BY d.app_user_id
+      """,
+      nativeQuery = true)
+  List<DriverEarningRow> sumDriverEarningsGrouped();
+
+  interface DriverEarningRow {
+    Long getDriverAppUserId();
+
+    BigDecimal getAmount();
+  }
+
   interface FareLedgerAdminRow {
     Long getBookingId();
 

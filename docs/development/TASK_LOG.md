@@ -8,6 +8,31 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-19
 
+### Task: Phase 06.6-G2 — Admin finance (commission/fare/settlements/adjustments)
+
+Status: `COMPLETED` (G-3 admin areas remain on the readiness facade)
+
+Context: The admin finance surface was workflow_item-backed. Built a real `finance` schema and admin services for it.
+
+Files Created:
+
+- `finance` module (V023): entities `CommissionRule`, `FarePolicy`, `PayoutBatch`, `PayoutBatchItem`, `FinanceAdjustment` + repositories + DTOs.
+- `admin`: `AdminFinanceService(+Impl)` (admin module is exempt, so it reads finance + payment repos directly) + `AdminFinanceController` serving commission-rules, fare-policies, settlements/driver-balances, settlements/payout-batches (+mark-paid), and finance/adjustments. All mutations audited.
+- Added `FareLedgerRepository.sumDriverEarningsGrouped` (DRIVER_EARNING per driver) and `PayoutBatchItemRepository.sumPaidByDriver`; driver balance = earned − paid.
+- Test: `AdminFinanceServiceImplTest` (payout total + mark-paid guard).
+
+Files Changed:
+
+- Removed commission/fare/settlement/finance-adjustment endpoints from `AdminAppReadinessController`.
+
+Deferred to G-3 (still workflow_item-backed): dashboard aggregates, driver-application/vehicle verification + document review/signed-download, trips/bookings ops + location trail, broadcasts, reports/export, Keycloak role propagation.
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 148, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase G-3 (verification/doc-review, trips/bookings ops, dashboard, reports, broadcasts, Keycloak roles), then Phase H.
+
 ### Task: Phase 06.6-G (part 1) — Admin audit, users, support, SOS
 
 Status: `COMPLETED` (G-1; G-2 admin areas remain on the readiness facade)
