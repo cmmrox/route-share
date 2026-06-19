@@ -8,6 +8,29 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-19
 
+### Task: Phase 06.6-G3 — Admin dashboard + document review/signed-download
+
+Status: `COMPLETED` (G-4 admin areas remain on the readiness facade)
+
+Files Created:
+
+- `admin`: `AdminDashboardService(+Impl)` + `AdminDashboardController` — live counts (users/drivers/vehicles/bookings/trips/payment-intents/open-SOS/open-support-tickets/open-payout-batches) serving `/api/v1/admin/dashboard` and `/api/v1/admin/reports/summary`.
+- `admin`: `AdminDocumentService(+Impl)` + `AdminDocumentController` — review (approve/reject) + signed download for driver/vehicle/passenger documents; review sets status+reviewer+reason, audits, emits `document.reviewed`; download via `ObjectStoragePort` presigned GET. DTOs `AdminDocReviewRequest`/`AdminDocumentResponse`.
+- Repo count helpers: `SosEventRepository.countByStatus`, `SupportTicketRepository.countByStatusIn`, `PayoutBatchRepository.countByStatus`.
+- Tests: `AdminDocumentServiceImplTest`.
+
+Files Changed:
+
+- Removed dashboard, reports/summary, driver/vehicle document review, and generic document download-url from `AdminAppReadinessController`. Updated `Phase065AppBackendReadinessContractTest` to assert the real dashboard controller.
+
+Deferred to G-4 (still workflow_item-backed): driver-application/vehicle list+detail, trips/bookings ops + location trail + admin cancel, broadcasts, reports/export (async), Keycloak role propagation.
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 150, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase G-4 (trips/bookings ops, broadcasts, Keycloak roles), then Phase H.
+
 ### Task: Phase 06.6-G2 — Admin finance (commission/fare/settlements/adjustments)
 
 Status: `COMPLETED` (G-3 admin areas remain on the readiness facade)
