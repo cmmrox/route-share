@@ -19,53 +19,15 @@ public class AdminAppReadinessController {
     return service.dashboard();
   }
 
-  @GetMapping("/api/v1/admin/audit/actions")
-  public List<Map<String, Object>> auditActions() {
-    return service.auditActions();
-  }
-
-  @GetMapping("/api/v1/admin/users")
-  public List<Map<String, Object>> users() {
-    return service.all("ADMIN_USER_ACTION");
-  }
-
-  @GetMapping("/api/v1/admin/users/{appUserId}")
-  public Map<String, Object> user(@PathVariable long appUserId) {
-    return Map.of("appUserId", appUserId, "status", "ACTIVE");
-  }
-
-  @PostMapping("/api/v1/admin/users/{appUserId}/suspend")
-  public Map<String, Object> suspendUser(
-      @PathVariable long appUserId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "ADMIN_USER_ACTION",
-        "ADMIN",
-        "APP_USER",
-        String.valueOf(appUserId),
-        withStatus(body, "SUSPENDED"));
-  }
-
-  @PostMapping("/api/v1/admin/users/{appUserId}/activate")
-  public Map<String, Object> activateUser(
-      @PathVariable long appUserId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "ADMIN_USER_ACTION",
-        "ADMIN",
-        "APP_USER",
-        String.valueOf(appUserId),
-        withStatus(body, "ACTIVE"));
-  }
+  // Audit log, user list/detail/suspend/activate/status-history are served by the real
+  // AdminAuditController and AdminUserController (Phase 06.6-G). Role updates remain here pending
+  // Keycloak admin-client propagation.
 
   @PutMapping("/api/v1/admin/users/{appUserId}/roles")
   public Map<String, Object> updateRoles(
       @PathVariable long appUserId, @RequestBody(required = false) Map<String, Object> body) {
     return service.create(
         "ADMIN_ROLE_UPDATE", "ADMIN", "APP_USER", String.valueOf(appUserId), body);
-  }
-
-  @GetMapping("/api/v1/admin/users/{appUserId}/status-history")
-  public List<Map<String, Object>> userStatusHistory(@PathVariable long appUserId) {
-    return service.all("ADMIN_USER_ACTION");
   }
 
   @GetMapping("/api/v1/admin/driver-applications")
@@ -223,44 +185,9 @@ public class AdminAppReadinessController {
     return service.create("FINANCE_ADJUSTMENT", "ADMIN", "FINANCE", null, body);
   }
 
-  @GetMapping("/api/v1/admin/support/tickets")
-  public List<Map<String, Object>> supportTickets() {
-    return service.all("SUPPORT_TICKET");
-  }
-
-  @GetMapping("/api/v1/admin/support/tickets/{ticketId}")
-  public Map<String, Object> supportTicket(@PathVariable long ticketId) {
-    return service.get(ticketId);
-  }
-
-  @PutMapping("/api/v1/admin/support/tickets/{ticketId}")
-  public Map<String, Object> updateSupportTicket(
-      @PathVariable long ticketId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.update(ticketId, body);
-  }
-
-  @PostMapping("/api/v1/admin/support/tickets/{ticketId}/messages")
-  public Map<String, Object> supportTicketMessage(
-      @PathVariable long ticketId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "SUPPORT_MESSAGE", "ADMIN", "SUPPORT_TICKET", String.valueOf(ticketId), body);
-  }
-
-  @GetMapping("/api/v1/admin/safety/sos-events")
-  public List<Map<String, Object>> sosEvents() {
-    return service.all("SOS_EVENT");
-  }
-
-  @GetMapping("/api/v1/admin/safety/sos-events/{sosEventId}")
-  public Map<String, Object> sosEvent(@PathVariable long sosEventId) {
-    return service.get(sosEventId);
-  }
-
-  @PostMapping("/api/v1/admin/safety/sos-events/{sosEventId}/resolve")
-  public Map<String, Object> resolveSos(
-      @PathVariable long sosEventId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.update(sosEventId, withStatus(body, "RESOLVED"));
-  }
+  // Admin support (tickets/messages/status) and safety (SOS list/detail/resolve) are served by the
+  // real AdminSupportController and AdminSafetyController (Phase 06.6-G), backed by the support and
+  // safety tables.
 
   @PostMapping("/api/v1/admin/notifications/broadcasts")
   public Map<String, Object> broadcast(@RequestBody(required = false) Map<String, Object> body) {

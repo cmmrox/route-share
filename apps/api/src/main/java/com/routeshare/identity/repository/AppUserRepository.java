@@ -16,6 +16,8 @@ public interface AppUserRepository extends JpaRepository<AppUserEntity, Long> {
 
   Optional<AppUserEntity> findByKeycloakSubject(String keycloakSubject);
 
+  java.util.List<AppUserEntity> findAllByOrderByIdDesc(org.springframework.data.domain.Pageable p);
+
   @Transactional
   @Modifying
   @Query(

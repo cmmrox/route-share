@@ -52,9 +52,10 @@ class Phase065AppBackendReadinessContractTest {
                 .getMethod("dashboard")
                 .isAnnotationPresent(GetMapping.class))
         .isTrue();
+    // Audit actions moved to the real AdminAuditController in Phase 06.6-G.
     assertThat(
-            AdminAppReadinessController.class
-                .getMethod("auditActions")
+            com.routeshare.admin.controller.AdminAuditController.class
+                .getDeclaredMethod("actions", int.class)
                 .isAnnotationPresent(GetMapping.class))
         .isTrue();
   }

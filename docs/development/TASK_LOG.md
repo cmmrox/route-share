@@ -8,6 +8,32 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-19
 
+### Task: Phase 06.6-G (part 1) — Admin audit, users, support, SOS
+
+Status: `COMPLETED` (G-1; G-2 admin areas remain on the readiness facade)
+
+Context: The admin suite was entirely workflow_item-backed; admin support/SOS couldn't even see the real Phase E tickets/events. Rebuilt the highest-value admin domains onto real tables. The admin module is exempt from the cross-module repository rule, so admin services read other modules' repositories directly.
+
+Files Created:
+
+- `audit`/admin: `audit.audit_action` (V022) + `AuditActionEntity`/repo; `AdminAuditService(+Impl)` records every admin mutation; `AdminAuditController` (`GET /api/v1/admin/audit/actions`).
+- Admin users: `identity.app_user_status_history` (V022) + entity/repo; `AdminUserService(+Impl)` list/detail/suspend/activate/status-history (suspension enforced via `upsertFromToken`); `AdminUserController`. Added `AppUserRepository.findAllByOrderByIdDesc`.
+- Admin support: `AdminSupportService(+Impl)` list/detail/update-status/reply on the support tables (admin reply moves OPEN→PENDING; audited); `AdminSupportController`.
+- Admin SOS: `AdminSafetyService(+Impl)` list/detail/resolve on safety.sos_event (sets resolution, audits, notifies the raiser); `AdminSafetyController`. Added admin list queries to support/SOS repositories.
+- Tests: `AdminSafetyServiceImplTest`.
+
+Files Changed:
+
+- Removed audit/users(list/detail/suspend/activate/status-history)/support/SOS endpoints from `AdminAppReadinessController` (kept role-update + the G-2 areas). Updated `Phase065AppBackendReadinessContractTest` to assert the real audit controller.
+
+Deferred to G-2 (still workflow_item-backed): dashboard, driver-application/vehicle verification + document review/signed-download, trips/bookings ops + location trail, fare/commission policy, settlements/payout batches/finance adjustments, broadcasts, reports/export, Keycloak role propagation.
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 146, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase G-2 (remaining admin finance/verification/ops domains), then Phase H.
+
 ### Task: Phase 06.6-F — Recurring routes + driver payout profile
 
 Status: `COMPLETED`
