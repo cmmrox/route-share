@@ -8,6 +8,38 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-19
 
+### Task: Phase 06.6-F — Recurring routes + driver payout profile
+
+Status: `COMPLETED`
+
+Context: Recurring routes and payout profile were workflow_item shells; routing only supported one-time schedules despite RECURRING schema columns.
+
+Files Created/Changed (recurring routes):
+
+- `RouteSchedulePolicy.generateRecurringOccurrences(...)` — expands days-of-week from a first departure across a horizon (capped at 60), with skip-anchor for extension.
+- `RouteServiceImpl` gains `publishRecurring` (creates plan + RECURRING rule + occurrences with bucket cells), `listRecurringRoutes`, `updateRecurringStatus` (ACTIVE/PAUSED/CANCELLED; cancels occurrences), `generateRecurringOccurrences` (extends forward, copies bucket cells from latest occurrence).
+- Repo additions: `RouteScheduleRuleRepository` (insertRecurringRule via string_to_array, list/find for driver, updateStatus, RecurringRuleRow), `RouteOccurrenceRepository.findLatestForPlan`, `RouteBucketCellRepository.copyCellsToOccurrence`.
+- `DriverRecurringRouteController` (`/api/v1/driver/recurring-routes` + `{ruleId}` PUT/DELETE + `/generate-occurrences`); DTOs RecurringRoutePublishRequest/RecurringRouteResponse/UpdateRecurringStatusRequest/GenerateOccurrencesRequest.
+
+Files Created (payout profile):
+
+- `db/migration/V021__driver_payout_profile.sql`; DriverPayoutProfile entity/repo; `DriverPayoutService(+Impl)` (get/save, bank vs wallet validation, masks account/wallet numbers, resets to PENDING_VERIFICATION on change); `DriverPayoutController` (`/api/v1/driver/payout-profile`); PayoutProfileRequest/Response DTOs.
+
+Files Changed:
+
+- Removed recurring-route + payout-profile endpoints from `DriverAppReadinessController`; updated `Phase065AppBackendReadinessContractTest` to assert the real payout controller.
+- Tests: extended `RouteSchedulePolicyTest` with recurring expansion cases.
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 145, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase G — admin suite rebuild.
+
+---
+
+## 2026-06-19
+
 ### Task: Phase 06.6-E — Support tickets, SOS events, ratings
 
 Status: `COMPLETED`

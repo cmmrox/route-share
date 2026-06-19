@@ -6,7 +6,6 @@ import com.routeshare.vehicle.dto.request.VehicleRequest;
 import com.routeshare.vehicle.dto.response.VehicleResponse;
 import com.routeshare.vehicle.service.VehicleService;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -80,45 +79,8 @@ public class DriverAppReadinessController {
         "routeId", routeId, "status", "PUBLISHED", "route", routeService.getDriverRoute(routeId));
   }
 
-  @PostMapping("/api/v1/driver/recurring-routes")
-  public Map<String, Object> createRecurringRoute(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.create("RECURRING_ROUTE", "DRIVER", "DRIVER", null, body);
-  }
-
-  @GetMapping("/api/v1/driver/recurring-routes")
-  public List<Map<String, Object>> recurringRoutes() {
-    return service.mine("RECURRING_ROUTE", "DRIVER");
-  }
-
-  @PutMapping("/api/v1/driver/recurring-routes/{routeId}")
-  public Map<String, Object> updateRecurringRoute(
-      @PathVariable long routeId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.update(routeId, body);
-  }
-
-  @DeleteMapping("/api/v1/driver/recurring-routes/{routeId}")
-  public Map<String, Object> deleteRecurringRoute(@PathVariable long routeId) {
-    return service.update(routeId, Map.of("status", "PAUSED"));
-  }
-
-  @PostMapping("/api/v1/driver/recurring-routes/{routeId}/generate-occurrences")
-  public Map<String, Object> generateRecurringOccurrences(
-      @PathVariable long routeId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "RECURRING_ROUTE_GENERATION", "DRIVER", "RECURRING_ROUTE", String.valueOf(routeId), body);
-  }
-
-  @GetMapping("/api/v1/driver/payout-profile")
-  public Map<String, Object> payoutProfile() {
-    return service.payoutProfile();
-  }
-
-  @PutMapping("/api/v1/driver/payout-profile")
-  public Map<String, Object> updatePayoutProfile(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.payoutProfile(body);
-  }
+  // Recurring routes are served by the real DriverRecurringRouteController and payout profile by
+  // DriverPayoutController (Phase 06.6-F); their workflow_item-backed versions were removed here.
 
   // Ratings, SOS, support tickets, notifications, preferences, and push registrations are served by
   // the real rating/safety/support/notification modules (Phase 06.6-D/E); their

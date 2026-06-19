@@ -43,4 +43,25 @@ public interface RouteOccurrenceRepository extends JpaRepository<RouteOccurrence
 
     double getRouteLengthMeters();
   }
+
+  @Query(
+      value =
+          """
+      SELECT route_occurrence_id AS "occurrenceId", scheduled_departure_at AS "scheduledAt",
+             available_seats AS "availableSeats"
+      FROM routing.route_occurrence
+      WHERE route_plan_id = :routePlanId
+      ORDER BY scheduled_departure_at DESC
+      LIMIT 1
+      """,
+      nativeQuery = true)
+  Optional<LatestOccurrenceRow> findLatestForPlan(@Param("routePlanId") long routePlanId);
+
+  interface LatestOccurrenceRow {
+    long getOccurrenceId();
+
+    Instant getScheduledAt();
+
+    int getAvailableSeats();
+  }
 }
