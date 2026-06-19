@@ -15,4 +15,6 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicketEnti
   List<SupportTicketEntity> findAllByOrderByIdDesc(Pageable pageable);
 
   List<SupportTicketEntity> findByStatusOrderByIdDesc(String status, Pageable pageable);
+
+  long countByStatusIn(java.util.Collection<String> statuses);
 }

@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminAppReadinessController {
   private final AppReadinessService service;
 
-  @GetMapping("/api/v1/admin/dashboard")
-  public Map<String, Object> dashboard() {
-    return service.dashboard();
-  }
+  // Dashboard + reports/summary are served by the real AdminDashboardController (Phase 06.6-G3).
 
   // Audit log, user list/detail/suspend/activate/status-history are served by the real
   // AdminAuditController and AdminUserController (Phase 06.6-G). Role updates remain here pending
@@ -47,19 +44,8 @@ public class AdminAppReadinessController {
         "DRIVER_APPLICATION_REVIEW", "ADMIN", "DRIVER", String.valueOf(driverId), body);
   }
 
-  @PostMapping("/api/v1/admin/driver-documents/{documentId}/review")
-  public Map<String, Object> reviewDriverDocument(
-      @PathVariable long documentId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "DRIVER_DOCUMENT_REVIEW", "ADMIN", "DRIVER_DOCUMENT", String.valueOf(documentId), body);
-  }
-
-  @PostMapping("/api/v1/admin/vehicle-documents/{documentId}/review")
-  public Map<String, Object> reviewVehicleDocument(
-      @PathVariable long documentId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "VEHICLE_DOCUMENT_REVIEW", "ADMIN", "VEHICLE_DOCUMENT", String.valueOf(documentId), body);
-  }
+  // Driver/vehicle/passenger document review + signed download are served by the real
+  // AdminDocumentController (Phase 06.6-G3), backed by the document tables + object storage.
 
   @GetMapping("/api/v1/admin/vehicles")
   public List<Map<String, Object>> vehicles() {
@@ -69,17 +55,6 @@ public class AdminAppReadinessController {
   @GetMapping("/api/v1/admin/vehicles/{vehicleId}")
   public Map<String, Object> vehicle(@PathVariable long vehicleId) {
     return Map.of("vehicleId", vehicleId, "status", "REVIEWABLE");
-  }
-
-  @PostMapping("/api/v1/admin/documents/{documentId}/download-url")
-  public Map<String, Object> documentDownloadUrl(@PathVariable long documentId) {
-    return Map.of(
-        "documentId",
-        documentId,
-        "downloadUrl",
-        "https://routeshare.local/documents/" + documentId,
-        "expiresInSeconds",
-        300);
   }
 
   @GetMapping("/api/v1/admin/trips")

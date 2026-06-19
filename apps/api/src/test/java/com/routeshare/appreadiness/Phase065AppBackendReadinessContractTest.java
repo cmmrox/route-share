@@ -47,9 +47,10 @@ class Phase065AppBackendReadinessContractTest {
                     "update", com.routeshare.driver.dto.request.PayoutProfileRequest.class)
                 .isAnnotationPresent(PutMapping.class))
         .isTrue();
+    // Dashboard moved to the real AdminDashboardController in Phase 06.6-G3.
     assertThat(
-            AdminAppReadinessController.class
-                .getMethod("dashboard")
+            com.routeshare.admin.controller.AdminDashboardController.class
+                .getDeclaredMethod("dashboard")
                 .isAnnotationPresent(GetMapping.class))
         .isTrue();
     // Audit actions moved to the real AdminAuditController in Phase 06.6-G.
