@@ -120,39 +120,8 @@ public class DriverAppReadinessController {
     return service.payoutProfile(body);
   }
 
-  @GetMapping("/api/v1/driver/ratings")
-  public List<Map<String, Object>> ratings() {
-    return service.mine("RATING", "DRIVER");
-  }
-
-  @PostMapping("/api/v1/driver/sos-events")
-  public Map<String, Object> createSos(@RequestBody(required = false) Map<String, Object> body) {
-    return service.create("SOS_EVENT", "DRIVER", "DRIVER", null, body);
-  }
-
-  // Notifications, preferences, and push registrations are served by the real notification module
-  // (DriverNotificationController); the workflow_item-backed versions were removed in Phase 06.6-D.
-
-  @PostMapping("/api/v1/driver/support/tickets")
-  public Map<String, Object> createSupportTicket(
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.create("SUPPORT_TICKET", "DRIVER", "DRIVER", null, body);
-  }
-
-  @GetMapping("/api/v1/driver/support/tickets")
-  public List<Map<String, Object>> supportTickets() {
-    return service.mine("SUPPORT_TICKET", "DRIVER");
-  }
-
-  @GetMapping("/api/v1/driver/support/tickets/{ticketId}")
-  public Map<String, Object> supportTicket(@PathVariable long ticketId) {
-    return service.get(ticketId);
-  }
-
-  @PostMapping("/api/v1/driver/support/tickets/{ticketId}/messages")
-  public Map<String, Object> supportTicketMessage(
-      @PathVariable long ticketId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "SUPPORT_MESSAGE", "DRIVER", "SUPPORT_TICKET", String.valueOf(ticketId), body);
-  }
+  // Ratings, SOS, support tickets, notifications, preferences, and push registrations are served by
+  // the real rating/safety/support/notification modules (Phase 06.6-D/E); their
+  // workflow_item-backed
+  // versions were removed here.
 }

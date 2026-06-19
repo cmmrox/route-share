@@ -6,6 +6,35 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ---
 
+## 2026-06-19
+
+### Task: Phase 06.6-E — Support tickets, SOS events, ratings
+
+Status: `COMPLETED`
+
+Context: Support/SOS/ratings were workflow_item shells. Built real domains for each.
+
+Files Created:
+
+- `support` module: SupportTicket/SupportMessage entities + repos; `SupportService(+Impl)` (create/list/get/addMessage, reopens resolved on new message); DTOs; Passenger/Driver support controllers.
+- `safety` module: SosEvent entity + repo; `SosService(+Impl)` (raise persists, publishes `safety.sos.raised` domain event, sends confirmation via NotificationFacade; listMine); DTOs; Passenger/Driver SOS controllers.
+- `rating` module: Rating entity + repo (unique per booking+rater, ratee aggregate projection); `RatingService(+Impl)` (passenger rates driver — ratee resolved via BookingFacade, duplicate-guarded, notifies driver; driver ratings summary); DTOs; Passenger/Driver rating controllers.
+- `db/migration/V020__support_sos_ratings.sql` (support/safety/rating schemas).
+- Added `BookingFacade.findDriverAppUserIdForPassengerBooking` (+ repo query) for rating ownership/ratee.
+- Tests: SupportServiceImplTest, SosServiceImplTest, RatingServiceImplTest.
+
+Files Changed:
+
+- Removed support/SOS/rating endpoints from Passenger/Driver readiness controllers (now real modules). Updated `Phase065AppBackendReadinessContractTest` to assert the real SOS controller.
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 142, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase F — recurring routes + driver payout profile.
+
+---
+
 ## 2026-06-18
 
 ### Task: Phase 06.6-D — Notifications + FCM push
