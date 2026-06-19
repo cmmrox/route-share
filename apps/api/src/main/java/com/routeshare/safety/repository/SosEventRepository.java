@@ -11,5 +11,7 @@ public interface SosEventRepository extends JpaRepository<SosEventEntity, Long> 
 
   List<SosEventEntity> findByStatusOrderByIdDesc(String status, Pageable pageable);
 
+  List<SosEventEntity> findAllByOrderByIdDesc(Pageable pageable);
+
   Optional<SosEventEntity> findByIdAndAppUserId(long id, long appUserId);
 }
