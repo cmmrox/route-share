@@ -40,9 +40,11 @@ class Phase065AppBackendReadinessContractTest {
                 .getMethod("verificationStatus")
                 .isAnnotationPresent(GetMapping.class))
         .isTrue();
+    // Payout profile moved to the real DriverPayoutController in Phase 06.6-F.
     assertThat(
-            DriverAppReadinessController.class
-                .getMethod("updatePayoutProfile", java.util.Map.class)
+            com.routeshare.driver.controller.DriverPayoutController.class
+                .getDeclaredMethod(
+                    "update", com.routeshare.driver.dto.request.PayoutProfileRequest.class)
                 .isAnnotationPresent(PutMapping.class))
         .isTrue();
     assertThat(

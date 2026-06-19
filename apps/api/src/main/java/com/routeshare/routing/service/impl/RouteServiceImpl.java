@@ -8,9 +8,11 @@ import com.routeshare.routing.domain.RouteMatchCandidate;
 import com.routeshare.routing.domain.RouteMatchScorer;
 import com.routeshare.routing.domain.RouteSchedulePolicy;
 import com.routeshare.routing.dto.request.CoordinateRequest;
+import com.routeshare.routing.dto.request.RecurringRoutePublishRequest;
 import com.routeshare.routing.dto.request.RoutePublishRequest;
 import com.routeshare.routing.dto.request.RouteSearchRequest;
 import com.routeshare.routing.dto.response.DriverRouteResponse;
+import com.routeshare.routing.dto.response.RecurringRouteResponse;
 import com.routeshare.routing.dto.response.RouteSearchResponse;
 import com.routeshare.routing.repository.RouteBucketCellRepository;
 import com.routeshare.routing.repository.RouteOccurrenceRepository;
@@ -19,11 +21,15 @@ import com.routeshare.routing.repository.RouteScheduleRuleRepository;
 import com.routeshare.routing.service.RouteService;
 import com.routeshare.vehicle.facade.VehicleFacade;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -204,6 +210,196 @@ public class RouteServiceImpl implements RouteService {
     String qrPayload = "ROUTESHARE_ROUTE:" + token;
     String savedUrl = routes.upsertShareLink(routeId, token, shareUrl, qrPayload);
     return Map.of("routeId", routeId, "shareUrl", savedUrl, "qrPayload", qrPayload);
+  }
+
+  private static final int DEFAULT_RECURRING_HORIZON_DAYS = 30;
+  private static final int MAX_RECURRING_HORIZON_DAYS = 90;
+
+  @Override
+  @Transactional
+  public Map<String, Object> publishRecurring(RecurringRoutePublishRequest req) {
+    validateCoordinates(req.coordinates());
+    Set<DayOfWeek> days = parseDays(req.daysOfWeek());
+    Instant generateUntil = horizonFrom(req.firstDepartureTime(), req.horizonDays());
+    var departures =
+        routeSchedulePolicy.generateRecurringOccurrences(
+            req.firstDepartureTime(),
+            req.endAt(),
+            days,
+            generateUntil,
+            null,
+            RouteSchedulePolicy.MAX_RECURRING_OCCURRENCES);
+    if (departures.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Recurring schedule produced no future departures in the horizon");
+    }
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    long driverId =
+        driverFacade
+            .findApprovedDriverProfileIdByAppUserId(app.appUserId())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Approved driver profile is required before publishing routes"));
+    requireApprovedVehicleWithCapacity(req.vehicleId(), driverId, req.availableSeats());
+    long routePlanId =
+        routes.create(
+            driverId,
+            req.vehicleId(),
+            req.originLabel(),
+            req.destinationLabel(),
+            toLineStringPoints(req.coordinates()),
+            departures.getFirst(),
+            req.availableSeats());
+    long ruleId =
+        scheduleRules.insertRecurringRule(
+            routePlanId, req.firstDepartureTime(), req.endAt(), daysToCsv(days));
+    var cells = routeBucketCellGenerator.cellsFor(req.coordinates(), ROUTE_BUCKET_RESOLUTION);
+    List<Long> occurrenceIds = new ArrayList<>();
+    for (Instant departure : departures) {
+      long occurrenceId =
+          occurrences.insertOccurrence(routePlanId, departure, req.availableSeats());
+      occurrenceIds.add(occurrenceId);
+      cells.forEach(
+          cell -> bucketCells.insertCell(routePlanId, occurrenceId, ROUTE_BUCKET_RESOLUTION, cell));
+    }
+    return Map.of(
+        "routePlanId",
+        routePlanId,
+        "routeScheduleRuleId",
+        ruleId,
+        "generatedOccurrences",
+        occurrenceIds.size(),
+        "firstDeparture",
+        departures.getFirst());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<RecurringRouteResponse> listRecurringRoutes() {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    return scheduleRules.findRecurringRulesForDriver(app.appUserId()).stream()
+        .map(this::toRecurringResponse)
+        .toList();
+  }
+
+  @Override
+  @Transactional
+  public RecurringRouteResponse updateRecurringStatus(long ruleId, String status) {
+    if (!Set.of("ACTIVE", "PAUSED", "CANCELLED").contains(status)) {
+      throw new IllegalArgumentException("Invalid recurring route status: " + status);
+    }
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    var rule =
+        scheduleRules
+            .findRecurringRuleForDriver(ruleId, app.appUserId())
+            .orElseThrow(() -> new java.util.NoSuchElementException("Recurring route not found"));
+    scheduleRules.updateStatus(ruleId, status);
+    if ("CANCELLED".equals(status)) {
+      routes.cancelRouteOccurrences(rule.getRoutePlanId());
+    }
+    return scheduleRules
+        .findRecurringRuleForDriver(ruleId, app.appUserId())
+        .map(this::toRecurringResponse)
+        .orElseThrow();
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> generateRecurringOccurrences(long ruleId, Integer horizonDays) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    var rule =
+        scheduleRules
+            .findRecurringRuleForDriver(ruleId, app.appUserId())
+            .orElseThrow(() -> new java.util.NoSuchElementException("Recurring route not found"));
+    if (!"ACTIVE".equals(rule.getStatus())) {
+      throw new IllegalStateException("Only active recurring routes can generate occurrences");
+    }
+    var latest =
+        occurrences
+            .findLatestForPlan(rule.getRoutePlanId())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException("Recurring route has no occurrences to extend from"));
+    Instant generateUntil = horizonFrom(Instant.now(clock), horizonDays);
+    var departures =
+        routeSchedulePolicy.generateRecurringOccurrences(
+            rule.getStartAt(),
+            rule.getEndAt(),
+            parseDays(splitCsv(rule.getDaysCsv())),
+            generateUntil,
+            latest.getScheduledAt(),
+            RouteSchedulePolicy.MAX_RECURRING_OCCURRENCES);
+    int generated = 0;
+    for (Instant departure : departures) {
+      long occurrenceId =
+          occurrences.insertOccurrence(
+              rule.getRoutePlanId(), departure, latest.getAvailableSeats());
+      bucketCells.copyCellsToOccurrence(latest.getOccurrenceId(), occurrenceId);
+      generated++;
+    }
+    return Map.of(
+        "routeScheduleRuleId", ruleId,
+        "routePlanId", rule.getRoutePlanId(),
+        "generatedOccurrences", generated);
+  }
+
+  private RecurringRouteResponse toRecurringResponse(
+      RouteScheduleRuleRepository.RecurringRuleRow row) {
+    return new RecurringRouteResponse(
+        row.getRuleId(),
+        row.getRoutePlanId(),
+        row.getOriginLabel(),
+        row.getDestinationLabel(),
+        row.getStartAt(),
+        row.getEndAt(),
+        splitCsv(row.getDaysCsv()),
+        row.getStatus());
+  }
+
+  private Instant horizonFrom(Instant from, Integer horizonDays) {
+    int days =
+        horizonDays == null || horizonDays <= 0
+            ? DEFAULT_RECURRING_HORIZON_DAYS
+            : Math.min(horizonDays, MAX_RECURRING_HORIZON_DAYS);
+    return from.plus(Duration.ofDays(days));
+  }
+
+  private Set<DayOfWeek> parseDays(List<String> days) {
+    Set<DayOfWeek> result = new LinkedHashSet<>();
+    if (days == null) {
+      return result;
+    }
+    for (String day : days) {
+      if (day == null || day.isBlank()) {
+        continue;
+      }
+      switch (day.trim().toUpperCase()) {
+        case "MON", "MONDAY" -> result.add(DayOfWeek.MONDAY);
+        case "TUE", "TUESDAY" -> result.add(DayOfWeek.TUESDAY);
+        case "WED", "WEDNESDAY" -> result.add(DayOfWeek.WEDNESDAY);
+        case "THU", "THURSDAY" -> result.add(DayOfWeek.THURSDAY);
+        case "FRI", "FRIDAY" -> result.add(DayOfWeek.FRIDAY);
+        case "SAT", "SATURDAY" -> result.add(DayOfWeek.SATURDAY);
+        case "SUN", "SUNDAY" -> result.add(DayOfWeek.SUNDAY);
+        default -> throw new IllegalArgumentException("Invalid day of week: " + day);
+      }
+    }
+    return result;
+  }
+
+  private String daysToCsv(Set<DayOfWeek> days) {
+    return days.stream()
+        .map(d -> d.name().substring(0, 3))
+        .reduce((a, b) -> a + "," + b)
+        .orElse("");
+  }
+
+  private List<String> splitCsv(String csv) {
+    if (csv == null || csv.isBlank()) {
+      return List.of();
+    }
+    return List.of(csv.split(","));
   }
 
   private DriverRouteResponse toDriverRouteResponse(RoutePlanRepository.DriverRouteRow row) {
