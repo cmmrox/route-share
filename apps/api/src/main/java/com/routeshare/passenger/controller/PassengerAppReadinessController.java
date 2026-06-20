@@ -28,11 +28,8 @@ public class PassengerAppReadinessController {
         "DETAIL_AVAILABLE_FROM_SEARCH_RESPONSE");
   }
 
-  @PostMapping("/api/v1/passenger/bookings/{bookingId}/early-drop-off")
-  public Map<String, Object> earlyDropOff(
-      @PathVariable long bookingId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.earlyDropOff(bookingId, body);
-  }
+  // Early drop-off is served by the real PassengerBookingController (actual-distance fare recalc +
+  // capture, Phase 06.6-K); the workflow_item-backed shell was removed here.
 
   @PostMapping("/api/v1/passenger/bookings/{bookingId}/share")
   public Map<String, Object> share(

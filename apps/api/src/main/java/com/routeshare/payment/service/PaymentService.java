@@ -10,6 +10,13 @@ import java.util.Map;
 public interface PaymentService {
   Map<String, Object> createIntent(PaymentIntentRequest req);
 
+  /**
+   * Finalizes a booking fare to the actual amount (e.g. after early drop-off): records
+   * FARE_FINALIZED and, for an active card authorization, captures that amount instead of the
+   * original estimate.
+   */
+  Map<String, Object> finalizeBookingFare(long bookingId, java.math.BigDecimal finalAmount);
+
   Map<String, Object> capture(long paymentIntentId, PaymentLifecycleRequest req);
 
   Map<String, Object> voidIntent(long paymentIntentId, PaymentLifecycleRequest req);

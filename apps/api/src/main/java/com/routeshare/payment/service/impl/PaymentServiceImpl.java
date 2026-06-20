@@ -38,6 +38,7 @@ public class PaymentServiceImpl implements PaymentService {
   static final String FARE_ADJUSTMENT_REQUESTED = "FARE_ADJUSTMENT_REQUESTED";
   static final String PLATFORM_COMMISSION = "PLATFORM_COMMISSION";
   static final String DRIVER_EARNING = "DRIVER_EARNING";
+  static final String FARE_FINALIZED = "FARE_FINALIZED";
 
   private final CurrentUserProvider current;
   private final IdentityFacade identityFacade;
@@ -96,6 +97,40 @@ public class PaymentServiceImpl implements PaymentService {
     }
     return toResponse(
         paymentIntents.create(req.bookingId(), providerReference, amount, DEFAULT_CURRENCY));
+  }
+
+  @Override
+  @Transactional
+  public Map<String, Object> finalizeBookingFare(long bookingId, BigDecimal finalAmount) {
+    if (finalAmount == null || finalAmount.signum() <= 0) {
+      throw new IllegalArgumentException("Final fare amount must be positive");
+    }
+    fareLedger.recordPaymentLifecycleIfAbsent(
+        bookingId, FARE_FINALIZED, finalAmount, DEFAULT_CURRENCY);
+
+    boolean captured = false;
+    var existing = paymentIntents.findActiveByBookingId(bookingId);
+    if (existing.isPresent()) {
+      var intent = existing.get();
+      boolean external =
+          intent.providerReference() != null
+              && !intent.providerReference().startsWith("cash_")
+              && !intent.providerReference().startsWith("local_");
+      if (external && "REQUIRES_CAPTURE".equals(intent.status())) {
+        var capturedIntent = transition(intent.paymentIntentId(), "REQUIRES_CAPTURE", "CAPTURED");
+        gateway.capture(capturedIntent.providerReference(), finalAmount, DEFAULT_CURRENCY);
+        fareLedger.recordPaymentLifecycleIfAbsent(
+            bookingId, PAYMENT_CAPTURED, finalAmount, DEFAULT_CURRENCY);
+        recordSettlement(bookingId, finalAmount, DEFAULT_CURRENCY);
+        captured = true;
+      }
+    }
+    return Map.of(
+        "bookingId", bookingId,
+        "status", "FARE_FINALIZED",
+        "finalAmount", finalAmount,
+        "currency", DEFAULT_CURRENCY,
+        "captured", captured);
   }
 
   @Override

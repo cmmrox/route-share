@@ -24,9 +24,13 @@ class Phase065AppBackendReadinessContractTest {
   void criticalPhase065ContractMethodsAreMapped() throws Exception {
     assertThat(AppConfigController.class.getMethod("config").isAnnotationPresent(GetMapping.class))
         .isTrue();
+    // Early drop-off moved to the real PassengerBookingController in Phase 06.6-K.
     assertThat(
-            PassengerAppReadinessController.class
-                .getMethod("earlyDropOff", long.class, java.util.Map.class)
+            com.routeshare.booking.controller.PassengerBookingController.class
+                .getDeclaredMethod(
+                    "earlyDropOff",
+                    long.class,
+                    com.routeshare.booking.dto.request.EarlyDropOffRequest.class)
                 .isAnnotationPresent(PostMapping.class))
         .isTrue();
     // SOS moved to the real safety module in Phase 06.6-E.

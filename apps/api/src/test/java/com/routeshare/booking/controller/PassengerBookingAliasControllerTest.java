@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.routeshare.booking.dto.request.BookingRequest;
 import com.routeshare.booking.service.BookingService;
+import com.routeshare.booking.service.EarlyDropOffService;
 import com.routeshare.payment.service.PaymentService;
 import java.math.BigDecimal;
 import java.util.Map;
@@ -19,10 +20,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class PassengerBookingAliasControllerTest {
   @Mock private BookingService bookings;
   @Mock private PaymentService payments;
+  @Mock private EarlyDropOffService earlyDropOff;
 
   @Test
   void passengerBookingCreateDelegatesWithIdempotencyKey() {
-    var controller = new PassengerBookingController(bookings, payments);
+    var controller = new PassengerBookingController(bookings, payments, earlyDropOff);
     var request = new BookingRequest(20L, 1, 6.9271, 79.8612, 6.9000, 79.9000, 0.10, 0.80);
     when(bookings.book(request, "idem-1"))
         .thenReturn(
@@ -39,7 +41,7 @@ class PassengerBookingAliasControllerTest {
 
   @Test
   void passengerCancelDelegatesToBookingStatusTransition() {
-    var controller = new PassengerBookingController(bookings, payments);
+    var controller = new PassengerBookingController(bookings, payments, earlyDropOff);
     when(bookings.transition(
             30L,
             new com.routeshare.booking.dto.request.BookingStatusTransitionRequest(
