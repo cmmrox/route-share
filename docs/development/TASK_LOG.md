@@ -6,7 +6,27 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ---
 
-## 2026-06-19
+## 2026-06-21
+
+### Task: Phase 06.6-I (part 1) — live-stack boot validation + ambiguous-mapping guard
+
+Status: `IN_PROGRESS` (rate limiting + integration/load tests remain)
+
+Context: Booted the packaged API against the running project Docker stack (Postgres :5433, Keycloak :8081, Redis, MinIO, Redpanda) per the "use the project services" directive.
+
+Findings + fixes:
+
+- Flyway applied V016–V023 cleanly against the real Postgres 16 (now at v023).
+- **Live boot caught a latent ambiguous-mapping startup failure** (no Spring-context test exists to catch it): `DriverAppReadinessController` still mapped `POST /driver/documents/{id}/submit` and `POST /driver/vehicles/{vehicleId}/documents/{documentId}/submit`, duplicating the real `DriverDocumentController`/`VehicleDocumentController` submit endpoints added in Phase B. Removed both shells.
+- Added `architecture/RequestMappingUniquenessTest` — scans controller sources and fails on any duplicate HTTP-verb + normalised-path (path vars → `{}`), so this class of bug can't recur without Docker. (Would have caught the G-3 `/reports/summary` and G-4 duplicates too.)
+- Re-booted: `Started RouteShareApplication in 5.5s`, `/actuator/health` UP with liveness/readiness groups; `/api/v1/app/config` 200; `/api/v1/admin/dashboard` and `/api/v1/pricing/estimate-by-route` correctly 401 without a token.
+
+Verification:
+
+- `./mvnw spotless:check test` — BUILD SUCCESS, `Tests run: 157, Failures: 0, Errors: 0, Skipped: 1`.
+- Live boot against project Docker stack: full context start + health UP.
+
+Next step: Phase I continued — Redis rate limiting (OTP/payment/SOS), Testcontainers integration/authz tests, load smoke; then Phase J deployment readiness.
 
 ### Task: Phase 06.6-H — Maps metrics → real fare/ETA + trip location trail
 
