@@ -1,7 +1,6 @@
 package com.routeshare.admin.controller;
 
 import com.routeshare.appreadiness.service.AppReadinessService;
-import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,10 +29,5 @@ public class AdminAppReadinessController {
       @PathVariable long driverId, @RequestBody(required = false) Map<String, Object> body) {
     return service.create(
         "DRIVER_APPLICATION_REVIEW", "ADMIN", "DRIVER", String.valueOf(driverId), body);
-  }
-
-  @GetMapping("/api/v1/admin/trips/{tripId}/location-trail")
-  public List<Map<String, Object>> locationTrail(@PathVariable long tripId) {
-    return service.all("LOCATION_TRAIL_REQUEST");
   }
 }

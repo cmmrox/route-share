@@ -19,6 +19,22 @@ class FareCalculatorTest {
   }
 
   @Test
+  void addsTimeFareFromDuration() {
+    var calc =
+        new FareCalculator(
+            new BigDecimal("250.00"),
+            new BigDecimal("90.00"),
+            new BigDecimal("5.00"),
+            new BigDecimal("0.10"));
+    var fare = calc.estimate(10000, 600); // 10 km, 10 min
+    assertThat(fare.distanceFare()).isEqualByComparingTo("900.00");
+    assertThat(fare.timeFare()).isEqualByComparingTo("50.00");
+    // subtotal 1200 -> fee 120 -> total 1320
+    assertThat(fare.platformFee()).isEqualByComparingTo("120.00");
+    assertThat(fare.totalFare()).isEqualByComparingTo("1320.00");
+  }
+
+  @Test
   void rejectsNegativeDistance() {
     var calc = new FareCalculator(BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ZERO);
     assertThatThrownBy(() -> calc.estimate(-1)).isInstanceOf(IllegalArgumentException.class);

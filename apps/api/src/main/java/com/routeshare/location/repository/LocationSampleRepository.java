@@ -12,6 +12,35 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface LocationSampleRepository extends JpaRepository<LocationSampleEntity, Long> {
+
+  /** Ordered location trail for a trip, extracting lat/lng from the PostGIS point geometry. */
+  @Query(
+      value =
+          """
+      SELECT ST_Y(point) AS "latitude", ST_X(point) AS "longitude",
+             speed_mps AS "speedMps", bearing_degrees AS "bearingDegrees",
+             accuracy_m AS "accuracyMeters", device_recorded_at AS "recordedAt"
+      FROM location.location_sample
+      WHERE trip_id = :tripId
+      ORDER BY device_recorded_at ASC
+      """,
+      nativeQuery = true)
+  List<LocationTrailRow> findTrailByTripId(@Param("tripId") long tripId);
+
+  interface LocationTrailRow {
+    Double getLatitude();
+
+    Double getLongitude();
+
+    java.math.BigDecimal getSpeedMps();
+
+    java.math.BigDecimal getBearingDegrees();
+
+    java.math.BigDecimal getAccuracyMeters();
+
+    Instant getRecordedAt();
+  }
+
   @Query(
       value =
           """

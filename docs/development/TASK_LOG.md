@@ -8,6 +8,27 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-19
 
+### Task: Phase 06.6-H — Maps metrics → real fare/ETA + trip location trail
+
+Status: `COMPLETED`
+
+Files Created:
+
+- `maps`: `RouteMetricsPort` (+ `RouteMetrics`), `service/impl/RouteMetricsAdapter` (Google Distance Matrix when `GOOGLE_MAPS_ENABLED`+key, else haversine fallback — never throws, degrades gracefully), `domain/HaversineDistance`.
+- `pricing`: time-aware `FareCalculator` (added per-min + `estimate(distance,duration)`; `FareBreakdown` gains `timeFare`); `POST /api/v1/pricing/estimate-by-route` prices from pickup/drop-off coordinates via the port (`RouteFareEstimateRequest`/`RouteFareResponse`).
+- Location trail: `LocationSampleRepository.findTrailByTripId` (ST_Y/ST_X from the PostGIS point); `AdminOpsService.locationTrail` + `AdminOpsController` `GET /admin/trips/{id}/location-trail` (`AdminLocationSampleResponse`).
+- Tests: `HaversineDistanceTest`, `RouteMetricsAdapterTest`, fare time-component test.
+
+Files Changed:
+
+- Retired the last admin facade read endpoint (location-trail) — `AdminAppReadinessController` now holds only `driver-applications/{id}/review`.
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 156, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase I — performance + security + integration/load test hardening (incl. live project-Docker-stack smoke checks of the gated provider integrations).
+
 ### Task: Phase 06.6-G4 — Broadcasts, Keycloak roles, admin ops projections
 
 Status: `COMPLETED` (Phase G admin suite functionally complete)
