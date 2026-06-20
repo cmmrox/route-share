@@ -32,16 +32,8 @@ public class DriverAppReadinessController {
     return service.create("DRIVER_KYC_LICENCE", "DRIVER", "DRIVER", null, body);
   }
 
-  @PostMapping("/api/v1/driver/documents/{documentId}/submit")
-  public Map<String, Object> submitDriverDocument(
-      @PathVariable long documentId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "DRIVER_DOCUMENT_SUBMISSION",
-        "DRIVER",
-        "DRIVER_DOCUMENT",
-        String.valueOf(documentId),
-        body);
-  }
+  // Driver/vehicle document submit are served by the real DriverDocumentController /
+  // VehicleDocumentController (Phase 06.6-B); the workflow_item submit shells were removed here.
 
   @GetMapping("/api/v1/driver/vehicles/{vehicleId}")
   public VehicleResponse vehicle(@PathVariable long vehicleId) {
@@ -58,19 +50,6 @@ public class DriverAppReadinessController {
   public Map<String, Object> deleteVehicle(@PathVariable long vehicleId) {
     vehicleService.deleteMine(vehicleId);
     return Map.of("deleted", true, "vehicleId", vehicleId);
-  }
-
-  @PostMapping("/api/v1/driver/vehicles/{vehicleId}/documents/{documentId}/submit")
-  public Map<String, Object> submitVehicleDocument(
-      @PathVariable long vehicleId,
-      @PathVariable long documentId,
-      @RequestBody(required = false) Map<String, Object> body) {
-    return service.create(
-        "VEHICLE_DOCUMENT_SUBMISSION",
-        "DRIVER",
-        "VEHICLE_DOCUMENT",
-        vehicleId + ":" + documentId,
-        body);
   }
 
   @PostMapping("/api/v1/driver/routes/{routeId}/publish")
