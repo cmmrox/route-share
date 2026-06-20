@@ -8,6 +8,30 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-21
 
+### Task: Phase 06.6-J — Deployment readiness
+
+Status: `COMPLETED`
+
+Files Created:
+
+- `apps/api/Dockerfile` — multi-stage (Maven build → Temurin 21 JRE), non-root user, `json` profile, Actuator-liveness HEALTHCHECK; `apps/api/.dockerignore`.
+- `infra/docker-compose/docker-compose.prod.yml` — overlay adding the `api` service wired to the in-network backing services; every provider flag defaults to disabled/fail-safe.
+- `docs/development/DEPLOYMENT.md` — build/run (project services), the gated-integration flag→credential table, migration pipeline, health/probes/metrics, backup/restore drill, runbooks, hosting checklist.
+
+Files Changed:
+
+- `PRODUCTION_EXTERNAL_SERVICES.md` — added the Phase 06.6 implementation-status matrix (adapter + enable-flag per provider) and the remaining business credentials/hosting to flip live.
+
+Verification:
+
+- `docker compose -f docker-compose.yml -f docker-compose.prod.yml config` — VALID.
+- `docker build apps/api` — image builds (multi-stage Maven→JRE). [see verification note in commit]
+- Keycloak realm import confirmed to already define all 8 managed roles + 4 clients.
+
+Outcome: **Phase 06.6 (Backend Production Hardening) A–J complete.** The backend is real domain code
+behind gated, credential-ready provider integrations, boots against the project Docker stack, and has
+a deployable image + ops docs.
+
 ### Task: Phase 06.6-I (part 2) — Redis rate limiting
 
 Status: `COMPLETED` (Phase I security hardening; perf/load + Testcontainers suite remain ongoing)

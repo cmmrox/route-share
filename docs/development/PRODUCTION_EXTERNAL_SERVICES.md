@@ -609,3 +609,25 @@ Still needed before real production integrations can be enabled:
 6. Implement object storage before driver KYC or profile avatar production claims.
 7. Implement SMS provider before enabling phone OTP in production.
 8. Implement payment gateway only after preauth/capture/refund support is confirmed by the selected vendor.
+
+## 2026-06-21 — Phase 06.6 implementation status (backend adapters built + gated)
+
+All selected providers now have **real backend adapters behind ports + capability flags** (Phase
+06.6 A–J). The backend boots cleanly against the project Docker stack with everything disabled; each
+integration goes live by flipping its flag and supplying credentials. See
+`docs/development/DEPLOYMENT.md` §3 for the exact flag → credential table.
+
+| Provider | Adapter | Flag to enable |
+|---|---|---|
+| Notify.lk SMS/OTP | `NotifyLkSmsGateway` (pre-existing) + Redis OTP rate limiting | `NOTIFY_LK_ENABLED` |
+| Google Maps | `RouteMetricsAdapter` (Distance Matrix → fare/ETA) + `GooglePlaceSearchServiceImpl` | `GOOGLE_MAPS_ENABLED` |
+| Cybersource | `CybersourcePaymentGateway` (authorize/capture/void/refund/tokenize + webhook) | `CYBERSOURCE_ENABLED` |
+| Firebase FCM | `FcmPushAdapter` + notification domain | `PUSH_NOTIFICATIONS_ENABLED` |
+| Object storage | `S3ObjectStorageAdapter` (presigned KYC/doc lifecycle) | `OBJECT_STORAGE_ENABLED` |
+| Sentry | Spring Boot starter (backend) | `SENTRY_DSN_BACKEND` |
+| Kafka/Redpanda | outbox relay + `KafkaEventSender` | `ROUTESHARE_EVENTS_KAFKA_ENABLED` |
+| Keycloak | realm import + admin role propagation (`KeycloakRealmRoleAdapter`) | `ROUTESHARE_KEYCLOAK_USER_SYNC_ENABLED` |
+
+Still required from the business to flip to live: the actual credentials/accounts listed above
+(sandbox first), production Postgres/Redis/Redpanda hosting, object-storage bucket, domain/DNS/TLS,
+and EAS/app-store credentials for the mobile apps.

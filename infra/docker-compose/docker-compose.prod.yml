@@ -1,0 +1,59 @@
+# Production overlay that adds the RouteShare API on top of the backing services.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Secrets/credentials are injected from the host environment (or a secret manager) — see
+# prod.env.example for the full list. Unset provider flags default to disabled (gated, fail-safe).
+services:
+  api:
+    build:
+      context: ../../apps/api
+    image: routeshare/api:latest
+    container_name: routeshare-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: json
+      # Core platform — wired to the in-network service hostnames.
+      ROUTESHARE_JDBC_URL: jdbc:postgresql://postgres:5432/${ROUTESHARE_POSTGRES_DB:-routeshare}
+      ROUTESHARE_DB_USER: ${ROUTESHARE_POSTGRES_USER:-routeshare}
+      ROUTESHARE_DB_PASSWORD: ${ROUTESHARE_POSTGRES_PASSWORD:-routeshare_dev_password}
+      ROUTESHARE_REDIS_HOST: redis
+      ROUTESHARE_REDIS_PORT: "6379"
+      ROUTESHARE_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      ROUTESHARE_KEYCLOAK_ISSUER: http://keycloak:8080/realms/routeshare
+      ROUTESHARE_KEYCLOAK_SERVER_URL: http://keycloak:8080
+      ROUTESHARE_KEYCLOAK_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      ROUTESHARE_KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      # Eventing (enable when a broker is reachable).
+      ROUTESHARE_EVENTS_KAFKA_ENABLED: ${ROUTESHARE_EVENTS_KAFKA_ENABLED:-false}
+      # Provider integrations — disabled unless credentials are supplied (see prod.env.example).
+      OBJECT_STORAGE_ENABLED: ${OBJECT_STORAGE_ENABLED:-false}
+      OBJECT_STORAGE_ENDPOINT: ${OBJECT_STORAGE_ENDPOINT:-http://minio:9000}
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-routeshare-documents}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-}
+      CYBERSOURCE_ENABLED: ${CYBERSOURCE_ENABLED:-false}
+      CYBERSOURCE_ENVIRONMENT: ${CYBERSOURCE_ENVIRONMENT:-sandbox}
+      CYBERSOURCE_MERCHANT_ID: ${CYBERSOURCE_MERCHANT_ID:-}
+      CYBERSOURCE_KEY_ID: ${CYBERSOURCE_KEY_ID:-}
+      CYBERSOURCE_SHARED_SECRET: ${CYBERSOURCE_SHARED_SECRET:-}
+      CYBERSOURCE_WEBHOOK_SECRET: ${CYBERSOURCE_WEBHOOK_SECRET:-}
+      PUSH_NOTIFICATIONS_ENABLED: ${PUSH_NOTIFICATIONS_ENABLED:-false}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+      FIREBASE_SERVICE_ACCOUNT_JSON: ${FIREBASE_SERVICE_ACCOUNT_JSON:-}
+      GOOGLE_MAPS_ENABLED: ${GOOGLE_MAPS_ENABLED:-false}
+      GOOGLE_MAPS_SERVER_API_KEY: ${GOOGLE_MAPS_SERVER_API_KEY:-}
+      NOTIFY_LK_ENABLED: ${NOTIFY_LK_ENABLED:-false}
+      NOTIFY_LK_API_USER_ID: ${NOTIFY_LK_API_USER_ID:-}
+      NOTIFY_LK_API_KEY: ${NOTIFY_LK_API_KEY:-}
+      NOTIFY_LK_SENDER_ID: ${NOTIFY_LK_SENDER_ID:-}
+      SENTRY_DSN_BACKEND: ${SENTRY_DSN_BACKEND:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
