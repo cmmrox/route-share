@@ -92,6 +92,13 @@ routeshare:
   commission:
     default-rate: ${ROUTESHARE_COMMISSION_DEFAULT_RATE:0.10}
 
+  rate-limit:
+    enabled: ${ROUTESHARE_RATE_LIMIT_ENABLED:true}
+    otp-request-per-hour: ${ROUTESHARE_RATE_LIMIT_OTP_REQUEST_PER_HOUR:5}
+    otp-verify-per-hour: ${ROUTESHARE_RATE_LIMIT_OTP_VERIFY_PER_HOUR:10}
+    payment-intent-per-minute: ${ROUTESHARE_RATE_LIMIT_PAYMENT_INTENT_PER_MIN:10}
+    sos-per-minute: ${ROUTESHARE_RATE_LIMIT_SOS_PER_MIN:5}
+
   push:
     enabled: ${PUSH_NOTIFICATIONS_ENABLED:false}
     project-id: ${FIREBASE_PROJECT_ID:}

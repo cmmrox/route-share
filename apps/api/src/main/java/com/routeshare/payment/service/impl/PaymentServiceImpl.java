@@ -1,6 +1,8 @@
 package com.routeshare.payment.service.impl;
 
 import com.routeshare.booking.facade.BookingFacade;
+import com.routeshare.common.ratelimit.RateLimitProperties;
+import com.routeshare.common.ratelimit.RateLimiter;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.payment.dto.request.CashCollectionRequest;
@@ -45,11 +47,18 @@ public class PaymentServiceImpl implements PaymentService {
   private final PaymentGatewayPort gateway;
   private final CommissionProperties commission;
   private final PaymentMethodRepository paymentMethods;
+  private final RateLimiter rateLimiter;
+  private final RateLimitProperties rateLimits;
 
   @Override
   @Transactional
   public Map<String, Object> createIntent(PaymentIntentRequest req) {
     var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    rateLimiter.check(
+        "payment-intent",
+        String.valueOf(app.appUserId()),
+        rateLimits.paymentIntentPerMinute(),
+        java.time.Duration.ofMinutes(1));
     var amount =
         bookingFacade
             .findFareEstimateForPassengerBooking(req.bookingId(), app.appUserId())
