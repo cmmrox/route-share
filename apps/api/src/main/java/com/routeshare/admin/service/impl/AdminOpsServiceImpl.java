@@ -3,6 +3,7 @@ package com.routeshare.admin.service.impl;
 import com.routeshare.admin.dto.AdminBookingResponse;
 import com.routeshare.admin.dto.AdminBookingStatusHistoryResponse;
 import com.routeshare.admin.dto.AdminDriverApplicationResponse;
+import com.routeshare.admin.dto.AdminLocationSampleResponse;
 import com.routeshare.admin.dto.AdminTripResponse;
 import com.routeshare.admin.dto.AdminVehicleResponse;
 import com.routeshare.admin.dto.ReportExportRequest;
@@ -15,6 +16,7 @@ import com.routeshare.booking.repository.BookingRepository;
 import com.routeshare.booking.repository.BookingStatusHistoryRepository;
 import com.routeshare.driver.entity.DriverProfileEntity;
 import com.routeshare.driver.repository.DriverProfileRepository;
+import com.routeshare.location.repository.LocationSampleRepository;
 import com.routeshare.trip.domain.TripStatus;
 import com.routeshare.trip.entity.TripEntity;
 import com.routeshare.trip.repository.TripRepository;
@@ -39,6 +41,7 @@ public class AdminOpsServiceImpl implements AdminOpsService {
   private final BookingStatusHistoryRepository bookingHistory;
   private final DriverProfileRepository drivers;
   private final VehicleRepository vehicles;
+  private final LocationSampleRepository locationSamples;
   private final AdminAuditService audit;
 
   private PageRequest page(int limit) {
@@ -71,6 +74,22 @@ public class AdminOpsServiceImpl implements AdminOpsService {
         String.valueOf(tripId),
         reason == null ? null : "{\"reason\":\"" + reason + "\"}");
     return toTrip(trip);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<AdminLocationSampleResponse> locationTrail(long tripId) {
+    return locationSamples.findTrailByTripId(tripId).stream()
+        .map(
+            r ->
+                new AdminLocationSampleResponse(
+                    r.getLatitude() == null ? 0.0 : r.getLatitude(),
+                    r.getLongitude() == null ? 0.0 : r.getLongitude(),
+                    r.getSpeedMps(),
+                    r.getBearingDegrees(),
+                    r.getAccuracyMeters(),
+                    r.getRecordedAt()))
+        .toList();
   }
 
   @Override

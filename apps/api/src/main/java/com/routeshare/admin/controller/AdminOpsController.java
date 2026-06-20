@@ -4,6 +4,7 @@ import com.routeshare.admin.dto.AdminActionRequest;
 import com.routeshare.admin.dto.AdminBookingResponse;
 import com.routeshare.admin.dto.AdminBookingStatusHistoryResponse;
 import com.routeshare.admin.dto.AdminDriverApplicationResponse;
+import com.routeshare.admin.dto.AdminLocationSampleResponse;
 import com.routeshare.admin.dto.AdminTripResponse;
 import com.routeshare.admin.dto.AdminVehicleResponse;
 import com.routeshare.admin.dto.ReportExportRequest;
@@ -44,6 +45,11 @@ public class AdminOpsController {
   ApiResponse<AdminTripResponse> cancelTrip(
       @PathVariable long tripId, @RequestBody(required = false) AdminActionRequest req) {
     return ApiResponse.ok(service.cancelTrip(tripId, req == null ? null : req.reason()));
+  }
+
+  @GetMapping("/api/v1/admin/trips/{tripId}/location-trail")
+  ApiResponse<List<AdminLocationSampleResponse>> locationTrail(@PathVariable long tripId) {
+    return ApiResponse.ok(service.locationTrail(tripId));
   }
 
   @GetMapping("/api/v1/admin/bookings")

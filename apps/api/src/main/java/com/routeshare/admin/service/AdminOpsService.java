@@ -3,6 +3,7 @@ package com.routeshare.admin.service;
 import com.routeshare.admin.dto.AdminBookingResponse;
 import com.routeshare.admin.dto.AdminBookingStatusHistoryResponse;
 import com.routeshare.admin.dto.AdminDriverApplicationResponse;
+import com.routeshare.admin.dto.AdminLocationSampleResponse;
 import com.routeshare.admin.dto.AdminTripResponse;
 import com.routeshare.admin.dto.AdminVehicleResponse;
 import com.routeshare.admin.dto.ReportExportRequest;
@@ -16,6 +17,8 @@ public interface AdminOpsService {
   AdminTripResponse getTrip(long tripId);
 
   AdminTripResponse cancelTrip(long tripId, String reason);
+
+  List<AdminLocationSampleResponse> locationTrail(long tripId);
 
   List<AdminBookingResponse> listBookings(int limit);
 

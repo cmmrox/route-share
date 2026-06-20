@@ -26,9 +26,12 @@ class AdminOpsServiceImplTest {
       mock(BookingStatusHistoryRepository.class);
   private final DriverProfileRepository drivers = mock(DriverProfileRepository.class);
   private final VehicleRepository vehicles = mock(VehicleRepository.class);
+  private final com.routeshare.location.repository.LocationSampleRepository locationSamples =
+      mock(com.routeshare.location.repository.LocationSampleRepository.class);
   private final AdminAuditService audit = mock(AdminAuditService.class);
   private final AdminOpsServiceImpl service =
-      new AdminOpsServiceImpl(trips, bookings, bookingHistory, drivers, vehicles, audit);
+      new AdminOpsServiceImpl(
+          trips, bookings, bookingHistory, drivers, vehicles, locationSamples, audit);
 
   @Test
   void requestExportReturnsQueuedJobAndAudits() {
