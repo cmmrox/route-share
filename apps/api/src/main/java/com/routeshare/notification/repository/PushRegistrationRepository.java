@@ -9,4 +9,8 @@ public interface PushRegistrationRepository extends JpaRepository<PushRegistrati
   List<PushRegistrationEntity> findByAppUserIdAndEnabledTrue(long appUserId);
 
   Optional<PushRegistrationEntity> findByToken(String token);
+
+  @org.springframework.data.jpa.repository.Query(
+      "select distinct p.appUserId from PushRegistrationEntity p where p.enabled = true")
+  List<Long> findDistinctEnabledAppUserIds(org.springframework.data.domain.Pageable pageable);
 }

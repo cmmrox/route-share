@@ -8,6 +8,30 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-19
 
+### Task: Phase 06.6-G4 — Broadcasts, Keycloak roles, admin ops projections
+
+Status: `COMPLETED` (Phase G admin suite functionally complete)
+
+Files Created:
+
+- Broadcasts: `AdminBroadcastService(+Impl)` + `AdminBroadcastController` — fan-out to all push-registered users via `NotificationFacade`, audited; `PushRegistrationRepository.findDistinctEnabledAppUserIds`.
+- Keycloak roles (uses the existing project Keycloak admin client): `KeycloakRealmRoleService` + `identity/keycloak/KeycloakRealmRoleAdapter` (admin token + add/remove realm role-mappings within the managed RouteShare role set), exposed via `IdentityFacade.setRealmRoles`; `AdminUserService.updateRoles` + `AdminUserController` PUT `/users/{id}/roles`, audited.
+- Ops: `AdminOpsService(+Impl)` + `AdminOpsController` — trips list/detail/cancel, bookings list/detail/status-history, driver-applications list/detail, vehicles list/detail, report-export request; typed DTOs; `BookingStatusHistoryRepository.findByBookingIdOrderByIdAsc`.
+- Tests: `AdminOpsServiceImplTest`.
+
+Files Changed:
+
+- `AdminAppReadinessController` reduced to the two facade residuals (driver-app review, location-trail). **Fixed a latent duplicate `/api/v1/admin/reports/summary` mapping** introduced in G-3 (would have failed Spring startup; not caught — no Spring-context test).
+- JaCoCo excludes `**/keycloak/**` (external adapter, like gateway/impl & push/impl).
+
+Residual: `driver-applications/{id}/review` and `trips/{id}/location-trail` stay on the facade; the location trail needs PostGIS coordinate extraction (lands with Phase H).
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 152, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase H — maps Directions/Distance/Geocoding → real fare/ETA (+ trip location-trail coordinates).
+
 ### Task: Phase 06.6-G3 — Admin dashboard + document review/signed-download
 
 Status: `COMPLETED` (G-4 admin areas remain on the readiness facade)

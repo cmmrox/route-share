@@ -8,6 +8,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface BookingStatusHistoryRepository
     extends JpaRepository<BookingStatusHistoryEntity, Long> {
+
+  java.util.List<BookingStatusHistoryEntity> findByBookingIdOrderByIdAsc(long bookingId);
+
   @Modifying
   @Query(
       value =

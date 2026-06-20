@@ -14,4 +14,7 @@ public interface AdminUserService {
   AdminUserResponse activate(long appUserId, String reason);
 
   List<UserStatusHistoryResponse> statusHistory(long appUserId);
+
+  /** Sets the user's RouteShare realm roles in Keycloak (managed role set). */
+  AdminUserResponse updateRoles(long appUserId, java.util.Set<String> roles);
 }

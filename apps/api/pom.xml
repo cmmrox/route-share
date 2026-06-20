@@ -63,6 +63,7 @@
           <exclude>**/observability/**</exclude>
           <exclude>**/gateway/impl/**</exclude>
           <exclude>**/push/impl/**</exclude>
+          <exclude>**/keycloak/**</exclude>
         </excludes>
       </configuration>
       <executions>
