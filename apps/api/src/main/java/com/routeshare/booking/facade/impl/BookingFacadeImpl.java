@@ -28,4 +28,9 @@ public class BookingFacadeImpl implements BookingFacade {
       long bookingId, long passengerAppUserId) {
     return bookings.findDriverAppUserIdForPassengerBooking(bookingId, passengerAppUserId);
   }
+
+  @Override
+  public Optional<Long> findPassengerAppUserIdForBooking(long bookingId) {
+    return bookings.findPassengerAppUserId(bookingId);
+  }
 }

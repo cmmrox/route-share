@@ -42,6 +42,11 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
       long bookingId, long passengerAppUserId);
 
   @Query(
+      value = "SELECT passenger_app_user_id FROM booking.booking WHERE booking_id = :bookingId",
+      nativeQuery = true)
+  Optional<Long> findPassengerAppUserId(@Param("bookingId") long bookingId);
+
+  @Query(
       value =
           """
       SELECT b.fare_estimate

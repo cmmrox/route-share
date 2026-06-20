@@ -5,6 +5,7 @@ import com.routeshare.common.ratelimit.RateLimitProperties;
 import com.routeshare.common.ratelimit.RateLimiter;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
+import com.routeshare.notification.facade.NotificationFacade;
 import com.routeshare.payment.dto.request.CashCollectionRequest;
 import com.routeshare.payment.dto.request.FareAdjustmentRequest;
 import com.routeshare.payment.dto.request.PaymentIntentRequest;
@@ -50,6 +51,7 @@ public class PaymentServiceImpl implements PaymentService {
   private final PaymentMethodRepository paymentMethods;
   private final RateLimiter rateLimiter;
   private final RateLimitProperties rateLimits;
+  private final NotificationFacade notifications;
 
   @Override
   @Transactional
@@ -123,6 +125,7 @@ public class PaymentServiceImpl implements PaymentService {
             bookingId, PAYMENT_CAPTURED, finalAmount, DEFAULT_CURRENCY);
         recordSettlement(bookingId, finalAmount, DEFAULT_CURRENCY);
         captured = true;
+        notifyPaymentCaptured(bookingId, finalAmount);
       }
     }
     return Map.of(
@@ -144,7 +147,23 @@ public class PaymentServiceImpl implements PaymentService {
     fareLedger.recordPaymentLifecycleIfAbsent(
         bookingId, PAYMENT_CAPTURED, intent.amount(), intent.currency());
     recordSettlement(bookingId, intent.amount(), intent.currency());
+    notifyPaymentCaptured(bookingId, intent.amount());
     return toResponse(intent);
+  }
+
+  private void notifyPaymentCaptured(long bookingId, BigDecimal amount) {
+    bookingFacade
+        .findPassengerAppUserIdForBooking(bookingId)
+        .ifPresent(
+            passengerAppUserId ->
+                notifications.notifyUser(
+                    passengerAppUserId,
+                    "PAYMENT_CAPTURED",
+                    "Payment received",
+                    "Your payment of " + amount + " " + DEFAULT_CURRENCY + " has been processed.",
+                    Map.of(
+                        "bookingId", String.valueOf(bookingId),
+                        "amount", String.valueOf(amount))));
   }
 
   @Override

@@ -15,6 +15,7 @@ import com.routeshare.common.repository.IdempotencyKeyRepository;
 import com.routeshare.common.security.CurrentUser;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
+import com.routeshare.notification.facade.NotificationFacade;
 import com.routeshare.pricing.domain.FareCalculator;
 import com.routeshare.routing.facade.RoutingFacade;
 import java.math.BigDecimal;
@@ -47,6 +48,7 @@ public class BookingServiceImpl implements BookingService {
   private final BookingStatusHistoryRepository statusHistory;
   private final RoutingFacade routingFacade;
   private final IdempotencyKeyRepository idempotencyKeys;
+  private final NotificationFacade notifications;
   private final ObjectMapper objectMapper;
   private final FareCalculator fareCalculator = FareCalculator.defaultSriLankaCalculator();
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
@@ -117,6 +119,12 @@ public class BookingServiceImpl implements BookingService {
             "fareEstimate",
             fareEstimate);
     idempotencyKeys.storeResponse(idempotencyKey, responseBody(response), 200);
+    notifications.notifyUser(
+        app.appUserId(),
+        "BOOKING_CONFIRMED",
+        "Booking confirmed",
+        "Your seat has been reserved and the booking is confirmed.",
+        Map.of("bookingId", String.valueOf(bookingId)));
     return response;
   }
 
@@ -130,6 +138,18 @@ public class BookingServiceImpl implements BookingService {
             .findStatusForUpdateByIdAndPassengerAppUserId(bookingId, app.appUserId())
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
     updateBookingStatus(bookingId, app.appUserId(), fromStatus, toStatus, req.reason());
+    if (CANCELLED.equals(toStatus)) {
+      bookings
+          .findDriverAppUserIdForPassengerBooking(bookingId, app.appUserId())
+          .ifPresent(
+              driverAppUserId ->
+                  notifications.notifyUser(
+                      driverAppUserId,
+                      "BOOKING_CANCELLED",
+                      "Booking cancelled",
+                      "A passenger has cancelled their booking.",
+                      Map.of("bookingId", String.valueOf(bookingId))));
+    }
     return Map.of("bookingId", bookingId, "status", toStatus);
   }
 
@@ -185,6 +205,11 @@ public class BookingServiceImpl implements BookingService {
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
     updateBookingStatus(
         bookingId, app.appUserId(), fromStatus, CONFIRMED, "Driver approved booking");
+    notifyPassenger(
+        bookingId,
+        "BOOKING_CONFIRMED",
+        "Booking confirmed",
+        "The driver has approved your booking.");
     return Map.of("bookingId", bookingId, "status", CONFIRMED);
   }
 
@@ -197,7 +222,25 @@ public class BookingServiceImpl implements BookingService {
             .findStatusForUpdateByIdAndDriverAppUserId(bookingId, app.appUserId())
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
     updateBookingStatus(bookingId, app.appUserId(), fromStatus, REJECTED, reason);
+    notifyPassenger(
+        bookingId,
+        "BOOKING_DECLINED",
+        "Booking declined",
+        "The driver was unable to accept your booking.");
     return Map.of("bookingId", bookingId, "status", REJECTED);
+  }
+
+  private void notifyPassenger(long bookingId, String type, String title, String body) {
+    bookings
+        .findPassengerAppUserId(bookingId)
+        .ifPresent(
+            passengerAppUserId ->
+                notifications.notifyUser(
+                    passengerAppUserId,
+                    type,
+                    title,
+                    body,
+                    Map.of("bookingId", String.valueOf(bookingId))));
   }
 
   private void updateBookingStatus(

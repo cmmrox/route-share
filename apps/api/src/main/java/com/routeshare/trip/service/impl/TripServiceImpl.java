@@ -3,6 +3,7 @@ package com.routeshare.trip.service.impl;
 import com.routeshare.common.security.CurrentUser;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
+import com.routeshare.notification.facade.NotificationFacade;
 import com.routeshare.trip.domain.PassengerTripStateMachine;
 import com.routeshare.trip.domain.TripStateMachine;
 import com.routeshare.trip.dto.request.PassengerTripStateTransitionRequest;
@@ -27,6 +28,7 @@ public class TripServiceImpl implements TripService {
   private final IdentityFacade identityFacade;
   private final TripRepository trips;
   private final PassengerTripStateRepository passengerStates;
+  private final NotificationFacade notifications;
   private final TripStateMachine stateMachine = new TripStateMachine();
   private final PassengerTripStateMachine passengerStateMachine = new PassengerTripStateMachine();
 
@@ -40,6 +42,7 @@ public class TripServiceImpl implements TripService {
     var currentStatus = trips.findStatusForUpdate(tripId);
     stateMachine.assertTransition(currentStatus, req.status());
     trips.updateStatus(tripId, req.status());
+    notifyTripStatus(tripId, req.status());
     return Map.of("tripId", tripId, "status", req.status().name());
   }
 
@@ -108,7 +111,34 @@ public class TripServiceImpl implements TripService {
         currentStatus, com.routeshare.trip.domain.TripStatus.ARRIVED_PICKUP);
     trips.updateStatus(tripId, com.routeshare.trip.domain.TripStatus.ARRIVED_PICKUP);
     trips.insertArrivedPickupEvent(tripId, app.appUserId());
+    notifyPassengers(
+        tripId, "DRIVER_ARRIVED", "Driver arrived", "Your driver has arrived at the pickup point.");
     return Map.of("tripId", tripId, "status", "ARRIVED_PICKUP");
+  }
+
+  private void notifyTripStatus(long tripId, com.routeshare.trip.domain.TripStatus status) {
+    switch (status) {
+      case STARTED ->
+          notifyPassengers(tripId, "TRIP_STARTED", "Trip started", "Your trip is now underway.");
+      case COMPLETED ->
+          notifyPassengers(
+              tripId, "TRIP_COMPLETED", "Trip completed", "Your trip has been completed.");
+      case CANCELLED ->
+          notifyPassengers(
+              tripId, "TRIP_CANCELLED", "Trip cancelled", "Your trip has been cancelled.");
+      default -> {
+        // Other transitions (SCHEDULED/ARRIVED_PICKUP) do not raise a passenger notification here.
+      }
+    }
+  }
+
+  private void notifyPassengers(long tripId, String type, String title, String body) {
+    for (Long passengerAppUserId : trips.findConfirmedPassengerAppUserIds(tripId)) {
+      if (passengerAppUserId != null) {
+        notifications.notifyUser(
+            passengerAppUserId, type, title, body, Map.of("tripId", String.valueOf(tripId)));
+      }
+    }
   }
 
   private DriverTripResponse toDriverTripResponse(TripRepository.DriverTripRow row) {

@@ -40,6 +40,8 @@ class BookingServiceTest {
   private final IdempotencyKeyRepository idempotencyKeys =
       org.mockito.Mockito.mock(IdempotencyKeyRepository.class);
   private final ObjectMapper objectMapper = new ObjectMapper();
+  private final com.routeshare.notification.facade.NotificationFacade notifications =
+      org.mockito.Mockito.mock(com.routeshare.notification.facade.NotificationFacade.class);
   private final BookingServiceImpl service =
       new BookingServiceImpl(
           current,
@@ -48,6 +50,7 @@ class BookingServiceTest {
           statusHistory,
           routingFacade,
           idempotencyKeys,
+          notifications,
           objectMapper);
 
   @BeforeEach
