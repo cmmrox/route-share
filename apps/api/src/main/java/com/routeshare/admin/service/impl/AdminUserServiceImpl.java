@@ -78,6 +78,20 @@ public class AdminUserServiceImpl implements AdminUserService {
         .toList();
   }
 
+  @Override
+  @Transactional
+  public AdminUserResponse updateRoles(long appUserId, java.util.Set<String> roles) {
+    var user = require(appUserId);
+    identityFacade.setRealmRoles(
+        user.getKeycloakSubject(), roles == null ? java.util.Set.of() : roles);
+    audit.record(
+        "USER_ROLES_UPDATED",
+        "APP_USER",
+        String.valueOf(appUserId),
+        "{\"roles\":\"" + roles + "\"}");
+    return toResponse(user);
+  }
+
   private AdminUserResponse changeStatus(long appUserId, String toStatus, String reason) {
     var user = require(appUserId);
     String from = user.getLocalStatus();

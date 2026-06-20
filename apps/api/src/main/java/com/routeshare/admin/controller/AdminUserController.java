@@ -50,4 +50,11 @@ public class AdminUserController {
   ApiResponse<List<UserStatusHistoryResponse>> statusHistory(@PathVariable long appUserId) {
     return ApiResponse.ok(service.statusHistory(appUserId));
   }
+
+  @org.springframework.web.bind.annotation.PutMapping("/api/v1/admin/users/{appUserId}/roles")
+  ApiResponse<AdminUserResponse> updateRoles(
+      @PathVariable long appUserId,
+      @jakarta.validation.Valid @RequestBody com.routeshare.admin.dto.UpdateRolesRequest req) {
+    return ApiResponse.ok(service.updateRoles(appUserId, req.roles()));
+  }
 }
