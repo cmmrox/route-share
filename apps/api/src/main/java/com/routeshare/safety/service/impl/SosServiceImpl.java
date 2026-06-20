@@ -2,6 +2,8 @@ package com.routeshare.safety.service.impl;
 
 import com.routeshare.common.event.DomainEvent;
 import com.routeshare.common.event.DomainEventPublisher;
+import com.routeshare.common.ratelimit.RateLimitProperties;
+import com.routeshare.common.ratelimit.RateLimiter;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.notification.facade.NotificationFacade;
@@ -24,11 +26,18 @@ public class SosServiceImpl implements SosService {
   private final SosEventRepository sosEvents;
   private final DomainEventPublisher events;
   private final NotificationFacade notifications;
+  private final RateLimiter rateLimiter;
+  private final RateLimitProperties rateLimits;
 
   @Override
   @Transactional
   public SosEventResponse raise(String ownerRole, RaiseSosRequest req) {
     long appUserId = currentAppUserId();
+    rateLimiter.check(
+        "sos",
+        String.valueOf(appUserId),
+        rateLimits.sosPerMinute(),
+        java.time.Duration.ofMinutes(1));
     var saved =
         sosEvents.save(
             SosEventEntity.raise(

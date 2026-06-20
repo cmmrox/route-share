@@ -29,7 +29,14 @@ class SosServiceImplTest {
   private final DomainEventPublisher events = mock(DomainEventPublisher.class);
   private final NotificationFacade notifications = mock(NotificationFacade.class);
   private final SosServiceImpl service =
-      new SosServiceImpl(current, identityFacade, sosEvents, events, notifications);
+      new SosServiceImpl(
+          current,
+          identityFacade,
+          sosEvents,
+          events,
+          notifications,
+          (action, key, limit, window) -> {},
+          new com.routeshare.common.ratelimit.RateLimitProperties(true, null, null, null, null));
 
   @BeforeEach
   void setUp() {

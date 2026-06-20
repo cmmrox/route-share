@@ -8,6 +8,26 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-06-21
 
+### Task: Phase 06.6-I (part 2) — Redis rate limiting
+
+Status: `COMPLETED` (Phase I security hardening; perf/load + Testcontainers suite remain ongoing)
+
+Files Created:
+
+- `common/ratelimit`: `RateLimiter` (port), `RedisRateLimiter` (fixed-window INCR+EXPIRE, **fails open** on Redis error so the protected endpoint stays up), `RateLimitProperties`, `RateLimitConfig`.
+- Test: `RedisRateLimiterTest` (TTL-on-first-hit, 429-over-limit, fail-open, disabled/blank no-op).
+
+Files Changed:
+
+- Wired limits into `AuthController` (OTP request 5/h, verify 10/h — keyed by phone), `PaymentServiceImpl.createIntent` (10/min per user), `SosServiceImpl.raise` (5/min per user). Updated affected unit tests with a no-op limiter.
+- `application.yml` + `.env.example`: `routeshare.rate-limit.*`.
+
+Verification:
+
+- `./mvnw spotless:check verify` — BUILD SUCCESS, `Tests run: 162, Failures: 0, Errors: 0, Skipped: 1`, JaCoCo gate green.
+
+Next step: Phase J — deployment readiness (prod container profile, migration pipeline, backup/restore, runbooks, staging Keycloak realm import). Remaining Phase I hardening (matching index/perf review, N+1 audit, Testcontainers integration/authz suite, load smoke) tracked as ongoing.
+
 ### Task: Phase 06.6-I (part 1) — live-stack boot validation + ambiguous-mapping guard
 
 Status: `IN_PROGRESS` (rate limiting + integration/load tests remain)

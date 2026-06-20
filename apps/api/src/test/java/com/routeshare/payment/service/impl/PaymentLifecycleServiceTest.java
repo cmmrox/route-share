@@ -43,7 +43,9 @@ class PaymentLifecycleServiceTest {
           fareLedger,
           new CashFallbackPaymentGateway(),
           new CommissionProperties(new BigDecimal("0.10")),
-          paymentMethods);
+          paymentMethods,
+          (action, key, limit, window) -> {},
+          new com.routeshare.common.ratelimit.RateLimitProperties(true, null, null, null, null));
 
   @BeforeEach
   void setUp() {
