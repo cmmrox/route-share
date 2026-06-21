@@ -877,6 +877,19 @@
                 }
               }
             }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RideSearchResult"
+                  }
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -3509,8 +3522,9 @@
       },
       "RideSearchResult": {
         "type": "object",
+        "description": "A scored ride match. Ride search is stateless; results are returned by POST /ride-searches and carried client-side into ride detail.",
         "properties": {
-          "id": {
+          "routePlanId": {
             "type": "integer",
             "format": "int64"
           },
@@ -3518,45 +3532,26 @@
             "type": "integer",
             "format": "int64"
           },
-          "driver": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "integer",
-                "format": "int64"
-              },
-              "name": {
-                "type": "string"
-              },
-              "ratingAverage": {
-                "type": "number"
-              }
-            }
-          },
-          "vehicle": {
-            "type": "object",
-            "properties": {
-              "make": {
-                "type": "string"
-              },
-              "model": {
-                "type": "string"
-              },
-              "color": {
-                "type": "string"
-              },
-              "registrationNumberMasked": {
-                "type": "string"
-              }
-            }
-          },
-          "matchType": {
+          "originLabel": {
             "type": "string"
           },
-          "matchScore": {
+          "destinationLabel": {
+            "type": "string"
+          },
+          "departureTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availableSeats": {
+            "type": "integer"
+          },
+          "routeLengthMeters": {
             "type": "number"
           },
-          "overlapPercentage": {
+          "pickupRouteFraction": {
+            "type": "number"
+          },
+          "dropoffRouteFraction": {
             "type": "number"
           },
           "pickupDistanceMeters": {
@@ -3565,14 +3560,42 @@
           "dropoffDistanceMeters": {
             "type": "number"
           },
-          "estimatedOverlapKm": {
+          "overlapDistanceMeters": {
             "type": "number"
           },
-          "estimatedFare": {
-            "$ref": "#/components/schemas/Money"
+          "overlapPercent": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number"
           },
           "explanation": {
             "type": "string"
+          },
+          "matchedDistanceMeters": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "estimatedFare": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "vehicleMake": {
+            "type": "string"
+          },
+          "vehicleModel": {
+            "type": "string"
+          },
+          "vehicleRegistration": {
+            "type": "string"
+          },
+          "vehicleSeatCount": {
+            "type": "integer"
           }
         }
       },

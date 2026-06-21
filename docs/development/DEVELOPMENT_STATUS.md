@@ -15,6 +15,24 @@ This file is the first file to read before continuing RouteShareApp development.
 - Status: `PASSENGER_TASKS_01_07_UI_ALIGNED_TO_DESIGN_PDF_ANDROID_DEVICE_QA_GREEN`
 - Repository Git Status: `Working tree contains focused Phase 07 Task 07 implementation changes; generated QA reports remain ignored`
 
+## 2026-06-21 — Phase 07 Task 08 implemented (results list/map/grouped + ride detail)
+
+Built the ride-browsing + pre-booking evaluation feature on top of the now-complete backend:
+
+- Backend search enriched so results carry real data: `RouteSearchResponse` (+ candidate query) now
+  return `estimatedFare` (FareCalculator on the matched on-route distance × seats),
+  `matchedDistanceMeters`, `driverName`, and `vehicleMake/Model/Registration/SeatCount`.
+- New RN-free, unit-tested `features/ride-results` module (normalization + filters/sort + overlap-tier
+  grouping) and two screens: `SearchResultsScreen` (list/map/grouped toggle, sort + match-threshold
+  filters, ride cards, accessible map fallback, empty state) and `RideDetailScreen` (driver card,
+  route timeline, fare estimate, why-good-match, safety/policy, continue→seat-selection handoff).
+
+Verification: passenger-mobile `typecheck | lint | test` (18 files / 80 tests) + Android e2e scaffold
++ preview-build gates green; backend `./mvnw spotless:check verify` green (180 tests). **Device QA is
+the one open item** — the Maestro flow is authored but a full run needs an attached emulator + seeded
+PUBLISHED route inventory matching the search corridor (see `BLOCKERS.md`). Next: Task 09 — seat
+selection, booking idempotency, cancellation.
+
 ## 2026-06-21 — Phase 06.6-K backend gap closure COMPLETE (backend production-complete)
 
 Closed the final seven backend gaps from the requirement/screens/docs audit; **no `workflow_item` shell remains for any product flow**, and Phase 06.6 (Backend Production Hardening) is now `COMPLETED`:

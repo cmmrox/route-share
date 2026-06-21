@@ -50,7 +50,15 @@ class AppFacingRouteAliasControllerTest {
             8_000,
             70.0,
             88.0,
-            "Strong route overlap");
+            "Strong route overlap",
+            8_000L,
+            new java.math.BigDecimal("980.00"),
+            "LKR",
+            "Nimal Perera",
+            "Toyota",
+            "Aqua",
+            "CAB-1234",
+            4);
     when(routes.search(request)).thenReturn(List.of(result));
 
     var response = controller.create(request);

@@ -128,7 +128,7 @@ export function SearchScreen({ navigation, route }: SearchScreenProps) {
       if (!nextValidation.valid) { setErrorMessage('Choose pickup and destination places with map coordinates before searching.'); return; }
       const results = await createPassengerRuntimeApi().rideSearch.search(buildRideSearchRequest(nextDraft));
       if (nextPickup && nextDropoff) await passengerRecentSearchRepository.save({ pickup: nextPickup, dropoff: nextDropoff, requestedDepartureTime: departAt, seats });
-      navigation.navigate('SearchResults', { searchId: 'latest', pickup: nextPickup?.coordinate, dropoff: nextDropoff?.coordinate, results });
+      navigation.navigate('SearchResults', { searchId: 'latest', pickup: nextPickup?.coordinate, dropoff: nextDropoff?.coordinate, seats, results });
     } catch {
       setErrorMessage('Route discovery failed. Retry or edit your search.');
     } finally {

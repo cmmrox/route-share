@@ -68,11 +68,19 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
           ST_LineLocatePoint(r.route_line, p.dropoff) AS "dropoffFraction",
           ST_Distance(r.route_line::geography, p.pickup::geography) AS "pickupDistanceMeters",
           ST_Distance(r.route_line::geography, p.dropoff::geography) AS "dropoffDistanceMeters",
+          COALESCE(dp.display_name, dau.display_name, 'Driver') AS "driverName",
+          v.make AS "vehicleMake",
+          v.model AS "vehicleModel",
+          v.registration_number AS "vehicleRegistration",
+          v.seat_count AS "vehicleSeatCount",
           p.pickup AS pickup,
           p.dropoff AS dropoff,
           r.route_line AS "routeLine"
         FROM routing.route_occurrence o
         JOIN routing.route_plan r ON r.route_plan_id = o.route_plan_id
+        JOIN driver.driver_profile dp ON dp.driver_profile_id = r.driver_profile_id
+        LEFT JOIN identity.app_user dau ON dau.app_user_id = dp.app_user_id
+        LEFT JOIN vehicle.vehicle v ON v.vehicle_id = r.vehicle_id
         CROSS JOIN request_points p
         WHERE r.status = 'PUBLISHED'
           AND o.status = 'PUBLISHED'
@@ -100,6 +108,11 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
         "dropoffFraction",
         "pickupDistanceMeters",
         "dropoffDistanceMeters",
+        "driverName",
+        "vehicleMake",
+        "vehicleModel",
+        "vehicleRegistration",
+        "vehicleSeatCount",
         ST_Length(ST_LineSubstring("routeLine", "pickupFraction", "dropoffFraction")::geography) AS "overlapDistanceMeters",
         GREATEST(ST_Distance(pickup::geography, dropoff::geography), 1.0) AS "requestedDistanceMeters"
       FROM candidate_routes
@@ -295,5 +308,15 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
     double getOverlapDistanceMeters();
 
     double getRequestedDistanceMeters();
+
+    String getDriverName();
+
+    String getVehicleMake();
+
+    String getVehicleModel();
+
+    String getVehicleRegistration();
+
+    Integer getVehicleSeatCount();
   }
 }

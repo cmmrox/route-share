@@ -1,5 +1,6 @@
 package com.routeshare.routing.dto.response;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 public record RouteSearchResponse(
@@ -17,4 +18,12 @@ public record RouteSearchResponse(
     double overlapDistanceMeters,
     double overlapPercent,
     double score,
-    String explanation) {}
+    String explanation,
+    long matchedDistanceMeters,
+    BigDecimal estimatedFare,
+    String currency,
+    String driverName,
+    String vehicleMake,
+    String vehicleModel,
+    String vehicleRegistration,
+    Integer vehicleSeatCount) {}
