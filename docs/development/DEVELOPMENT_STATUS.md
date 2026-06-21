@@ -28,10 +28,12 @@ Built the ride-browsing + pre-booking evaluation feature on top of the now-compl
   route timeline, fare estimate, why-good-match, safety/policy, continue→seat-selection handoff).
 
 Verification: passenger-mobile `typecheck | lint | test` (18 files / 80 tests) + Android e2e scaffold
-+ preview-build gates green; backend `./mvnw spotless:check verify` green (180 tests). **Device QA is
-the one open item** — the Maestro flow is authored but a full run needs an attached emulator + seeded
-PUBLISHED route inventory matching the search corridor (see `BLOCKERS.md`). Next: Task 09 — seat
-selection, booking idempotency, cancellation.
++ preview-build gates green; backend `./mvnw spotless:check verify` green (180 tests). **Android device
+QA is GREEN**: the Task 08 Maestro regression passed 1/1 (2m35s) on the Pixel_9 emulator against the
+live stack with a seeded Colombo Fort → Nugegoda route — real data rendered across list/map/grouped +
+ride detail (100% match, "Saman Fernando", "Toyota Aqua · CAB-7788", 3 seats, fare **LKR 1,206**).
+Evidence: `qa/reports/20260621-111049-task08-final-green/`. iOS device evidence remains a later
+release-evidence follow-up. Next: Task 09 — seat selection, booking idempotency, cancellation.
 
 ## 2026-06-21 — Phase 06.6-K backend gap closure COMPLETE (backend production-complete)
 

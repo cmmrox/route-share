@@ -424,3 +424,25 @@ Open blocker — full device QA could not be run in this environment:
 
 To close: boot the emulator with Metro on 8082 + API on 8080 (Google Maps enabled, demo OTP), seed a
 matching published route, run the task08 flow, and save evidence under ignored `qa/reports/`.
+
+## 2026-06-21 (later) — Task 08 device QA RESOLVED (green on emulator)
+
+The Task 08 device-QA blocker is cleared. Ran the full Maestro regression on the Pixel_9 Android
+emulator against the live stack (API 8080 + Metro 8082 + Postgres/Keycloak/Redis, Google Maps
+enabled, demo OTP) with a seeded PUBLISHED Colombo Fort → Nugegoda route:
+
+- `qa/maestro/passenger-mobile/regression/task08-results-list-map-filtering-ride-detail.yaml` →
+  **1/1 Flow Passed (2m35s)**. Evidence: `qa/reports/20260621-111049-task08-final-green/`
+  (results-list, filtered, map, grouped, ride-detail screenshots + maestro-junit.xml).
+- Real backend data rendered: 100% match, driver "Saman Fernando", "Toyota Aqua · CAB-7788",
+  "3 seats left", computed fare **LKR 1,206**, across list / map / grouped views and ride detail.
+
+Findings fixed during the run (not app defects): the map caption was rendered behind the native
+Google map surface (moved it above the map); Maestro regex assertions are full-string matches
+(anchored the map/Continue patterns with `.*`); the ride-detail Continue button needed
+scroll-to-visible. Earlier transient failures were emulator-environment noise (Maestro driver
+startup timeout; a Digital Wellbeing system ANR over the onboarding screen; a stale Metro instance
+on 8082 serving an old bundle — replaced with a fresh Metro from the working tree).
+
+Note: seeding inventory directly is a QA convenience; a production-faithful alternative is to publish
+a route via the driver API. iOS device evidence remains a later release-evidence follow-up.

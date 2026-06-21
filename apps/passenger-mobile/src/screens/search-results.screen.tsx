@@ -167,10 +167,10 @@ function CompactRow({ model, onPress }: { readonly model: RideResultModel; reado
 function ResultsMap({ models, onSelect }: { readonly models: readonly RideResultModel[]; readonly onSelect: (model: RideResultModel) => void }) {
   return (
     <View>
+      <AppText variant="label" color={t.colors.ink3} style={styles.mapCaption}>{models.length} rides on the map · swipe to preview</AppText>
       <MapBackdrop showRoute>
         <MapOverlayCard>
-          <AppText variant="label" color={t.colors.ink3}>{models.length} rides on the map</AppText>
-          <AppText color={t.colors.ink3}>Swipe the cards below to preview each ride; tap to open details.</AppText>
+          <AppText variant="label" color={t.colors.ink3}>{models.length} on map</AppText>
         </MapOverlayCard>
       </MapBackdrop>
       <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mapCards} accessibilityLabel="Ride cards (accessible list fallback)">
@@ -195,6 +195,7 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: t.spacing.md },
   cardMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   compact: { flexDirection: 'row', alignItems: 'center', gap: t.spacing.md, paddingVertical: t.spacing.sm },
+  mapCaption: { marginBottom: t.spacing.sm },
   mapCards: { gap: t.spacing.md, paddingVertical: t.spacing.md },
   mapCard: { width: 300 },
 });
