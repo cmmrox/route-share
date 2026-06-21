@@ -1,7 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { createPassengerRuntimeApi } from '../application/providers';
+import type { Coordinate } from '../api/types';
 import {
   AppText,
   Avatar,
@@ -24,6 +26,21 @@ type Props = NativeStackScreenProps<PassengerRootStackParamList, 'RideDetail'>;
 export function RideDetailScreen({ navigation, route }: Props) {
   const result = route.params?.result;
   const model = useMemo(() => (result ? toRideResultModel(result) : undefined), [result]);
+  const pickupLat = route.params?.pickup?.latitude;
+  const pickupLng = route.params?.pickup?.longitude;
+  const dropLat = route.params?.dropoff?.latitude;
+  const dropLng = route.params?.dropoff?.longitude;
+  const [routeCoordinates, setRouteCoordinates] = useState<Coordinate[] | undefined>(undefined);
+
+  useEffect(() => {
+    let active = true;
+    if (pickupLat == null || pickupLng == null || dropLat == null || dropLng == null) return;
+    createPassengerRuntimeApi()
+      .places.directions({ originLat: pickupLat, originLng: pickupLng, destLat: dropLat, destLng: dropLng })
+      .then((coords) => { if (active && coords.length >= 2) setRouteCoordinates(coords); })
+      .catch(() => { /* map still renders without the route overlay */ });
+    return () => { active = false; };
+  }, [pickupLat, pickupLng, dropLat, dropLng]);
 
   if (!model) {
     return (
@@ -57,7 +74,7 @@ export function RideDetailScreen({ navigation, route }: Props) {
         </View>
       </View>
 
-      <MapBackdrop showRoute>
+      <MapBackdrop showRoute routeCoordinates={routeCoordinates}>
         <MapOverlayCard>
           <AppText variant="label">{model.departureLabel}</AppText>
           <AppText color={t.colors.ink3}>{model.walkLabel}</AppText>

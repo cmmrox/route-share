@@ -1731,3 +1731,21 @@ Device QA: authored `qa/maestro/.../task08-results-list-map-filtering-ride-detai
 run is blocked on an attached emulator + seeded matching route inventory (see BLOCKERS.md).
 
 Next step: Task 09 — seat selection, booking idempotency, and cancellation.
+
+## 2026-06-21 (later) — Road-following route on the passenger map (Directions)
+
+Fix: the ride-detail map drew a straight pickup→drop-off line instead of the actual driving route.
+
+- Backend: new `DirectionsPort` + `GoogleDirectionsAdapter` (Google Directions API, decodes the
+  overview polyline; straight-line fallback when maps disabled) and
+  `GET /api/v1/passenger/directions` (`PassengerDirectionsController`). Unit-tested the polyline
+  decoder + fallback.
+- Mobile: `places.directions(...)` API; `MapBackdrop` now takes `routeCoordinates`, draws the real
+  road polyline with pickup/drop-off markers, and `fitToCoordinates` to frame the whole trip
+  (removed the synthetic straight line); `RideDetailScreen` fetches directions for pickup→drop-off.
+  api-contracts + sync test updated (+`/passenger/directions`).
+
+Verified on the Pixel 7 Pro: the device calls `/passenger/directions` with the real coords, the
+backend returns the 12.8 km / 290-point Colombo road route (no fallback), and the map renders the
+route tracing the actual roads (Havelock Rd corridor), framed to Colombo Fort → Nugegoda. Mobile
+typecheck/lint/test (80) + backend `spotless:check verify` (183) green.

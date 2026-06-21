@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { PropsWithChildren, ReactNode } from 'react';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -107,19 +107,52 @@ export function FareRow({ label, amount, emphasized = false }: { readonly label:
 export function PaymentRow({ brand, last4, selected, onPress }: { readonly brand: string; readonly last4: string; readonly selected?: boolean; readonly onPress?: () => void }) { return <ListRow title={brand} subtitle={`•••• ${last4}`} onPress={onPress} accessibilityLabel={`${brand} ending ${last4}`} accessibilityHint="Select payment method" trailing={<Chip selected={!!selected}>{selected ? 'Selected' : 'Use'}</Chip>} />; }
 export function SeatPlan({ seats, onToggle }: { readonly seats: readonly { readonly id: string; readonly label: string; readonly state: 'driver' | 'taken' | 'free' | 'selected' | 'disabled' }[]; readonly onToggle?: (id: string) => void }) { return <View accessibilityLabel="Seat plan" style={styles.seatGrid}>{seats.map(seat => { const disabled = seat.state === 'driver' || seat.state === 'taken' || seat.state === 'disabled'; return <Pressable key={seat.id} accessibilityRole="button" accessibilityLabel={`${seat.label} ${seat.state}`} accessibilityHint={disabled ? 'Seat is not available' : 'Toggle seat selection'} accessibilityState={{ disabled, selected: seat.state === 'selected' }} disabled={disabled} onPress={() => onToggle?.(seat.id)} style={[styles.touchTarget, styles.seat, seatStyle(seat.state)]}><AppText variant="label">{seat.label}</AppText></Pressable>; })}</View>; }
 export function SosButton({ onPress }: { readonly onPress?: () => void }) { return <Pressable accessibilityRole="button" accessibilityLabel="SOS emergency help" accessibilityHint="Call emergency support and share your trip" accessibilityState={{ disabled: !onPress }} disabled={!onPress} onPress={onPress} style={[styles.touchTarget, styles.sos]}><AppText variant="label" color="#ffffff">SOS</AppText></Pressable>; }
-export function MapBackdrop({ showRoute = true, children }: PropsWithChildren<{ readonly showRoute?: boolean }>) {
-  const center = { latitude: 6.9271, longitude: 79.8612 };
-  const route = [{ latitude: 6.909, longitude: 79.909 }, center];
+type LatLng = { readonly latitude: number; readonly longitude: number };
+
+function regionForRoute(coords: readonly LatLng[]): { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number } {
+  const fallback = { latitude: 6.9271, longitude: 79.8612 };
+  if (!coords || coords.length === 0) return { ...fallback, latitudeDelta: 0.08, longitudeDelta: 0.08 };
+  const lats = coords.map((c) => c.latitude);
+  const lngs = coords.map((c) => c.longitude);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+  return {
+    latitude: (minLat + maxLat) / 2,
+    longitude: (minLng + maxLng) / 2,
+    latitudeDelta: Math.max((maxLat - minLat) * 1.5, 0.02),
+    longitudeDelta: Math.max((maxLng - minLng) * 1.5, 0.02),
+  };
+}
+
+// `routeCoordinates`, when provided, is the real road-following driving route (from the backend
+// Directions API) and is drawn as the route polyline with pickup/drop-off markers. Without it the
+// backdrop just shows the map (no synthetic straight line).
+export function MapBackdrop({ showRoute = true, routeCoordinates, children }: PropsWithChildren<{ readonly showRoute?: boolean; readonly routeCoordinates?: readonly LatLng[] }>) {
+  const hasRoute = showRoute && !!routeCoordinates && routeCoordinates.length >= 2;
+  const mapRef = useRef<MapView>(null);
+  const region = regionForRoute(hasRoute ? routeCoordinates! : []);
+
+  const fitRoute = () => {
+    if (hasRoute && mapRef.current) {
+      mapRef.current.fitToCoordinates(routeCoordinates as LatLng[], {
+        edgePadding: { top: 70, right: 60, bottom: 130, left: 60 },
+        animated: true,
+      });
+    }
+  };
+  // Re-fit whenever the road route arrives/changes so the whole trip is framed.
+  useEffect(fitRoute, [routeCoordinates, hasRoute]);
+
   return (
     <View accessibilityLabel="Google route map preview" style={styles.map}>
-      <MapView
-        accessibilityLabel="Google map"
-        initialRegion={{ ...center, latitudeDelta: 0.08, longitudeDelta: 0.08 }}
-        provider="google"
-        style={StyleSheet.absoluteFill}
-      >
-        {showRoute ? <Polyline coordinates={route} strokeColor={t.colors.accent} strokeWidth={5} /> : null}
-        <Marker coordinate={center} title="RouteShare map center" />
+      <MapView ref={mapRef} accessibilityLabel="Google map" initialRegion={region} provider="google" style={StyleSheet.absoluteFill} onMapReady={fitRoute}>
+        {hasRoute ? (
+          <>
+            <Polyline coordinates={routeCoordinates as LatLng[]} strokeColor={t.colors.accent} strokeWidth={5} />
+            <Marker coordinate={routeCoordinates![0]} title="Pickup" pinColor={t.colors.teal} />
+            <Marker coordinate={routeCoordinates![routeCoordinates!.length - 1]} title="Drop-off" pinColor={t.colors.accent} />
+          </>
+        ) : null}
       </MapView>
       {children}
     </View>

@@ -1,6 +1,6 @@
 import { HttpError, type ApiClient } from './api-client';
 import { adaptBooking, adaptPassengerProfile, adaptPaymentIntent, adaptPlaceSuggestion, adaptRideSearchResult, adaptSavedPlace, adaptTrustedContact } from './adapters';
-import type { Booking, PassengerProfile, PaymentIntent, PlaceSuggestion, RideSearchResult, SavedPlace, TrustedContact } from './types';
+import type { Booking, Coordinate, PassengerProfile, PaymentIntent, PlaceSuggestion, RideSearchResult, SavedPlace, TrustedContact } from './types';
 
 const mapList = <T>(items: unknown, adapter: (item: unknown) => T): T[] => Array.isArray(items) ? items.map(adapter) : [];
 
@@ -26,6 +26,17 @@ export const profileApi = (client: ApiClient) => ({
 export const placesApi = (client: ApiClient) => ({
   autocomplete: async ({ query, latitude, longitude }: { query: string; latitude?: number; longitude?: number }): Promise<PlaceSuggestion[]> => mapList(await client.request('/api/v1/passenger/places/autocomplete', { query: { query, latitude, longitude } }), adaptPlaceSuggestion),
   details: async (placeId: string): Promise<PlaceSuggestion> => adaptPlaceSuggestion(await client.request('/api/v1/passenger/places/{placeId}', { pathParams: { placeId } })),
+  // Road-following driving route (pickup -> drop-off) for drawing the real route on the map.
+  directions: async ({ originLat, originLng, destLat, destLng }: { originLat: number; originLng: number; destLat: number; destLng: number }): Promise<Coordinate[]> => {
+    const res = (await client.request('/api/v1/passenger/directions', { query: { originLat, originLng, destLat, destLng } })) as { coordinates?: unknown } | null;
+    const raw = res && Array.isArray(res.coordinates) ? res.coordinates : [];
+    return raw
+      .map((c) => {
+        const r = c as { latitude?: unknown; longitude?: unknown };
+        return { latitude: Number(r.latitude), longitude: Number(r.longitude) };
+      })
+      .filter((c) => Number.isFinite(c.latitude) && Number.isFinite(c.longitude));
+  },
 });
 export const savedPlacesApi = (client: ApiClient) => ({ list: async (): Promise<SavedPlace[]> => mapList(await client.request('/api/v1/passenger/saved-places'), adaptSavedPlace), get: async (savedPlaceId: string): Promise<SavedPlace> => adaptSavedPlace(await client.request('/api/v1/passenger/saved-places/{savedPlaceId}', { pathParams: { savedPlaceId } })), create: async (body: unknown): Promise<SavedPlace> => adaptSavedPlace(await client.request('/api/v1/passenger/saved-places', { method: 'POST', body })), update: async (savedPlaceId: string, body: unknown): Promise<SavedPlace> => adaptSavedPlace(await client.request('/api/v1/passenger/saved-places/{savedPlaceId}', { method: 'PUT', pathParams: { savedPlaceId }, body })), delete: (savedPlaceId: string) => client.request('/api/v1/passenger/saved-places/{savedPlaceId}', { method: 'DELETE', pathParams: { savedPlaceId } }) });
 export const trustedContactsApi = (client: ApiClient) => ({ list: async (): Promise<TrustedContact[]> => mapList(await client.request('/api/v1/passenger/trusted-contacts'), adaptTrustedContact), get: async (contactId: string): Promise<TrustedContact> => adaptTrustedContact(await client.request('/api/v1/passenger/trusted-contacts/{contactId}', { pathParams: { contactId } })), create: async (body: unknown): Promise<TrustedContact> => adaptTrustedContact(await client.request('/api/v1/passenger/trusted-contacts', { method: 'POST', body })), update: async (contactId: string, body: unknown): Promise<TrustedContact> => adaptTrustedContact(await client.request('/api/v1/passenger/trusted-contacts/{contactId}', { method: 'PUT', pathParams: { contactId }, body })), delete: (contactId: string) => client.request('/api/v1/passenger/trusted-contacts/{contactId}', { method: 'DELETE', pathParams: { contactId } }) });

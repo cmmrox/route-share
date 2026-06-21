@@ -109,6 +109,11 @@ name: Passenger Task 08 results list map filtering ride detail regression
 - extendedWaitUntil:
     visible: RIDE DETAILS
     timeout: 20000
+# Give the Directions API call time to return so the road-following route paints, then capture
+# the map header before scrolling away.
+- waitForAnimationToEnd:
+    timeout: 6000
+- takeScreenshot: qa-passenger-task08-ride-detail-map
 - assertVisible: FARE ESTIMATE
 - scrollUntilVisible:
     element: ".*Continue.*"
