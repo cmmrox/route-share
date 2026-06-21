@@ -1,39 +1,22 @@
 package com.routeshare.passenger.controller;
 
-import com.routeshare.appreadiness.service.AppReadinessService;
 import com.routeshare.passenger.dto.request.PassengerDocumentUploadRequest;
 import com.routeshare.passenger.dto.response.PassengerVerificationStatusResponse;
 import com.routeshare.passenger.service.PassengerDocumentService;
 import com.routeshare.storage.dto.UploadUrlRequest;
 import com.routeshare.storage.dto.UploadUrlResponse;
 import jakarta.validation.Valid;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 public class PassengerAppReadinessController {
-  private final AppReadinessService service;
   private final PassengerDocumentService documentService;
 
-  @GetMapping("/api/v1/passenger/ride-searches/{searchId}/results")
-  public List<Map<String, Object>> rideSearchResults(@PathVariable long searchId) {
-    return service.mine("RIDE_SEARCH_RESULT", "PASSENGER");
-  }
-
-  @GetMapping("/api/v1/passenger/ride-searches/{searchId}/results/{resultId}")
-  public Map<String, Object> rideSearchResult(
-      @PathVariable long searchId, @PathVariable long resultId) {
-    return Map.of(
-        "searchId",
-        searchId,
-        "resultId",
-        resultId,
-        "status",
-        "DETAIL_AVAILABLE_FROM_SEARCH_RESPONSE");
-  }
+  // Ride search is stateless: POST /api/v1/passenger/ride-searches returns scored results directly
+  // (real-time matching). The workflow_item GET results/result shells were removed — clients carry
+  // the selected result into the ride-detail screen rather than re-fetching a stale persisted set.
 
   // Early drop-off is served by the real PassengerBookingController (actual-distance fare recalc +
   // capture, Phase 06.6-K); the workflow_item-backed shell was removed here.
