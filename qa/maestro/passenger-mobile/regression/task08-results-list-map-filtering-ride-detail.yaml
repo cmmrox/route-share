@@ -22,6 +22,10 @@ name: Passenger Task 08 results list map filtering ride detail regression
 - tapOn: Sri Lankan mobile number
 - inputText: 770000042
 - pressKey: Enter
+- scrollUntilVisible:
+    element: Send Code
+    direction: DOWN
+    timeout: 15000
 - tapOn: Send Code
 - extendedWaitUntil:
     visible: Enter the code
@@ -29,6 +33,10 @@ name: Passenger Task 08 results list map filtering ride detail regression
 - tapOn: One-time passcode
 - inputText: "000000"
 - pressKey: Enter
+- scrollUntilVisible:
+    element: Verify OTP
+    direction: DOWN
+    timeout: 15000
 - tapOn: Verify OTP
 - extendedWaitUntil:
     visible: Tell us about you
@@ -87,7 +95,8 @@ name: Passenger Task 08 results list map filtering ride detail regression
 - takeScreenshot: qa-passenger-task08-filtered
 # Map view with accessible ride-card fallback.
 - tapOn: Map
-- assertVisible: "rides on the map.*"
+# Maestro regex assertions are full-string matches, so anchor with leading/trailing .*
+- assertVisible: ".*rides on the map.*"
 - takeScreenshot: qa-passenger-task08-map
 # Grouped view by overlap tier.
 - tapOn: Grouped
@@ -101,5 +110,8 @@ name: Passenger Task 08 results list map filtering ride detail regression
     visible: RIDE DETAILS
     timeout: 20000
 - assertVisible: FARE ESTIMATE
-- assertVisible: "Continue.*"
+- scrollUntilVisible:
+    element: ".*Continue.*"
+    direction: DOWN
+    timeout: 10000
 - takeScreenshot: qa-passenger-task08-ride-detail

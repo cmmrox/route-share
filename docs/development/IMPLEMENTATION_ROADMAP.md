@@ -520,9 +520,10 @@ Verification: `pnpm --filter @routeshare/passenger-mobile typecheck | lint | tes
 80 tests), Android e2e scaffold gate, and Android preview-build config gate all pass. Backend
 `./mvnw spotless:check verify` green (180 tests).
 
-Blocked (device evidence only): full Android/iOS Maestro device run needs an attached emulator plus
-seeded PUBLISHED route inventory matching the search corridor; flow authored at
-`qa/maestro/passenger-mobile/regression/task08-results-list-map-filtering-ride-detail.yaml`. See
-`BLOCKERS.md` (2026-06-21 Task 08 device-QA blocker).
+Android device QA: GREEN — `task08-results-list-map-filtering-ride-detail.yaml` passed 1/1 (2m35s) on
+the Pixel_9 emulator against the live stack with a seeded Colombo Fort → Nugegoda route (real data
+across list/map/grouped + ride detail; fare LKR 1,206). Evidence:
+`qa/reports/20260621-111049-task08-final-green/`. iOS device evidence is a later release-evidence
+follow-up.
 
 Next: Task 09 — seat selection, booking idempotency, and cancellation.
