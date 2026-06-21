@@ -74,6 +74,7 @@ describe('passenger endpoint modules', () => {
     expect(passengerContractPaths).toContain('POST /api/v1/passenger/sos-events');
     expect(passengerContractPaths).toContain('GET /api/v1/passenger/saved-places/{savedPlaceId}');
     expect(passengerContractPaths).toContain('GET /api/v1/passenger/trusted-contacts/{contactId}');
-    expect(passengerContractPaths).toHaveLength(51);
+    // Ride search is stateless: the two GET-by-searchId result paths were removed (06.6-K cleanup).
+    expect(passengerContractPaths).toHaveLength(49);
   });
 });

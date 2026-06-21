@@ -15,6 +15,20 @@ This file is the first file to read before continuing RouteShareApp development.
 - Status: `PASSENGER_TASKS_01_07_UI_ALIGNED_TO_DESIGN_PDF_ANDROID_DEVICE_QA_GREEN`
 - Repository Git Status: `Working tree contains focused Phase 07 Task 07 implementation changes; generated QA reports remain ignored`
 
+## 2026-06-21 — Phase 06.6-K backend gap closure COMPLETE (backend production-complete)
+
+Closed the final seven backend gaps from the requirement/screens/docs audit; **no `workflow_item` shell remains for any product flow**, and Phase 06.6 (Backend Production Hardening) is now `COMPLETED`:
+
+1. Early drop-off — actual-distance fare recalc + capture (`V024`, real `PassengerBookingController` + `EarlyDropOffService` + `PaymentService.finalizeBookingFare`).
+2. Lifecycle notifications — booking confirmed/declined/cancelled, trip started/arrived/completed/cancelled, payment captured wired to `NotificationFacade`.
+3. Trip share-links — tokenized, time-boxed, revocable + unauthenticated public status (`/api/v1/public/trip-shares/{token}`) + best-effort trusted-contact SMS via `SmsGateway.sendText` (`V025`).
+4. Driver verification — `DriverVerificationService` derives readiness from profile status + required KYC docs (IDENTITY/LICENCE) + approved vehicle, with guidance; KYC identity/licence now issue real presigned uploads.
+5. Admin-configurable matching — `routing.matching_settings` (`V026`) + `GET/PUT /api/v1/admin/matching-settings`; `RouteService.search` resolves defaults from it and clamps to configured maximums.
+6. Analytics — real FINANCE/OPERATIONS reports over a window + CSV export (`GET /api/v1/admin/reports/{type}` and `/export`).
+7. Cleanup — passenger avatar/verification on the real document lifecycle; admin driver-application review consolidated onto `AdminDriverReviewController` (+ audit); stateless ride-search GET shells removed; OpenAPI specs + `API_BACKEND_RECONCILIATION.md` reconciled.
+
+Verification: `./mvnw spotless:apply spotless:check verify` → BUILD SUCCESS, 180 tests, JaCoCo 80% gate met. Live boot against the project Docker stack applied Flyway V024→V026 cleanly, seeded `matching_settings`, confirmed the `FARE_FINALIZED` ledger constraint, and smoke-tested endpoints (health UP; public invalid token → 404; admin endpoints → 401). Provider integrations remain gated/credential-ready (Cybersource/FCM/object-storage/Sentry/Notify.lk) per the user's plan to supply real keys later. **Backend development is functionally complete for production; remaining work is the passenger mobile app (Phase 07, Task 08 next).**
+
 ## 2026-06-18 — Phase 06.6 Backend Production Hardening started (Phase A done)
 
 A production-readiness audit found the Phase 06.5 "closure" was largely a facade: ~50 endpoints behind one generic `app_backend.workflow_item` table, untyped responses, and no real provider integrations beyond Notify.lk SMS + Google Places (payments `mock_`-only; no FCM/object-storage/Sentry/Kafka). Opened branch `feat/backend-production-hardening` and added `Phase 06.6 — Backend Production Hardening` to the roadmap (Phases A–J).

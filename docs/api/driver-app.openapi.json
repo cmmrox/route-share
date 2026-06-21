@@ -249,7 +249,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DriverProfile"
+                  "$ref": "#/components/schemas/DriverVerificationStatusResponse"
                 }
               }
             }
@@ -5075,6 +5075,71 @@
           },
           "latestLocation": {
             "$ref": "#/components/schemas/LocationSnapshotResponse"
+          }
+        }
+      },
+      "DriverVerificationStatusResponse": {
+        "type": "object",
+        "properties": {
+          "profileStatus": {
+            "type": "string"
+          },
+          "hasApprovedVehicle": {
+            "type": "boolean"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "documentType": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "rejectionReason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "UploadUrlResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "storageKey": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string"
+          },
+          "httpMethod": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "expiresInSeconds": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }
