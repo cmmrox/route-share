@@ -5,6 +5,7 @@ import com.routeshare.common.event.DomainEventPublisher;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.passenger.dto.response.PassengerDocumentResponse;
+import com.routeshare.passenger.dto.response.PassengerVerificationStatusResponse;
 import com.routeshare.passenger.entity.PassengerDocumentEntity;
 import com.routeshare.passenger.repository.PassengerDocumentRepository;
 import com.routeshare.passenger.service.PassengerDocumentService;
@@ -99,6 +100,31 @@ public class PassengerDocumentServiceImpl implements PassengerDocumentService {
     var ttl = Duration.ofSeconds(storageProps.presignTtlSeconds());
     return new DownloadUrlResponse(
         storage.createDownloadUrl(doc.getStorageKey(), ttl).toString(), ttl.toSeconds());
+  }
+
+  private static final String IDENTITY_TYPE = "IDENTITY";
+
+  @Override
+  @Transactional(readOnly = true)
+  public PassengerVerificationStatusResponse verificationStatus() {
+    var docs = documents.findByAppUserIdOrderByIdDesc(currentAppUserId());
+    String status =
+        docs.stream()
+            .filter(d -> IDENTITY_TYPE.equalsIgnoreCase(d.getDocumentType()))
+            .findFirst()
+            .map(PassengerDocumentServiceImpl::verificationLabel)
+            .orElse("NOT_SUBMITTED");
+    return new PassengerVerificationStatusResponse(
+        status, false, docs.stream().map(this::toResponse).toList());
+  }
+
+  private static String verificationLabel(PassengerDocumentEntity doc) {
+    return switch (doc.getStatus()) {
+      case PassengerDocumentEntity.STATUS_APPROVED -> "VERIFIED";
+      case PassengerDocumentEntity.STATUS_REJECTED -> "REJECTED";
+      case PassengerDocumentEntity.STATUS_SUBMITTED -> "PENDING_REVIEW";
+      default -> "AWAITING_UPLOAD";
+    };
   }
 
   private PassengerDocumentEntity requireOwned(long documentId) {

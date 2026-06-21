@@ -2,7 +2,6 @@ package com.routeshare.appreadiness;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.routeshare.admin.controller.AdminAppReadinessController;
 import com.routeshare.driver.controller.DriverAppReadinessController;
 import com.routeshare.passenger.controller.PassengerAppReadinessController;
 import com.routeshare.platform.controller.AppConfigController;
@@ -17,7 +16,9 @@ class Phase065AppBackendReadinessContractTest {
     assertThat(AppConfigController.class).isNotNull();
     assertThat(PassengerAppReadinessController.class).isNotNull();
     assertThat(DriverAppReadinessController.class).isNotNull();
-    assertThat(AdminAppReadinessController.class).isNotNull();
+    // Admin driver-application review consolidated onto the real AdminDriverReviewController
+    // (Phase 06.6-K); the workflow_item AdminAppReadinessController was removed.
+    assertThat(com.routeshare.admin.controller.AdminDriverReviewController.class).isNotNull();
   }
 
   @Test
