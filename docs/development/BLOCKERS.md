@@ -446,3 +446,16 @@ on 8082 serving an old bundle — replaced with a fresh Metro from the working t
 
 Note: seeding inventory directly is a QA convenience; a production-faithful alternative is to publish
 a route via the driver API. iOS device evidence remains a later release-evidence follow-up.
+
+## 2026-06-21 (later) — Passenger regression suite green on emulator (Tasks 07 + 08)
+
+Re-ran both passenger regression flows on the Pixel_9 emulator against the live stack in one session:
+- Task 07 (`task07-home-search-route-discovery.yaml`): 1/1 Passed (2m4s).
+- Task 08 (`task08-results-list-map-filtering-ride-detail.yaml`): 1/1 Passed (2m43s);
+  earlier authoritative run with full screenshots: `qa/reports/20260621-111049-task08-final-green/`.
+
+Hardened the Task 07 flow login/OTP steps with `scrollUntilVisible` (keyboard-robust), matching Task 08.
+Note: the standalone Task 07 failures before this were the OTP request **rate limit** (5/hour per number)
+being exhausted by repeated QA runs on +94770000042 — the app correctly displayed
+"Too many requests. Please try again later." For repeatable QA the local backend was run with
+`ROUTESHARE_RATE_LIMIT_ENABLED=false`; production keeps the limiter on (fail-open).
