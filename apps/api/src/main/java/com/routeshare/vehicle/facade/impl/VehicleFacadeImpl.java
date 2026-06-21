@@ -20,4 +20,9 @@ public class VehicleFacadeImpl implements VehicleFacade {
   public boolean existsByVehicleIdAndDriverProfileId(long vehicleId, long driverProfileId) {
     return vehicles.existsByVehicleIdAndDriverProfileId(vehicleId, driverProfileId);
   }
+
+  @Override
+  public boolean existsApprovedVehicleForDriver(long driverProfileId) {
+    return vehicles.existsApprovedVehicleForDriver(driverProfileId);
+  }
 }

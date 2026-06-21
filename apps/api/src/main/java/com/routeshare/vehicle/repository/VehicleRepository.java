@@ -14,6 +14,8 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
   boolean existsByIdAndDriverProfileIdAndStatusAndSeatCountGreaterThanEqual(
       long vehicleId, long driverProfileId, String status, int seats);
 
+  boolean existsByDriverProfileIdAndStatus(long driverProfileId, String status);
+
   default VehicleResponse create(long driverProfileId, VehicleRequest request) {
     return toResponse(
         save(
@@ -43,6 +45,10 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Long> {
 
   default boolean existsByVehicleIdAndDriverProfileId(long vehicleId, long driverProfileId) {
     return existsByIdAndDriverProfileId(vehicleId, driverProfileId);
+  }
+
+  default boolean existsApprovedVehicleForDriver(long driverProfileId) {
+    return existsByDriverProfileIdAndStatus(driverProfileId, "APPROVED");
   }
 
   default VehicleResponse review(long vehicleId, String status) {
