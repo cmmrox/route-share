@@ -2,7 +2,6 @@ package com.routeshare.appreadiness;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.routeshare.admin.controller.AdminAppReadinessController;
 import com.routeshare.driver.controller.DriverAppReadinessController;
 import com.routeshare.passenger.controller.PassengerAppReadinessController;
 import com.routeshare.platform.controller.AppConfigController;
@@ -17,16 +16,22 @@ class Phase065AppBackendReadinessContractTest {
     assertThat(AppConfigController.class).isNotNull();
     assertThat(PassengerAppReadinessController.class).isNotNull();
     assertThat(DriverAppReadinessController.class).isNotNull();
-    assertThat(AdminAppReadinessController.class).isNotNull();
+    // Admin driver-application review consolidated onto the real AdminDriverReviewController
+    // (Phase 06.6-K); the workflow_item AdminAppReadinessController was removed.
+    assertThat(com.routeshare.admin.controller.AdminDriverReviewController.class).isNotNull();
   }
 
   @Test
   void criticalPhase065ContractMethodsAreMapped() throws Exception {
     assertThat(AppConfigController.class.getMethod("config").isAnnotationPresent(GetMapping.class))
         .isTrue();
+    // Early drop-off moved to the real PassengerBookingController in Phase 06.6-K.
     assertThat(
-            PassengerAppReadinessController.class
-                .getMethod("earlyDropOff", long.class, java.util.Map.class)
+            com.routeshare.booking.controller.PassengerBookingController.class
+                .getDeclaredMethod(
+                    "earlyDropOff",
+                    long.class,
+                    com.routeshare.booking.dto.request.EarlyDropOffRequest.class)
                 .isAnnotationPresent(PostMapping.class))
         .isTrue();
     // SOS moved to the real safety module in Phase 06.6-E.

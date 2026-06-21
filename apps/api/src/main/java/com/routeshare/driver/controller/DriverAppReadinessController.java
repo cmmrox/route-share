@@ -1,7 +1,12 @@
 package com.routeshare.driver.controller;
 
-import com.routeshare.appreadiness.service.AppReadinessService;
+import com.routeshare.driver.dto.request.DriverKycUploadRequest;
+import com.routeshare.driver.dto.response.DriverVerificationStatusResponse;
+import com.routeshare.driver.service.DriverDocumentService;
+import com.routeshare.driver.service.DriverVerificationService;
 import com.routeshare.routing.service.RouteService;
+import com.routeshare.storage.dto.UploadUrlRequest;
+import com.routeshare.storage.dto.UploadUrlResponse;
 import com.routeshare.vehicle.dto.request.VehicleRequest;
 import com.routeshare.vehicle.dto.response.VehicleResponse;
 import com.routeshare.vehicle.service.VehicleService;
@@ -13,23 +18,29 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 public class DriverAppReadinessController {
-  private final AppReadinessService service;
   private final VehicleService vehicleService;
   private final RouteService routeService;
+  private final DriverVerificationService verificationService;
+  private final DriverDocumentService documentService;
 
   @GetMapping("/api/v1/driver/verification-status")
-  public Map<String, Object> verificationStatus() {
-    return service.verificationStatus();
+  public DriverVerificationStatusResponse verificationStatus() {
+    return verificationService.status();
   }
 
   @PutMapping("/api/v1/driver/kyc/identity")
-  public Map<String, Object> kycIdentity(@RequestBody(required = false) Map<String, Object> body) {
-    return service.create("DRIVER_KYC_IDENTITY", "DRIVER", "DRIVER", null, body);
+  public UploadUrlResponse kycIdentity(@Valid @RequestBody DriverKycUploadRequest body) {
+    return documentService.createUploadUrl(toUploadRequest("IDENTITY", body));
   }
 
   @PutMapping("/api/v1/driver/kyc/licence")
-  public Map<String, Object> kycLicence(@RequestBody(required = false) Map<String, Object> body) {
-    return service.create("DRIVER_KYC_LICENCE", "DRIVER", "DRIVER", null, body);
+  public UploadUrlResponse kycLicence(@Valid @RequestBody DriverKycUploadRequest body) {
+    return documentService.createUploadUrl(toUploadRequest("LICENCE", body));
+  }
+
+  private UploadUrlRequest toUploadRequest(String documentType, DriverKycUploadRequest body) {
+    return new UploadUrlRequest(
+        documentType, body.contentType(), body.fileSizeBytes(), body.originalFilename());
   }
 
   // Driver/vehicle document submit are served by the real DriverDocumentController /

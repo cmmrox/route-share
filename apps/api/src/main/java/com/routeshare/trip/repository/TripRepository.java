@@ -121,6 +121,18 @@ public interface TripRepository extends JpaRepository<TripEntity, Long> {
   int insertArrivedPickupEvent(
       @Param("tripId") long tripId, @Param("actorAppUserId") long actorAppUserId);
 
+  @Query(
+      value =
+          """
+      SELECT b.passenger_app_user_id
+      FROM booking.booking b
+      JOIN trip.trip t ON t.route_plan_id = b.route_plan_id
+        AND (b.route_occurrence_id = t.route_occurrence_id OR t.route_occurrence_id IS NULL)
+      WHERE t.trip_id = :tripId AND b.status = 'CONFIRMED'
+      """,
+      nativeQuery = true)
+  List<Long> findConfirmedPassengerAppUserIds(@Param("tripId") long tripId);
+
   interface DriverTripRow {
     Long getTripId();
 

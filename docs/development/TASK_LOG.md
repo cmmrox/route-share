@@ -1692,3 +1692,22 @@ Verification:
 - Android Maestro Task 07 regression — PASS end-to-end on `emulator-5554` against the real stack and Google Places; evidence under ignored `qa/reports/20260617-002329-task07-rework/`. Device screenshots confirm Onboarding, Login, and Search match the design references.
 
 Next step: bundle the design's serif display typeface; continue Task 08 (results list/map + ride detail).
+
+## 2026-06-21 — Phase 06.6-K: backend gap closure (Gaps 1–7)
+
+Closed the seven remaining backend gaps found in the requirement/screens/docs audit; every flow
+is now backed by real domain modules (no `workflow_item` shells remain for them):
+
+1. Early drop-off — actual-distance fare recalc + capture (`V024`, `PassengerBookingController`).
+2. Lifecycle notifications — booking/trip/payment events wired to `NotificationFacade`.
+3. Trip share-links — tokenized/time-boxed/revocable + public status + trusted-contact SMS (`V025`).
+4. Driver verification-status derived from profile + KYC docs + approved vehicle; KYC identity/
+   licence now issue real presigned uploads.
+5. Admin-configurable matching parameters (`V026`, `/api/v1/admin/matching-settings`).
+6. Real admin analytics reports + CSV export (`/api/v1/admin/reports/{type}` + `/export`).
+7. Passenger avatar/verification on the real document lifecycle; admin driver-application review
+   consolidated onto `AdminDriverReviewController`; OpenAPI/contract drift reconciled in
+   `docs/api/API_BACKEND_RECONCILIATION.md`.
+
+Verification: `./mvnw spotless:apply spotless:check verify` green each phase (unit suite + JaCoCo
+80% gate). Testcontainers migration smoke auto-skips without a Docker socket in this environment.

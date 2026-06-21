@@ -42,6 +42,11 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
       long bookingId, long passengerAppUserId);
 
   @Query(
+      value = "SELECT passenger_app_user_id FROM booking.booking WHERE booking_id = :bookingId",
+      nativeQuery = true)
+  Optional<Long> findPassengerAppUserId(@Param("bookingId") long bookingId);
+
+  @Query(
       value =
           """
       SELECT b.fare_estimate
@@ -107,6 +112,53 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
       """,
       nativeQuery = true)
   int updateStatus(@Param("bookingId") long bookingId, @Param("status") String status);
+
+  /**
+   * Projects the passenger's exit point onto the driver route to support early drop-off
+   * finalization.
+   */
+  @Query(
+      value =
+          """
+      SELECT ST_LineLocatePoint(rp.route_line, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326))
+               AS "exitFraction",
+             rp.route_length_m AS "routeLengthM",
+             COALESCE(b.pickup_route_fraction, 0) AS "pickupFraction",
+             COALESCE(b.dropoff_route_fraction, 1) AS "dropoffFraction",
+             b.seats AS "seats",
+             b.status AS "status"
+      FROM booking.booking b
+      JOIN routing.route_plan rp ON rp.route_plan_id = b.route_plan_id
+      WHERE b.booking_id = :bookingId AND b.passenger_app_user_id = :passengerAppUserId
+      """,
+      nativeQuery = true)
+  Optional<EarlyDropOffContext> findEarlyDropOffContext(
+      @Param("bookingId") long bookingId,
+      @Param("passengerAppUserId") long passengerAppUserId,
+      @Param("lat") double lat,
+      @Param("lng") double lng);
+
+  @Modifying
+  @Query(
+      value =
+          "UPDATE booking.booking SET dropoff_route_fraction = :fraction WHERE booking_id = :bookingId",
+      nativeQuery = true)
+  int updateDropoffFraction(
+      @Param("bookingId") long bookingId, @Param("fraction") java.math.BigDecimal fraction);
+
+  interface EarlyDropOffContext {
+    Double getExitFraction();
+
+    java.math.BigDecimal getRouteLengthM();
+
+    java.math.BigDecimal getPickupFraction();
+
+    java.math.BigDecimal getDropoffFraction();
+
+    Integer getSeats();
+
+    String getStatus();
+  }
 
   @Query(
       value =

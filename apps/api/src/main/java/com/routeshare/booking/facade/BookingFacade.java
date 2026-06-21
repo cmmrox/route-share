@@ -10,4 +10,7 @@ public interface BookingFacade {
 
   /** Driver's app_user_id for a booking owned by the given passenger (also confirms ownership). */
   Optional<Long> findDriverAppUserIdForPassengerBooking(long bookingId, long passengerAppUserId);
+
+  /** Passenger's app_user_id for a booking, used to address lifecycle notifications. */
+  Optional<Long> findPassengerAppUserIdForBooking(long bookingId);
 }

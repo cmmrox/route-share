@@ -31,10 +31,6 @@ public interface AppReadinessService {
 
   Map<String, Object> pushRegistration(String ownerRole, Map<String, Object> payload);
 
-  Map<String, Object> earlyDropOff(long bookingId, Map<String, Object> payload);
-
-  Map<String, Object> shareBooking(long bookingId, Map<String, Object> payload);
-
   Map<String, Object> payoutProfile(Map<String, Object> payload);
 
   Map<String, Object> payoutProfile();

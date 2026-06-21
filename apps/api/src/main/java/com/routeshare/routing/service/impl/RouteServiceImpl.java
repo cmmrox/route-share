@@ -14,6 +14,7 @@ import com.routeshare.routing.dto.request.RouteSearchRequest;
 import com.routeshare.routing.dto.response.DriverRouteResponse;
 import com.routeshare.routing.dto.response.RecurringRouteResponse;
 import com.routeshare.routing.dto.response.RouteSearchResponse;
+import com.routeshare.routing.repository.MatchingSettingsRepository;
 import com.routeshare.routing.repository.RouteBucketCellRepository;
 import com.routeshare.routing.repository.RouteOccurrenceRepository;
 import com.routeshare.routing.repository.RoutePlanRepository;
@@ -58,6 +59,7 @@ public class RouteServiceImpl implements RouteService {
   private final RouteScheduleRuleRepository scheduleRules;
   private final RouteOccurrenceRepository occurrences;
   private final RouteBucketCellRepository bucketCells;
+  private final MatchingSettingsRepository matchingSettings;
 
   public RouteServiceImpl(
       CurrentUserProvider current,
@@ -85,6 +87,7 @@ public class RouteServiceImpl implements RouteService {
         new RouteMatchScorer(),
         new RouteSchedulePolicy(clock),
         new RouteBucketCellGenerator(),
+        null,
         null,
         null,
         null);
@@ -135,11 +138,19 @@ public class RouteServiceImpl implements RouteService {
   public List<RouteSearchResponse> search(RouteSearchRequest req) {
     validateSearchRequest(req);
     identityFacade.upsertFromToken(current.requireCurrentUser());
-    int pickupRadiusMeters = valueOrDefault(req.pickupRadiusMeters(), DEFAULT_SEARCH_RADIUS_METERS);
+    MatchingDefaults defaults = matchingDefaults();
+    int pickupRadiusMeters =
+        clamp(
+            valueOrDefault(req.pickupRadiusMeters(), defaults.defaultSearchRadiusMeters()),
+            defaults.maxSearchRadiusMeters());
     int dropoffRadiusMeters =
-        valueOrDefault(req.dropoffRadiusMeters(), DEFAULT_SEARCH_RADIUS_METERS);
+        clamp(
+            valueOrDefault(req.dropoffRadiusMeters(), defaults.defaultSearchRadiusMeters()),
+            defaults.maxSearchRadiusMeters());
     int departureWindowMinutes =
-        valueOrDefault(req.departureWindowMinutes(), DEFAULT_DEPARTURE_WINDOW_MINUTES);
+        clamp(
+            valueOrDefault(req.departureWindowMinutes(), defaults.defaultDepartureWindowMinutes()),
+            defaults.maxDepartureWindowMinutes());
     int limit = valueOrDefault(req.limit(), DEFAULT_SEARCH_LIMIT);
     Instant windowStart =
         req.requestedDepartureTime().minus(Duration.ofMinutes(departureWindowMinutes));
@@ -520,6 +531,40 @@ public class RouteServiceImpl implements RouteService {
   private int valueOrDefault(Integer value, int defaultValue) {
     return value == null ? defaultValue : value;
   }
+
+  private int clamp(int value, int max) {
+    return Math.min(Math.max(value, 1), max);
+  }
+
+  private MatchingDefaults matchingDefaults() {
+    if (matchingSettings != null) {
+      return matchingSettings
+          .current()
+          .map(
+              s ->
+                  new MatchingDefaults(
+                      s.getDefaultSearchRadiusMeters(),
+                      s.getMaxSearchRadiusMeters(),
+                      s.getDefaultDepartureWindowMinutes(),
+                      s.getMaxDepartureWindowMinutes()))
+          .orElseGet(RouteServiceImpl::fallbackMatchingDefaults);
+    }
+    return fallbackMatchingDefaults();
+  }
+
+  private static MatchingDefaults fallbackMatchingDefaults() {
+    return new MatchingDefaults(
+        DEFAULT_SEARCH_RADIUS_METERS,
+        DEFAULT_SEARCH_RADIUS_METERS * 5,
+        DEFAULT_DEPARTURE_WINDOW_MINUTES,
+        DEFAULT_DEPARTURE_WINDOW_MINUTES * 6);
+  }
+
+  private record MatchingDefaults(
+      int defaultSearchRadiusMeters,
+      int maxSearchRadiusMeters,
+      int defaultDepartureWindowMinutes,
+      int maxDepartureWindowMinutes) {}
 
   private double round(double value) {
     return Math.round(value * 100.0) / 100.0;

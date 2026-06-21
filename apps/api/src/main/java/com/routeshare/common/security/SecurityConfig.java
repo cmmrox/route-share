@@ -35,6 +35,7 @@ public class SecurityConfig {
                         "/api/v1/app/config",
                         "/api/v1/auth/otp/request",
                         "/api/v1/auth/otp/verify",
+                        "/api/v1/public/**",
                         "/api/v1/payments/webhooks/**",
                         "/api-docs/**",
                         "/swagger-ui.html",

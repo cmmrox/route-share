@@ -287,3 +287,56 @@ Implemented Phase 06 backend foundation:
 - Admin live trip feed endpoint: `GET /api/v1/admin/trips/live`.
 
 Verification recorded after implementation: targeted Phase 06 tests pass, full backend tests pass, runtime health passes, Redis ping passes, and Flyway migration `013` succeeds.
+
+
+## 2026-06-21 — Phase 06.6-K backend gap closure (final contract reconciliation)
+
+Closed the remaining backend gaps and reconciled superseded/added endpoints. All paths below
+are now backed by real domain modules (no `workflow_item` shells remain for these flows).
+
+### Passenger (`passenger-app.openapi.json`)
+- `POST /api/v1/passenger/bookings/{bookingId}/early-drop-off` — REAL. Projects the exit point
+  onto the driver route (`ST_LineLocatePoint`), recomputes fare by actual distance, finalizes
+  payment. Response is now typed `EarlyDropOffResponse` (was generic map). Moved from the
+  readiness controller to `PassengerBookingController`.
+- `POST /api/v1/passenger/bookings/{bookingId}/share` and `/share-link` — REAL. Returns typed
+  `ShareTripResponse` `{ token, shareUrl, expiresAt, contactsNotified }` (was a fake
+  `routeshare.local` URL). Tokenized, time-boxed, revocable; optional trusted-contact SMS.
+- `DELETE /api/v1/passenger/bookings/{bookingId}/share/{token}` — NEW. Revoke a share link.
+- `GET /api/v1/public/trip-shares/{token}` — NEW, unauthenticated. Returns
+  `PublicTripStatusResponse` live trip status for a valid token.
+- `POST /api/v1/passenger/profile/avatar-upload` — REAL. Now returns `UploadUrlResponse`
+  (presigned upload via the passenger document lifecycle); request body
+  `PassengerDocumentUploadRequest`.
+- `GET /api/v1/passenger/verification/status` — REAL. Returns
+  `PassengerVerificationStatusResponse` derived from uploaded documents (was a static
+  `OPTIONAL` map).
+- `POST /api/v1/passenger/verification/documents` — REAL. Returns `UploadUrlResponse` for an
+  `IDENTITY` document upload.
+
+### Driver (`driver-app.openapi.json`)
+- `GET /api/v1/driver/verification-status` — REAL. Returns `DriverVerificationStatusResponse`
+  derived from profile status + required KYC docs (IDENTITY, LICENCE) + approved-vehicle gate,
+  with `nextSteps` guidance (was a static placeholder).
+- `PUT /api/v1/driver/kyc/identity` and `/kyc/licence` — REAL. Now issue presigned
+  `UploadUrlResponse` through the document lifecycle; request body `DriverKycUploadRequest`.
+
+### Admin (`admin-web.openapi.json`)
+- `POST /api/v1/admin/drivers/{id}/review` and `POST /api/v1/admin/driver-applications/{id}/review`
+  — consolidated onto the real `AdminDriverReviewController` (`DriverService.review` +
+  audit-action record). Status passed as `?status=` (`DriverVerificationStatus`). The
+  `workflow_item`-backed `AdminAppReadinessController` was removed.
+- `GET/PUT /api/v1/admin/matching-settings` — NEW. Admin-tunable route matching parameters
+  (`MatchingSettingsResponse` / `MatchingSettingsRequest`).
+- `GET /api/v1/admin/reports/{reportType}` — NEW. Real FINANCE/OPERATIONS analytics over a
+  `from`/`to` window (`AdminReportResponse`).
+- `GET /api/v1/admin/reports/{reportType}/export` — NEW. CSV download (`text/csv`) of the same
+  report. (The legacy `POST /api/v1/admin/reports/export` ack DTOs `ReportExportRequest/Response`
+  remain for backward compatibility but are superseded by this synchronous export.)
+
+### Migrations added
+- `V024` FARE_FINALIZED ledger entry type; `V025` `booking.trip_share`;
+  `V026` `routing.matching_settings`.
+
+Verification: `./mvnw spotless:apply spotless:check verify` green (unit suite + JaCoCo 80% gate);
+Testcontainers migration smoke auto-skips without a Docker socket in this environment.

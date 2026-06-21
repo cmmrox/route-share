@@ -2,9 +2,12 @@ package com.routeshare.booking.controller;
 
 import com.routeshare.booking.dto.request.BookingRequest;
 import com.routeshare.booking.dto.request.BookingStatusTransitionRequest;
+import com.routeshare.booking.dto.request.EarlyDropOffRequest;
+import com.routeshare.booking.dto.response.EarlyDropOffResponse;
 import com.routeshare.booking.dto.response.PassengerBookingDetailResponse;
 import com.routeshare.booking.dto.response.PassengerBookingSummaryResponse;
 import com.routeshare.booking.service.BookingService;
+import com.routeshare.booking.service.EarlyDropOffService;
 import com.routeshare.common.web.ApiResponse;
 import com.routeshare.payment.dto.response.ReceiptResponse;
 import com.routeshare.payment.service.PaymentService;
@@ -27,10 +30,13 @@ public class PassengerBookingController {
   private static final String CANCELLED = "CANCELLED";
   private final BookingService bookings;
   private final PaymentService payments;
+  private final EarlyDropOffService earlyDropOff;
 
-  public PassengerBookingController(BookingService bookings, PaymentService payments) {
+  public PassengerBookingController(
+      BookingService bookings, PaymentService payments, EarlyDropOffService earlyDropOff) {
     this.bookings = bookings;
     this.payments = payments;
+    this.earlyDropOff = earlyDropOff;
   }
 
   @PostMapping
@@ -61,6 +67,12 @@ public class PassengerBookingController {
     return ApiResponse.ok(
         bookings.transition(
             bookingId, new BookingStatusTransitionRequest(CANCELLED, req.reason())));
+  }
+
+  @PostMapping("/{bookingId}/early-drop-off")
+  ApiResponse<EarlyDropOffResponse> earlyDropOff(
+      @PathVariable long bookingId, @Valid @RequestBody EarlyDropOffRequest req) {
+    return ApiResponse.ok(earlyDropOff.finalizeEarlyDropOff(bookingId, req));
   }
 
   public record CancelBookingRequest(String reason) {}

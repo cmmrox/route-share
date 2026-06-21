@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.routeshare.booking.dto.response.PassengerBookingSummaryResponse;
 import com.routeshare.booking.service.BookingService;
+import com.routeshare.booking.service.EarlyDropOffService;
 import com.routeshare.payment.service.PaymentService;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -19,10 +20,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class PassengerBookingProjectionControllerTest {
   @Mock private BookingService bookings;
   @Mock private PaymentService payments;
+  @Mock private EarlyDropOffService earlyDropOff;
 
   @Test
   void passengerBookingListDelegatesToProjectionService() {
-    var controller = new PassengerBookingController(bookings, payments);
+    var controller = new PassengerBookingController(bookings, payments, earlyDropOff);
     var summary =
         new PassengerBookingSummaryResponse(
             1L,

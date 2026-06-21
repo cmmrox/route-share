@@ -124,18 +124,6 @@ public class AppReadinessServiceImpl implements AppReadinessService {
   }
 
   @Transactional
-  public Map<String, Object> earlyDropOff(long bookingId, Map<String, Object> payload) {
-    return create("EARLY_DROP_OFF", "PASSENGER", "BOOKING", String.valueOf(bookingId), payload);
-  }
-
-  @Transactional
-  public Map<String, Object> shareBooking(long bookingId, Map<String, Object> payload) {
-    var body = new LinkedHashMap<String, Object>(payload == null ? Map.of() : payload);
-    body.put("shareUrl", "https://routeshare.local/share/booking/" + bookingId);
-    return create("TRIP_SHARE", "PASSENGER", "BOOKING", String.valueOf(bookingId), body);
-  }
-
-  @Transactional
   public Map<String, Object> payoutProfile(Map<String, Object> payload) {
     return create("PAYOUT_PROFILE", "DRIVER", "DRIVER", String.valueOf(appUserId()), payload);
   }

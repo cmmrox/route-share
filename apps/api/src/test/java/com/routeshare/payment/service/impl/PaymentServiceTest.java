@@ -47,7 +47,8 @@ class PaymentServiceTest {
           new CommissionProperties(new BigDecimal("0.10")),
           paymentMethods,
           (action, key, limit, window) -> {},
-          new com.routeshare.common.ratelimit.RateLimitProperties(true, null, null, null, null));
+          new com.routeshare.common.ratelimit.RateLimitProperties(true, null, null, null, null),
+          org.mockito.Mockito.mock(com.routeshare.notification.facade.NotificationFacade.class));
 
   @BeforeEach
   void setUp() {
