@@ -60,6 +60,8 @@ public class RouteServiceImpl implements RouteService {
   private final RouteOccurrenceRepository occurrences;
   private final RouteBucketCellRepository bucketCells;
   private final MatchingSettingsRepository matchingSettings;
+  private final com.routeshare.pricing.domain.FareCalculator fareCalculator =
+      com.routeshare.pricing.domain.FareCalculator.defaultSriLankaCalculator();
 
   public RouteServiceImpl(
       CurrentUserProvider current,
@@ -173,7 +175,7 @@ public class RouteServiceImpl implements RouteService {
             routeBucketCellGenerator.cellFor(req.dropoff(), ROUTE_BUCKET_RESOLUTION),
             limit)
         .stream()
-        .map(this::toSearchResponse)
+        .map(row -> toSearchResponse(row, req.seats()))
         .sorted(Comparator.comparing(RouteSearchResponse::score).reversed())
         .toList();
   }
@@ -463,7 +465,8 @@ public class RouteServiceImpl implements RouteService {
     }
   }
 
-  private RouteSearchResponse toSearchResponse(RoutePlanRepository.RouteSearchCandidateRow row) {
+  private RouteSearchResponse toSearchResponse(
+      RoutePlanRepository.RouteSearchCandidateRow row, int seats) {
     var candidate =
         new RouteMatchCandidate(
             row.getRoutePlanId(),
@@ -478,6 +481,16 @@ public class RouteServiceImpl implements RouteService {
             row.getOverlapDistanceMeters(),
             row.getRequestedDistanceMeters());
     var score = routeMatchScorer.score(candidate);
+    // Matched distance is the on-route segment the passenger actually travels; fare mirrors
+    // booking.
+    long matchedMeters = Math.max(0, Math.round(row.getOverlapDistanceMeters()));
+    int requestedSeats = Math.max(1, seats);
+    java.math.BigDecimal estimatedFare =
+        fareCalculator
+            .estimate(matchedMeters)
+            .totalFare()
+            .multiply(java.math.BigDecimal.valueOf(requestedSeats))
+            .setScale(2, java.math.RoundingMode.HALF_UP);
     return new RouteSearchResponse(
         row.getRoutePlanId(),
         row.getRouteOccurrenceId(),
@@ -493,7 +506,15 @@ public class RouteServiceImpl implements RouteService {
         round(row.getOverlapDistanceMeters()),
         score.overlapPercent(),
         score.score(),
-        score.explanation());
+        score.explanation(),
+        matchedMeters,
+        estimatedFare,
+        "LKR",
+        row.getDriverName(),
+        row.getVehicleMake(),
+        row.getVehicleModel(),
+        row.getVehicleRegistration(),
+        row.getVehicleSeatCount());
   }
 
   private void validateCoordinate(CoordinateRequest coordinate) {

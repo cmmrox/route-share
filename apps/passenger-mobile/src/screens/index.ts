@@ -10,3 +10,5 @@ export { TrustedContactsScreen } from './trusted-contacts.screen';
 export { VerificationScreen } from './verification.screen';
 
 export { SearchScreen } from './search.screen';
+export { SearchResultsScreen } from './search-results.screen';
+export { RideDetailScreen } from './ride-detail.screen';

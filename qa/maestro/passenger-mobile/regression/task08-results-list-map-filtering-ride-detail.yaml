@@ -1,0 +1,105 @@
+appId: app.routeshare.passenger
+name: Passenger Task 08 results list map filtering ride detail regression
+---
+# Clean-state Android regression for Task 08 (results list/map/grouped + ride detail).
+# Preconditions (same stack as Task 07 plus seeded inventory):
+#   - Local backend OTP demo mode (NOTIFY_LK_ALLOW_DEMO_SENDER_FOR_OTP=true), Metro on 8082,
+#     API on 8080, Google Maps enabled, adb reverse/emulator base URL configured by the QA wrapper.
+#   - At least one PUBLISHED driver route + occurrence whose corridor matches the
+#     Colombo Fort -> Nugegoda search window, so the results list renders ride cards
+#     (otherwise the screen correctly shows the "No rides match yet" empty state and the
+#     ride-card/detail assertions below will not be reachable).
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible: Skip
+    timeout: 180000
+- tapOn: Skip
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: Welcome back
+    timeout: 30000
+- tapOn: Sri Lankan mobile number
+- inputText: 770000042
+- pressKey: Enter
+- tapOn: Send Code
+- extendedWaitUntil:
+    visible: Enter the code
+    timeout: 30000
+- tapOn: One-time passcode
+- inputText: "000000"
+- pressKey: Enter
+- tapOn: Verify OTP
+- extendedWaitUntil:
+    visible: Tell us about you
+    timeout: 30000
+- tapOn: First name
+- eraseText
+- inputText: QA
+- pressKey: Enter
+- tapOn: Last name
+- eraseText
+- inputText: Passenger
+- pressKey: Enter
+- tapOn: Email
+- eraseText
+- inputText: qa.passenger@example.test
+- pressKey: Enter
+- scrollUntilVisible:
+    element: Continue
+    direction: DOWN
+    timeout: 10000
+- tapOn: Continue
+- extendedWaitUntil:
+    visible: "Where to.*"
+    timeout: 30000
+- tapOn: Enter destination
+- extendedWaitUntil:
+    visible: Pickup location
+    timeout: 15000
+- tapOn: Pickup location
+- inputText: Colombo Fort
+- extendedWaitUntil:
+    visible: "Select place.*"
+    timeout: 20000
+- pressKey: Enter
+- tapOn: "Select place.*"
+- tapOn: Destination
+- inputText: Nugegoda
+- extendedWaitUntil:
+    visible: "Select place.*"
+    timeout: 20000
+- pressKey: Enter
+- tapOn: "Select place.*"
+- tapOn: Search for shared rides
+- extendedWaitUntil:
+    visible: Available rides
+    timeout: 30000
+# --- Task 08 results experience ---
+- assertVisible: List
+- assertVisible: Map
+- assertVisible: Grouped
+- assertVisible: Best match
+- takeScreenshot: qa-passenger-task08-results-list
+# Sort + match filter chips reorder/filter the list.
+- tapOn: Lowest price
+- tapOn: 75%+
+- takeScreenshot: qa-passenger-task08-filtered
+# Map view with accessible ride-card fallback.
+- tapOn: Map
+- assertVisible: "rides on the map.*"
+- takeScreenshot: qa-passenger-task08-map
+# Grouped view by overlap tier.
+- tapOn: Grouped
+- takeScreenshot: qa-passenger-task08-grouped
+# Open the first ride card -> ride detail (requires seeded matching inventory).
+- tapOn: List
+- tapOn:
+    text: "LKR .*"
+    index: 0
+- extendedWaitUntil:
+    visible: RIDE DETAILS
+    timeout: 20000
+- assertVisible: FARE ESTIMATE
+- assertVisible: "Continue.*"
+- takeScreenshot: qa-passenger-task08-ride-detail

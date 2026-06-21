@@ -495,3 +495,34 @@ Notes: verification document submission and avatar binary storage are honest rea
 In progress: Task 07 — home, search, location, and route discovery. Production completion is blocked until Google Maps Platform keys are supplied, real map/place integration is verified, strict Android Maestro regression is green, and iOS runtime evidence is captured.
 
 Next: obtain/configure Google Maps Platform keys for Task 07, rebuild the dev client, verify real map/place flows on device, stabilize Task 07 device QA, then Task 08 — results list/map filtering and ride detail.
+
+## Phase 07 Task 08 update — 2026-06-21
+
+Implemented Task 08 — results list, results map, grouped results, filtering, and ride detail.
+
+- Backend search enrichment: `RouteSearchResponse` (and the matching candidate query) now carry
+  `estimatedFare` (computed from the matched on-route distance via `FareCalculator`, ×seats),
+  `matchedDistanceMeters`, `driverName`, and `vehicleMake/Model/Registration/SeatCount`, so the
+  results/detail screens render real fare/driver/vehicle data instead of placeholders.
+- New passenger feature module `features/ride-results` (RN-free, unit-tested): `toRideResultModel`
+  normalization (match tier, fare/departure/seat/walk labels), `applyRideFilters` (min match,
+  max fare, min seats, sort by best-match/price/departure/seats), and `groupRideResults` by overlap
+  tier.
+- New screens `SearchResultsScreen` (list/map/grouped toggle, sort + match-threshold filter chips,
+  ride cards with `MatchRing`/`Avatar`/fare/driver/vehicle/seats, accessible map card fallback,
+  empty state) and `RideDetailScreen` (map header, driver card, route timeline, fare estimate,
+  why-good-match, safety/policy, continue→seat-selection booking handoff). Registered in the
+  navigator; `RideDetail`/`SeatSelection` params now carry the selected result + coordinates + seats.
+- Ride search confirmed stateless: removed the redundant GET result/result-detail shells in the
+  backend finalization commit; results are carried via navigation state.
+
+Verification: `pnpm --filter @routeshare/passenger-mobile typecheck | lint | test` (18 files /
+80 tests), Android e2e scaffold gate, and Android preview-build config gate all pass. Backend
+`./mvnw spotless:check verify` green (180 tests).
+
+Blocked (device evidence only): full Android/iOS Maestro device run needs an attached emulator plus
+seeded PUBLISHED route inventory matching the search corridor; flow authored at
+`qa/maestro/passenger-mobile/regression/task08-results-list-map-filtering-ride-detail.yaml`. See
+`BLOCKERS.md` (2026-06-21 Task 08 device-QA blocker).
+
+Next: Task 09 — seat selection, booking idempotency, and cancellation.

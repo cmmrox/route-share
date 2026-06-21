@@ -36,9 +36,9 @@ export type PassengerRootStackParamList = {
   ProfileSetup: undefined;
   Home: undefined;
   Search: { pickup?: Coordinate; dropoff?: Coordinate } | undefined;
-  SearchResults: { searchId: string; pickup?: Coordinate; dropoff?: Coordinate; results?: RideSearchResult[] };
-  RideDetail: { searchId: string; resultId: string };
-  SeatSelection: { searchId: string; resultId: string };
+  SearchResults: { searchId: string; pickup?: Coordinate; dropoff?: Coordinate; seats?: number; results?: RideSearchResult[] };
+  RideDetail: { searchId: string; resultId: string; result?: RideSearchResult; pickup?: Coordinate; dropoff?: Coordinate; seats?: number };
+  SeatSelection: { searchId: string; resultId: string; result?: RideSearchResult; pickup?: Coordinate; dropoff?: Coordinate; seats?: number };
   Payment: { bookingId: string; paymentIntentId?: string };
   BookedWaiting: { bookingId: string };
   InTrip: { tripId: string; bookingId: string };

@@ -404,3 +404,23 @@ Android Search-screen device QA progress 2026-06-16 (later):
 - Full Android regression (`qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml`) now PASSES end-to-end on `emulator-5554` against the real Google Places integration. The SearchResults handoff carried real resolved coordinates (pickup `6.9336686, 79.8500469`; dropoff `6.8649081, 79.8996789`). Evidence under ignored `qa/reports/20260616-224636/`.
 - Maestro flows corrected to drive the real Google-Places suggestion-selection UX (tap "Search pickup/destination places" → tap `📍` suggestion → "Search shared rides"); `hideKeyboard` removed because Android Maestro sends BACK.
 - Remaining to close Blocker 011: iOS simulator/device runtime evidence for the same map/place/search path.
+
+
+## 2026-06-21 — Phase 07 Task 08 device-QA blocker (results list/map/grouped + ride detail)
+
+Task 08 implementation is complete and statically verified: `pnpm --filter
+@routeshare/passenger-mobile typecheck | lint | test` (18 files / 80 tests) all pass, plus the
+Android e2e scaffold gate and preview-build config gate. The Maestro regression flow is authored at
+`qa/maestro/passenger-mobile/regression/task08-results-list-map-filtering-ride-detail.yaml`.
+
+Open blocker — full device QA could not be run in this environment:
+
+1. No emulator/device was attached (`adb devices` empty); a `Pixel_9` AVD exists but was not booted here.
+2. The ride-card and ride-detail assertions require **seeded PUBLISHED driver-route inventory**
+   whose corridor matches the Colombo Fort → Nugegoda search window. Without a published
+   route+occurrence+bucket cells (which need an approved driver + approved vehicle), the results
+   screen correctly renders the "No rides match yet" empty state and the card/detail steps are not
+   reachable. The list/map/grouped/filter UI itself is reachable without inventory.
+
+To close: boot the emulator with Metro on 8082 + API on 8080 (Google Maps enabled, demo OTP), seed a
+matching published route, run the task08 flow, and save evidence under ignored `qa/reports/`.

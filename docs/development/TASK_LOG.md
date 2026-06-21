@@ -1711,3 +1711,23 @@ is now backed by real domain modules (no `workflow_item` shells remain for them)
 
 Verification: `./mvnw spotless:apply spotless:check verify` green each phase (unit suite + JaCoCo
 80% gate). Testcontainers migration smoke auto-skips without a Docker socket in this environment.
+
+## 2026-06-21 — Phase 07 Task 08: results list/map/grouped, filtering, ride detail
+
+Implemented the ride-browsing and pre-booking evaluation experience.
+
+- Backend: enriched `RouteSearchResponse` + the candidate query with `estimatedFare` (FareCalculator
+  on matched on-route distance × seats), `matchedDistanceMeters`, `driverName`, and
+  `vehicleMake/Model/Registration/SeatCount`.
+- Mobile: `features/ride-results` (normalization + filters/sort + tier grouping, unit-tested),
+  `SearchResultsScreen` (list/map/grouped + sort/match filters + ride cards + empty/map-fallback),
+  and `RideDetailScreen` (driver/timeline/fare/why-match/safety + booking handoff). Updated the
+  ride-search adapter/types for the new fields; navigation handoff carries the selected result.
+
+Verification: passenger-mobile typecheck/lint/test (18 files / 80 tests) + Android e2e + preview
+gates green; backend `./mvnw spotless:check verify` green (180 tests).
+
+Device QA: authored `qa/maestro/.../task08-results-list-map-filtering-ride-detail.yaml`; full device
+run is blocked on an attached emulator + seeded matching route inventory (see BLOCKERS.md).
+
+Next step: Task 09 — seat selection, booking idempotency, and cancellation.
