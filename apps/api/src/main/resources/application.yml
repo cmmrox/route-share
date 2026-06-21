@@ -89,6 +89,11 @@ routeshare:
     capture-mode: ${CYBERSOURCE_CAPTURE_MODE:manual}
     webhook-secret: ${CYBERSOURCE_WEBHOOK_SECRET:}
 
+  share:
+    base-url: ${ROUTESHARE_SHARE_BASE_URL:https://app.routeshare.lk/share/trip}
+    default-ttl-minutes: ${ROUTESHARE_SHARE_DEFAULT_TTL_MINUTES:240}
+    max-ttl-minutes: ${ROUTESHARE_SHARE_MAX_TTL_MINUTES:1440}
+
   commission:
     default-rate: ${ROUTESHARE_COMMISSION_DEFAULT_RATE:0.10}
 

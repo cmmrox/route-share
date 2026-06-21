@@ -118,14 +118,6 @@ class AppReadinessServiceImplTest {
   }
 
   @Test
-  void shareBookingAddsShareUrlBeforePersisting() {
-    var response = service.shareBooking(99L, Map.of("title", "Share"));
-
-    assertThat((Map<String, Object>) response.get("payload"))
-        .containsEntry("shareUrl", "https://routeshare.local/share/booking/99");
-  }
-
-  @Test
   void payoutProfileReturnsNotConfiguredWhenDriverHasNoProfile() {
     when(items.findByItemTypeAndOwnerAppUserIdOrderByIdDesc("PAYOUT_PROFILE", 7L))
         .thenReturn(List.of());

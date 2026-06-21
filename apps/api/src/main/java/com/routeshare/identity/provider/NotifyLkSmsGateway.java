@@ -34,7 +34,21 @@ public class NotifyLkSmsGateway implements SmsGateway {
       throw new IllegalStateException(
           "Configure an approved Notify.lk sender ID before sending OTP messages");
     }
+    send(phoneE164, message(code, expiresInMinutes), "OTP");
+  }
 
+  @Override
+  public void sendText(String phoneE164, String message) {
+    if (!properties.enabled()) {
+      throw new IllegalStateException("Notify.lk SMS is disabled for this environment");
+    }
+    if (!properties.hasCredentials()) {
+      throw new IllegalStateException("Notify.lk credentials are not configured");
+    }
+    send(phoneE164, message, "transactional");
+  }
+
+  private void send(String phoneE164, String message, String kind) {
     String response;
     try {
       response =
@@ -51,16 +65,17 @@ public class NotifyLkSmsGateway implements SmsGateway {
                           .queryParam("api_key", properties.apiKey())
                           .queryParam("sender_id", properties.senderId())
                           .queryParam("to", toNotifyPhone(phoneE164))
-                          .queryParam("message", message(code, expiresInMinutes))
+                          .queryParam("message", message)
                           .build())
               .retrieve()
               .body(String.class);
     } catch (RestClientResponseException e) {
-      throw new IllegalStateException("Notify.lk rejected the OTP request: " + providerError(e), e);
+      throw new IllegalStateException(
+          "Notify.lk rejected the " + kind + " request: " + providerError(e), e);
     }
 
     if (!isSuccess(response)) {
-      throw new IllegalStateException("Notify.lk failed to send OTP SMS");
+      throw new IllegalStateException("Notify.lk failed to send " + kind + " SMS");
     }
   }
 

@@ -31,17 +31,9 @@ public class PassengerAppReadinessController {
   // Early drop-off is served by the real PassengerBookingController (actual-distance fare recalc +
   // capture, Phase 06.6-K); the workflow_item-backed shell was removed here.
 
-  @PostMapping("/api/v1/passenger/bookings/{bookingId}/share")
-  public Map<String, Object> share(
-      @PathVariable long bookingId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.shareBooking(bookingId, body);
-  }
-
-  @PostMapping("/api/v1/passenger/bookings/{bookingId}/share-link")
-  public Map<String, Object> shareLink(
-      @PathVariable long bookingId, @RequestBody(required = false) Map<String, Object> body) {
-    return service.shareBooking(bookingId, body);
-  }
+  // Trip share / share-link are served by the real PassengerTripShareController +
+  // PublicTripShareController (tokenized, time-boxed links + trusted-contact SMS, Phase 06.6-K);
+  // the workflow_item-backed shells were removed here.
 
   // Ratings, SOS, support tickets, notifications, preferences, and push registrations are served by
   // the real rating/safety/support/notification modules (Phase 06.6-D/E); their
