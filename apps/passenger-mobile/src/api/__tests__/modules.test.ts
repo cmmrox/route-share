@@ -75,6 +75,7 @@ describe('passenger endpoint modules', () => {
     expect(passengerContractPaths).toContain('GET /api/v1/passenger/saved-places/{savedPlaceId}');
     expect(passengerContractPaths).toContain('GET /api/v1/passenger/trusted-contacts/{contactId}');
     // Ride search is stateless: the two GET-by-searchId result paths were removed (06.6-K cleanup).
-    expect(passengerContractPaths).toHaveLength(49);
+    // +1 for the road-following directions endpoint used to draw the real route on the map.
+    expect(passengerContractPaths).toHaveLength(50);
   });
 });
