@@ -19,6 +19,10 @@ name: Passenger Task 07 home search route discovery regression
 - tapOn: Sri Lankan mobile number
 - inputText: 770000042
 - pressKey: Enter
+- scrollUntilVisible:
+    element: Send Code
+    direction: DOWN
+    timeout: 15000
 - tapOn: Send Code
 - extendedWaitUntil:
     visible: Enter the code
@@ -26,6 +30,10 @@ name: Passenger Task 07 home search route discovery regression
 - tapOn: One-time passcode
 - inputText: "000000"
 - pressKey: Enter
+- scrollUntilVisible:
+    element: Verify OTP
+    direction: DOWN
+    timeout: 15000
 - tapOn: Verify OTP
 - extendedWaitUntil:
     visible: Tell us about you
