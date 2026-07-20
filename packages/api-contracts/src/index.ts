@@ -78,6 +78,10 @@ export const passengerApiEndpoints = [
     "path": "/api/v1/passenger/directions"
   },
   {
+    "method": "GET",
+    "path": "/api/v1/passenger/route-occurrences/{routeOccurrenceId}/geometry"
+  },
+  {
     "method": "POST",
     "path": "/api/v1/passenger/ride-searches"
   },

@@ -6,6 +6,40 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ---
 
+## 2026-07-21
+
+### Task: Google API cost-optimization + performance slice
+
+Status: `COMPLETED` (branch `codex/perf-google-cost-optimization`, uncommitted pending review)
+
+Files Created:
+
+- `apps/api/src/main/java/com/routeshare/common/cache/JsonCache.java`, `RedisJsonCache.java` — fail-open Redis JSON cache for billable provider responses.
+- `apps/api/src/main/java/com/routeshare/maps/service/impl/ProviderCooldown.java` — in-process cooldown breaker for Google adapters.
+- `apps/api/src/main/java/com/routeshare/routing/service/RouteGeometryService.java`, `service/impl/RouteGeometryServiceImpl.java`, `controller/PassengerRouteGeometryController.java`, `dto/response/RouteGeometryResponse.java` — stored-route segment endpoint (`ST_LineSubstring`), zero Google cost.
+- `scripts/simulation/` — `lib.sh`, `seed-demo-route.sh`, `verify-cost-controls.sh`, `README.md` (local QA seeding + cost-control verification helpers, kept separate from app code).
+- Backend tests: `GooglePlaceSearchServiceImplTest`, `ProviderCooldownTest`, `RouteGeometryServiceImplTest`, `IdentityFacadeImplTest`, `InMemoryJsonCache` test double; caching/cooldown tests added to `RouteMetricsAdapterTest` and `GoogleDirectionsAdapterTest`.
+
+Files Modified:
+
+- Maps module: `GooglePlaceSearchServiceImpl` (session tokens, Essentials-tier details field mask, details cache), `RouteMetricsAdapter` + `GoogleDirectionsAdapter` (Redis cache + cooldown), `PassengerPlaceSearchController` + `PassengerDirectionsController` (session token param + per-user rate limits), `GoogleMapsProperties` (cache TTL/breaker config, `@ConstructorBinding`).
+- `common/ratelimit/RateLimitProperties` — places/directions limits (+ `@ConstructorBinding`).
+- Identity: `IdentityFacade`/`IdentityFacadeImpl` — Caffeine token-projection cache + invalidation; `AdminUserServiceImpl` invalidates on suspend/activate; `apps/api/pom.xml` adds Caffeine.
+- `RoutePlanRepository` — `findOccurrenceSegment` GeoJSON query.
+- Passenger mobile: `search.screen.tsx` (session tokens, min 3 chars, 450 ms debounce, local saved-place suggestions), `ride-detail.screen.tsx` (stored geometry first, directions fallback), `api/modules.ts` (+`routeGeometry`, session tokens), `features/ride-search/types.ts`.
+- Contracts/docs/config: `packages/api-contracts/src/index.ts` (51 passenger paths), `docs/api/API_BACKEND_RECONCILIATION.md`, `application.yml`, `.env.example`.
+
+Verification:
+
+- Backend `spotless:check verify`: BUILD SUCCESS, 203 tests, JaCoCo gate met.
+- Mobile `typecheck|lint|test`: 18 files / 82 tests; api-contracts typecheck green.
+- Live stack `verify-cost-controls.sh`: 6/6 PASS with real Google keys (session token, place-details + distance-matrix Redis caches, `route_plan` geometry, 429 rate limit).
+- Android emulator Maestro: task07 regression PASS (1m14s), task08 regression PASS (1m36s); ride detail produced no `maps:dir:*` cache keys (no Directions call). Evidence: `qa/reports/20260721-002636/`, `qa/reports/20260721-003153/`.
+
+Next Step: commit/review the slice, then continue Phase 07 Task 09 (seat selection, booking idempotency, cancellation).
+
+---
+
 ## 2026-06-21
 
 ### Task: Phase 06.6-J — Deployment readiness

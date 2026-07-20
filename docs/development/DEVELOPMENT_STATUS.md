@@ -1,6 +1,6 @@
 # RouteShareApp Development Status
 
-2026-06-15 22:35 +0530
+2026-07-21 01:00 +0530
 
 ## Purpose
 
@@ -14,6 +14,47 @@ This file is the first file to read before continuing RouteShareApp development.
 - Current Active Task: `Task 07 home, search, location, and route discovery is not production-complete until Google Maps keys, real map/place integration, and device QA evidence are complete`
 - Status: `PASSENGER_TASKS_01_07_UI_ALIGNED_TO_DESIGN_PDF_ANDROID_DEVICE_QA_GREEN`
 - Repository Git Status: `Working tree contains focused Phase 07 Task 07 implementation changes; generated QA reports remain ignored`
+
+## 2026-07-21 — Google API cost-optimization + performance slice (branch `codex/perf-google-cost-optimization`)
+
+Implemented the architecture-review cost/performance recommendations without changing product behavior:
+
+- Places autocomplete/details now carry a client-generated Google **session token** end-to-end
+  (search screen → proxy → Google) so Google bills a search interaction as one session.
+- Place Details **field mask reduced to Essentials tier** (`id,formattedAddress,location`;
+  `displayName` is Pro-tier ≈3× the price) — clients keep the suggestion label instead.
+- **Ride-detail map polyline now comes from the stored PostGIS route line**
+  (`GET /api/v1/passenger/route-occurrences/{id}/geometry`, `ST_LineSubstring` between the matched
+  fractions): zero Google cost, and the passenger sees the driver's actual route. Directions API
+  remains only as fallback for unmatched coordinate pairs.
+- **Redis caching** for Google responses via new `common/cache/RedisJsonCache`:
+  place details by placeId (24 h), Distance Matrix by ~110 m-rounded coordinates (7 d),
+  Directions by ~11 m-rounded coordinates (7 d). TTLs configurable; well inside Google's 30-day term.
+- **Per-user rate limits** on the Google-billed proxy endpoints (autocomplete 40/min,
+  details 20/min, directions 20/min) using the existing `RedisRateLimiter` — cost-abuse stop.
+- **Cooldown breaker** (`ProviderCooldown`, 3 failures → 30 s skip) on all Google adapters so a
+  Google brownout degrades instantly to fallbacks instead of holding request threads for 8 s each.
+- **Identity projection cache** (Caffeine, 5 min TTL, claims-aware, admin suspend/activate
+  invalidates): `IdentityFacade.upsertFromToken` no longer issues a DB write per authenticated
+  request. `ROUTESHARE_IDENTITY_PROJECTION_CACHE_TTL_SECONDS=0` restores old behavior.
+- Client tuning: autocomplete min chars 2→3, debounce 350→450 ms, saved places matched locally
+  (zero-cost) above Google suggestions; ride detail prefers the geometry endpoint.
+- New **simulation/QA helper scripts** under `scripts/simulation/` (kept separate as required):
+  `seed-demo-route.sh` (Keycloak demo driver + approved vehicle + published Colombo Fort→Nugegoda
+  route) and `verify-cost-controls.sh` (end-to-end proof of session tokens, Redis caches, stored
+  geometry, degradation paths, and the 429 rate limit).
+- Fixed in-flight: `@ConfigurationProperties` records with extra convenience constructors needed
+  `@ConstructorBinding` (caught by live boot, not unit tests).
+
+Verification (all green):
+
+- Backend `./mvnw spotless:check verify` — BUILD SUCCESS, **203 tests**, JaCoCo 80% gate met.
+- Passenger mobile `typecheck | lint | test` — **18 files / 82 tests**; `@routeshare/api-contracts` typecheck passed (51 passenger paths).
+- Live stack (Postgres/Redis/Keycloak + API with real Google keys): `scripts/simulation/verify-cost-controls.sh` → **6/6 PASS** (session token, `maps:place:*` cache, seeded-route search, `source=route_plan` geometry, `maps:dm:*` cache with `GOOGLE_DISTANCE_MATRIX`, autocomplete 429 after 40/min).
+- Android emulator Maestro regressions both **PASS**: `task07-home-search-route-discovery.yaml` (1m14s) and `task08-results-list-map-filtering-ride-detail.yaml` (1m36s) on Pixel_9 against the live stack; ride-detail run left **zero `maps:dir:*` keys** in Redis, proving the polyline came from the stored route geometry. Evidence under ignored `qa/reports/20260721-002636/` and `qa/reports/20260721-003153/`.
+- Environment note for repeat QA: the passenger dev client must be built with
+  `-PreactNativeDevServerPort=8082`, and another local project (`genone-keycloak`) squats host
+  `127.0.0.1:8080`, so Metro must be started with `EXPO_PUBLIC_API_BASE_URL=http://<mac-LAN-IP>:8080`.
 
 ## 2026-06-21 — Phase 07 Task 08 implemented (results list/map/grouped + ride detail)
 

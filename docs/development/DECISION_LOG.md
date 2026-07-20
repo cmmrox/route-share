@@ -225,3 +225,37 @@ Operational Note:
 
 - Claude Code uses root `CLAUDE.md` as project guidance; Codex reads root `AGENTS.md` as project instructions. Keep both concise and route development work to `routeshare-dev-skill`.
 - If the two skill mirrors drift, copy the intended source copy over the stale mirror, then rerun skill validation for both.
+
+---
+
+## Decision 010 — Google Maps cost-control architecture (session tokens, Essentials masks, DB-served geometry, Redis caches, rate limits)
+
+Date: 2026-07-21
+Status: `ACCEPTED`
+
+Decision:
+
+- All Google Maps Platform usage stays proxied through the backend and is cost-controlled in one place:
+  1. Places autocomplete/details carry a client-generated session token so Google bills a search interaction as one session.
+  2. Place Details requests only Essentials-tier fields (`id,formattedAddress,location`); `displayName` (Pro tier, ~3× price) is never requested — the client keeps the suggestion label.
+  3. Matched-ride map polylines are served from the stored PostGIS `route_line` (`ST_LineSubstring` between matched fractions) via `GET /api/v1/passenger/route-occurrences/{id}/geometry`; the Directions API is fallback-only for unmatched pairs.
+  4. Provider responses are cached in Redis (place details 24 h by placeId; Distance Matrix 7 d by ~110 m-rounded coordinates; Directions 7 d by ~11 m-rounded coordinates) — within Google's 30-day caching terms.
+  5. Google-billed proxy endpoints are per-user rate limited (autocomplete 40/min, details 20/min, directions 20/min) via the existing Redis limiter.
+  6. Google adapters use a small cooldown breaker (3 consecutive failures → 30 s skip) and degrade to haversine/straight-line/stored-geometry fallbacks.
+- The identity token projection (`IdentityFacade.upsertFromToken`) is cached in-process (Caffeine, 5 min, claims-aware, invalidated on admin suspend/activate) so authenticated reads no longer write `identity.app_user` per request.
+
+Why:
+
+- Google API spend was the dominant variable cost; matching was already Google-free (PostGIS), so the remaining spend was Places/details/directions/distance-matrix. Session tokens + Essentials masks + caches + DB geometry remove most billable calls without any UX change, mirroring the hybrid pattern used by regional ride-hailing apps (self-served routing data + Google kept only for POI search).
+- The per-request identity upsert was the main self-inflicted write amplification ahead of driver-app GPS ingestion (Phase 08).
+
+Alternatives Rejected:
+
+- Self-hosted OSRM/Valhalla now — deferred (documented as the next lever if Places/Routes spend grows; port-based adapters make it a drop-in later).
+- Keeping Google Directions for ride-detail maps — rejected: the stored driver route is both free and more truthful.
+- Immediate migration to the Routes API (`computeRoutes`) — deferred to its own slice; legacy Directions/Distance Matrix continue to work for existing customers but are Legacy-status, so the migration is tracked as follow-up work.
+
+Operational Note:
+
+- Local QA helpers live in `scripts/simulation/` (`seed-demo-route.sh`, `verify-cost-controls.sh`); the latter proves each control against the live stack and must stay green before provider-related releases.
+- New tuning env vars are documented in `.env.example` (cache TTLs, breaker, projection-cache TTL, per-endpoint limits).

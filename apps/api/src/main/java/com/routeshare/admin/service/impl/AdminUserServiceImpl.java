@@ -98,6 +98,8 @@ public class AdminUserServiceImpl implements AdminUserService {
     if (!toStatus.equals(from)) {
       user.setLocalStatus(toStatus);
       users.save(user);
+      // Drop the cached identity projection so the new status is enforced on the next request.
+      identityFacade.invalidateProjection(user.getKeycloakSubject());
       statusHistory.save(
           AppUserStatusHistoryEntity.of(
               appUserId, from, toStatus, reason, currentAdminAppUserId()));

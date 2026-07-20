@@ -5,6 +5,8 @@ export type SearchPlace = {
   readonly address?: string;
   readonly coordinate?: Coordinate;
   readonly placeProviderId?: string;
+  /** Google Places autocomplete session token; ends the billing session on details resolution. */
+  readonly sessionToken?: string;
 };
 
 export type RideSearchDraft = {

@@ -1,6 +1,14 @@
 # API Backend Reconciliation
 
-Last Updated: 2026-06-01 23:20 +0530
+Last Updated: 2026-07-20 (Google API cost-optimization slice)
+
+## 2026-07-20 — Google API cost-optimization contract changes
+
+- `GET /api/v1/passenger/route-occurrences/{routeOccurrenceId}/geometry?pickupFraction&dropoffFraction` — `IMPLEMENTED` (`PassengerRouteGeometryController` → `RouteGeometryService`). Returns the stored driver route segment (`coordinates[]`, `distanceMeters`, `source: "route_plan"`) from PostGIS `ST_LineSubstring`; the matched-ride map polyline no longer requires a billable Google Directions call.
+- `GET /api/v1/passenger/places/autocomplete` — added optional `sessionToken` query param (Google Places session billing; client generates one token per search interaction). Per-user rate limited.
+- `GET /api/v1/passenger/places/{placeId}` — added optional `sessionToken` query param; response `label` now derives from `formattedAddress` (details field mask reduced to Essentials-tier `id,formattedAddress,location`; clients keep the suggestion label). Responses cached server-side by place id. Per-user rate limited.
+- `GET /api/v1/passenger/directions` — unchanged shape; now Redis-cached, cooldown-protected, and per-user rate limited. Matched-ride flows should prefer the route-occurrence geometry endpoint.
+- `packages/api-contracts` inventory updated (51 passenger paths).
 
 ## Purpose
 

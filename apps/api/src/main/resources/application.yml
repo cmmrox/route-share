@@ -71,6 +71,10 @@ routeshare:
   google-maps:
     enabled: ${GOOGLE_MAPS_ENABLED:false}
     server-api-key: ${GOOGLE_MAPS_SERVER_API_KEY:}
+    place-details-cache-ttl-seconds: ${GOOGLE_MAPS_PLACE_DETAILS_CACHE_TTL_SECONDS:86400}
+    route-cache-ttl-seconds: ${GOOGLE_MAPS_ROUTE_CACHE_TTL_SECONDS:604800}
+    provider-failure-threshold: ${GOOGLE_MAPS_PROVIDER_FAILURE_THRESHOLD:3}
+    provider-cooldown-seconds: ${GOOGLE_MAPS_PROVIDER_COOLDOWN_SECONDS:30}
   notify-lk:
     enabled: ${NOTIFY_LK_ENABLED:false}
     api-base-url: ${NOTIFY_LK_API_BASE_URL:https://app.notify.lk/api/v1}
@@ -97,12 +101,19 @@ routeshare:
   commission:
     default-rate: ${ROUTESHARE_COMMISSION_DEFAULT_RATE:0.10}
 
+  identity:
+    # Per-subject token-projection cache; 0 disables and restores the write-per-request behavior.
+    projection-cache-ttl-seconds: ${ROUTESHARE_IDENTITY_PROJECTION_CACHE_TTL_SECONDS:300}
+
   rate-limit:
     enabled: ${ROUTESHARE_RATE_LIMIT_ENABLED:true}
     otp-request-per-hour: ${ROUTESHARE_RATE_LIMIT_OTP_REQUEST_PER_HOUR:5}
     otp-verify-per-hour: ${ROUTESHARE_RATE_LIMIT_OTP_VERIFY_PER_HOUR:10}
     payment-intent-per-minute: ${ROUTESHARE_RATE_LIMIT_PAYMENT_INTENT_PER_MIN:10}
     sos-per-minute: ${ROUTESHARE_RATE_LIMIT_SOS_PER_MIN:5}
+    places-autocomplete-per-minute: ${ROUTESHARE_RATE_LIMIT_PLACES_AUTOCOMPLETE_PER_MIN:40}
+    places-details-per-minute: ${ROUTESHARE_RATE_LIMIT_PLACES_DETAILS_PER_MIN:20}
+    directions-per-minute: ${ROUTESHARE_RATE_LIMIT_DIRECTIONS_PER_MIN:20}
 
   push:
     enabled: ${PUSH_NOTIFICATIONS_ENABLED:false}

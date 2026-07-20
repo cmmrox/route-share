@@ -23,20 +23,28 @@ export const profileApi = (client: ApiClient) => ({
   getVerificationStatus: async () => ({ status: (await client.request<PassengerProfile>('/api/v1/passenger/profile')).verificationStatus ?? 'readiness_only' }),
   uploadVerificationDocument: async (body: unknown) => ({ accepted: false, mode: 'readiness_only', body })
 });
+const toCoordinates = (res: { coordinates?: unknown } | null): Coordinate[] => {
+  const raw = res && Array.isArray(res.coordinates) ? res.coordinates : [];
+  return raw
+    .map((c) => {
+      const r = c as { latitude?: unknown; longitude?: unknown };
+      return { latitude: Number(r.latitude), longitude: Number(r.longitude) };
+    })
+    .filter((c) => Number.isFinite(c.latitude) && Number.isFinite(c.longitude));
+};
+
 export const placesApi = (client: ApiClient) => ({
-  autocomplete: async ({ query, latitude, longitude }: { query: string; latitude?: number; longitude?: number }): Promise<PlaceSuggestion[]> => mapList(await client.request('/api/v1/passenger/places/autocomplete', { query: { query, latitude, longitude } }), adaptPlaceSuggestion),
-  details: async (placeId: string): Promise<PlaceSuggestion> => adaptPlaceSuggestion(await client.request('/api/v1/passenger/places/{placeId}', { pathParams: { placeId } })),
+  // sessionToken groups the keystrokes of one search + the terminating details call into a single
+  // Google Places billing session; generate one token per search interaction and reuse it.
+  autocomplete: async ({ query, latitude, longitude, sessionToken }: { query: string; latitude?: number; longitude?: number; sessionToken?: string }): Promise<PlaceSuggestion[]> => mapList(await client.request('/api/v1/passenger/places/autocomplete', { query: { query, latitude, longitude, sessionToken } }), adaptPlaceSuggestion),
+  details: async (placeId: string, sessionToken?: string): Promise<PlaceSuggestion> => adaptPlaceSuggestion(await client.request('/api/v1/passenger/places/{placeId}', { pathParams: { placeId }, query: { sessionToken } })),
   // Road-following driving route (pickup -> drop-off) for drawing the real route on the map.
-  directions: async ({ originLat, originLng, destLat, destLng }: { originLat: number; originLng: number; destLat: number; destLng: number }): Promise<Coordinate[]> => {
-    const res = (await client.request('/api/v1/passenger/directions', { query: { originLat, originLng, destLat, destLng } })) as { coordinates?: unknown } | null;
-    const raw = res && Array.isArray(res.coordinates) ? res.coordinates : [];
-    return raw
-      .map((c) => {
-        const r = c as { latitude?: unknown; longitude?: unknown };
-        return { latitude: Number(r.latitude), longitude: Number(r.longitude) };
-      })
-      .filter((c) => Number.isFinite(c.latitude) && Number.isFinite(c.longitude));
-  },
+  directions: async ({ originLat, originLng, destLat, destLng }: { originLat: number; originLng: number; destLat: number; destLng: number }): Promise<Coordinate[]> =>
+    toCoordinates((await client.request('/api/v1/passenger/directions', { query: { originLat, originLng, destLat, destLng } })) as { coordinates?: unknown } | null),
+  // Stored driver route segment for a matched ride: served from the backend database with no
+  // billable Google call, and it is the driver's actual route rather than a hypothetical one.
+  routeGeometry: async ({ routeOccurrenceId, pickupFraction, dropoffFraction }: { routeOccurrenceId: string; pickupFraction: number; dropoffFraction: number }): Promise<Coordinate[]> =>
+    toCoordinates((await client.request('/api/v1/passenger/route-occurrences/{routeOccurrenceId}/geometry', { pathParams: { routeOccurrenceId }, query: { pickupFraction, dropoffFraction } })) as { coordinates?: unknown } | null),
 });
 export const savedPlacesApi = (client: ApiClient) => ({ list: async (): Promise<SavedPlace[]> => mapList(await client.request('/api/v1/passenger/saved-places'), adaptSavedPlace), get: async (savedPlaceId: string): Promise<SavedPlace> => adaptSavedPlace(await client.request('/api/v1/passenger/saved-places/{savedPlaceId}', { pathParams: { savedPlaceId } })), create: async (body: unknown): Promise<SavedPlace> => adaptSavedPlace(await client.request('/api/v1/passenger/saved-places', { method: 'POST', body })), update: async (savedPlaceId: string, body: unknown): Promise<SavedPlace> => adaptSavedPlace(await client.request('/api/v1/passenger/saved-places/{savedPlaceId}', { method: 'PUT', pathParams: { savedPlaceId }, body })), delete: (savedPlaceId: string) => client.request('/api/v1/passenger/saved-places/{savedPlaceId}', { method: 'DELETE', pathParams: { savedPlaceId } }) });
 export const trustedContactsApi = (client: ApiClient) => ({ list: async (): Promise<TrustedContact[]> => mapList(await client.request('/api/v1/passenger/trusted-contacts'), adaptTrustedContact), get: async (contactId: string): Promise<TrustedContact> => adaptTrustedContact(await client.request('/api/v1/passenger/trusted-contacts/{contactId}', { pathParams: { contactId } })), create: async (body: unknown): Promise<TrustedContact> => adaptTrustedContact(await client.request('/api/v1/passenger/trusted-contacts', { method: 'POST', body })), update: async (contactId: string, body: unknown): Promise<TrustedContact> => adaptTrustedContact(await client.request('/api/v1/passenger/trusted-contacts/{contactId}', { method: 'PUT', pathParams: { contactId }, body })), delete: (contactId: string) => client.request('/api/v1/passenger/trusted-contacts/{contactId}', { method: 'DELETE', pathParams: { contactId } }) });

@@ -2,6 +2,7 @@ package com.routeshare.maps.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.routeshare.common.cache.JsonCache;
 import com.routeshare.maps.config.GoogleMapsProperties;
 import com.routeshare.maps.dto.CoordinateResponse;
 import com.routeshare.maps.service.DirectionsPort;
@@ -12,6 +13,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,41 +23,72 @@ import org.springframework.stereotype.Service;
  * Road-following route via the Google Directions API when maps are configured; otherwise a straight
  * two-point line. Never throws on provider failure — it degrades to the straight line so the map
  * always has a polyline to render.
+ *
+ * <p>Cost controls: routes are cached in Redis keyed by coordinates rounded to ~11 m (map display
+ * precision), and a cooldown breaker skips Google after repeated failures. Matched-ride maps should
+ * prefer the stored route geometry endpoint, which never calls Google.
  */
 @Service
 public class GoogleDirectionsAdapter implements DirectionsPort {
   private static final Logger log = LoggerFactory.getLogger(GoogleDirectionsAdapter.class);
   private static final String BASE = "https://maps.googleapis.com/maps/api/directions/json";
+  private static final String CACHE_PREFIX = "maps:dir:";
 
   private final GoogleMapsProperties properties;
   private final ObjectMapper objectMapper;
   private final HttpClient httpClient;
+  private final JsonCache cache;
+  private final ProviderCooldown cooldown;
 
   @Autowired
-  public GoogleDirectionsAdapter(GoogleMapsProperties properties, ObjectMapper objectMapper) {
-    this(properties, objectMapper, HttpClient.newHttpClient());
+  public GoogleDirectionsAdapter(
+      GoogleMapsProperties properties, ObjectMapper objectMapper, JsonCache cache) {
+    this(properties, objectMapper, HttpClient.newHttpClient(), cache);
   }
 
   GoogleDirectionsAdapter(
-      GoogleMapsProperties properties, ObjectMapper objectMapper, HttpClient httpClient) {
+      GoogleMapsProperties properties,
+      ObjectMapper objectMapper,
+      HttpClient httpClient,
+      JsonCache cache) {
     this.properties = properties;
     this.objectMapper = objectMapper;
     this.httpClient = httpClient;
+    this.cache = cache;
+    this.cooldown =
+        new ProviderCooldown(
+            properties.providerFailureThreshold(),
+            Duration.ofSeconds(properties.providerCooldownSeconds()));
   }
 
   @Override
   public DirectionsResult route(
       double originLat, double originLng, double destLat, double destLng) {
     if (properties.ready()) {
-      try {
-        return googleRoute(originLat, originLng, destLat, destLng);
-      } catch (RuntimeException | java.io.IOException e) {
-        log.warn("directions_failed, falling back to straight line: {}", e.getMessage());
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+      String cacheKey = cacheKey(originLat, originLng, destLat, destLng);
+      var cached = cache.get(cacheKey, DirectionsResult.class);
+      if (cached.isPresent()) {
+        return cached.get();
+      }
+      if (!cooldown.isOpen()) {
+        try {
+          DirectionsResult result = googleRoute(originLat, originLng, destLat, destLng);
+          cooldown.recordSuccess();
+          cache.put(cacheKey, result, Duration.ofSeconds(properties.routeCacheTtlSeconds()));
+          return result;
+        } catch (RuntimeException | java.io.IOException e) {
+          cooldown.recordFailure();
+          log.warn("directions_failed, falling back to straight line: {}", e.getMessage());
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
     return straightLine(originLat, originLng, destLat, destLng);
+  }
+
+  private static String cacheKey(double oLat, double oLng, double dLat, double dLng) {
+    return CACHE_PREFIX + String.format(Locale.ROOT, "%.4f,%.4f:%.4f,%.4f", oLat, oLng, dLat, dLng);
   }
 
   private DirectionsResult googleRoute(double oLat, double oLng, double dLat, double dLng)

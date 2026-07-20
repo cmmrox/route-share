@@ -32,15 +32,35 @@ export function RideDetailScreen({ navigation, route }: Props) {
   const dropLng = route.params?.dropoff?.longitude;
   const [routeCoordinates, setRouteCoordinates] = useState<Coordinate[] | undefined>(undefined);
 
+  const occurrenceId = result?.routeOccurrenceId;
+  const pickupFraction = result?.pickupRouteFraction;
+  const dropoffFraction = result?.dropoffRouteFraction;
+
   useEffect(() => {
     let active = true;
-    if (pickupLat == null || pickupLng == null || dropLat == null || dropLng == null) return;
-    createPassengerRuntimeApi()
-      .places.directions({ originLat: pickupLat, originLng: pickupLng, destLat: dropLat, destLng: dropLng })
+    const api = createPassengerRuntimeApi().places;
+    const loadFallbackDirections = async (): Promise<Coordinate[]> => {
+      if (pickupLat == null || pickupLng == null || dropLat == null || dropLng == null) return [];
+      return api.directions({ originLat: pickupLat, originLng: pickupLng, destLat: dropLat, destLng: dropLng });
+    };
+    const load = async (): Promise<Coordinate[]> => {
+      // Prefer the stored driver route segment: it is the road the driver actually drives and it
+      // costs nothing, unlike the Google-billed directions fallback.
+      if (occurrenceId && pickupFraction != null && dropoffFraction != null && pickupFraction < dropoffFraction) {
+        try {
+          const coords = await api.routeGeometry({ routeOccurrenceId: occurrenceId, pickupFraction, dropoffFraction });
+          if (coords.length >= 2) return coords;
+        } catch {
+          // fall through to the directions fallback below
+        }
+      }
+      return loadFallbackDirections();
+    };
+    load()
       .then((coords) => { if (active && coords.length >= 2) setRouteCoordinates(coords); })
       .catch(() => { /* map still renders without the route overlay */ });
     return () => { active = false; };
-  }, [pickupLat, pickupLng, dropLat, dropLng]);
+  }, [occurrenceId, pickupFraction, dropoffFraction, pickupLat, pickupLng, dropLat, dropLng]);
 
   if (!model) {
     return (
