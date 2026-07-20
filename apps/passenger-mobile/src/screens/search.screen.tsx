@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -28,10 +28,20 @@ const toSearchPlace = (place: { readonly placeId: string; readonly label: string
 
 const savedToSearchPlace = (place: SavedPlace): SearchPlace => ({ label: place.label, address: place.address, coordinate: place.location });
 
+// Autocomplete keystrokes below this length never reach the (billable) Google proxy.
+const MIN_AUTOCOMPLETE_CHARS = 3;
+const AUTOCOMPLETE_DEBOUNCE_MS = 450;
+
+// Google session tokens only need to be unique per search interaction, not cryptographic.
+const newSessionToken = (): string =>
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}-${Math.random().toString(36).slice(2, 12)}`;
+
 async function resolvePlaceCoordinates(place: SearchPlace | undefined): Promise<SearchPlace | undefined> {
   if (!place?.placeProviderId || place.coordinate) return place;
-  const details = await createPassengerRuntimeApi().places.details(place.placeProviderId);
-  return toSearchPlace(details);
+  // Passing the session token ends the autocomplete billing session on this details call. The
+  // suggestion's label/address are kept: details only carries Essentials-tier fields.
+  const details = await createPassengerRuntimeApi().places.details(place.placeProviderId, place.sessionToken);
+  return { ...toSearchPlace(details), label: place.label || details.label, address: place.address ?? details.address };
 }
 
 export function SearchScreen({ navigation, route }: SearchScreenProps) {
@@ -50,6 +60,8 @@ export function SearchScreen({ navigation, route }: SearchScreenProps) {
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  // One Google Places session token per typing interaction; reset when a place is selected.
+  const sessionTokenRef = useRef<string | undefined>(undefined);
 
   const requestedDepartureTime = useMemo(() => new Date(baseDepartureTime + timeOffsetMinutes * 60_000), [baseDepartureTime, timeOffsetMinutes]);
   const locationState = resolveLocationState({ permission, coordinate: pickup?.label === 'Current location' ? pickup.coordinate : undefined });
@@ -63,15 +75,17 @@ export function SearchScreen({ navigation, route }: SearchScreenProps) {
     return () => { active = false; };
   }, []);
 
-  // Type-to-search Google Places autocomplete (debounced) for the active field.
+  // Type-to-search Google Places autocomplete (debounced) for the active field. Cost controls:
+  // >= 3 chars, 450 ms debounce, and a per-interaction session token shared with the details call.
   useEffect(() => {
     const query = activeText.trim();
     const handle = setTimeout(async () => {
-      if (!suggestionsOpen || query.length < 2) { setSuggestions([]); setPlaceLoading(false); return; }
+      if (!suggestionsOpen || query.length < MIN_AUTOCOMPLETE_CHARS) { setSuggestions([]); setPlaceLoading(false); return; }
       setPlaceLoading(true);
       try {
+        sessionTokenRef.current ??= newSessionToken();
         const center = pickup?.coordinate;
-        const places = await createPassengerRuntimeApi().places.autocomplete({ query, latitude: center?.latitude, longitude: center?.longitude });
+        const places = await createPassengerRuntimeApi().places.autocomplete({ query, latitude: center?.latitude, longitude: center?.longitude, sessionToken: sessionTokenRef.current });
         setSuggestions(places.map(toSearchPlace));
         setErrorMessage(places.length === 0 ? 'No places found. Try a more specific address.' : undefined);
       } catch {
@@ -79,7 +93,7 @@ export function SearchScreen({ navigation, route }: SearchScreenProps) {
       } finally {
         setPlaceLoading(false);
       }
-    }, 350);
+    }, AUTOCOMPLETE_DEBOUNCE_MS);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeText, activeField, suggestionsOpen]);
@@ -100,7 +114,11 @@ export function SearchScreen({ navigation, route }: SearchScreenProps) {
   };
 
   const applyPlace = (target: FieldTarget, place: SearchPlace) => {
-    if (target === 'pickup') { setPickup(place); setPickupText(place.label); } else { setDropoff(place); setDropoffText(place.label); }
+    // Carry the active session token onto the chosen place so the details call terminates the
+    // Google billing session; the next typing interaction starts a fresh session.
+    const chosen = place.placeProviderId && !place.coordinate ? { ...place, sessionToken: sessionTokenRef.current } : place;
+    sessionTokenRef.current = undefined;
+    if (target === 'pickup') { setPickup(chosen); setPickupText(chosen.label); } else { setDropoff(chosen); setDropoffText(chosen.label); }
     setSuggestionsOpen(false);
     setSuggestions([]);
   };
@@ -136,7 +154,11 @@ export function SearchScreen({ navigation, route }: SearchScreenProps) {
     }
   };
 
-  const showSuggestions = suggestionsOpen && activeText.trim().length >= 2;
+  const showSuggestions = suggestionsOpen && activeText.trim().length >= MIN_AUTOCOMPLETE_CHARS;
+  // Saved places matching the typed query cost nothing and already carry coordinates.
+  const localMatches = showSuggestions
+    ? savedPlaces.filter((place) => `${place.label} ${place.address ?? ''}`.toLowerCase().includes(activeText.trim().toLowerCase())).slice(0, 3)
+    : [];
   const timeChips: { readonly label: string; readonly minutes: number }[] = [
     { label: '◷ Now', minutes: 0 },
     { label: '+30 min', minutes: 30 },
@@ -199,6 +221,12 @@ export function SearchScreen({ navigation, route }: SearchScreenProps) {
         {showSuggestions ? (
           <View style={styles.section}>
             <AppText variant="label" color="#9a8d82">SUGGESTIONS</AppText>
+            {localMatches.map((place, localIndex) => (
+              <Pressable key={`saved-${place.savedPlaceId}`} nativeID={`savedSuggestion${localIndex}`} testID={`savedSuggestion${localIndex}`} accessibilityRole="button" accessibilityLabel={`Select saved place ${place.label}`} onPress={() => applyPlace(activeField, savedToSearchPlace(place))} style={styles.placeRow}>
+                <AppText variant="title">⭐</AppText>
+                <View style={styles.flex}><AppText variant="label">{place.label}</AppText>{place.address ? <AppText color="#9a8d82" numberOfLines={1}>{place.address}</AppText> : null}</View>
+              </Pressable>
+            ))}
             {placeLoading ? <LoadingState label="Searching Google Places" /> : null}
             {suggestions.map((suggestion, suggestionIndex) => (
               <Pressable key={suggestion.placeProviderId ?? suggestion.label} nativeID={`placeSuggestion${suggestionIndex}`} testID={`placeSuggestion${suggestionIndex}`} accessibilityRole="button" accessibilityLabel={`Select place ${suggestion.label}`} onPress={() => applyPlace(activeField, suggestion)} style={styles.placeRow}>

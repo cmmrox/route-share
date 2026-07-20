@@ -136,6 +136,29 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
       @Param("dropoffBucketCell") String dropoffBucketCell,
       @Param("limit") int limit);
 
+  @Query(
+      value =
+          """
+      SELECT
+        ST_AsGeoJSON(ST_LineSubstring(r.route_line, LEAST(:fromFraction, :toFraction), GREATEST(:fromFraction, :toFraction))) AS "geoJson",
+        ST_Length(ST_LineSubstring(r.route_line, LEAST(:fromFraction, :toFraction), GREATEST(:fromFraction, :toFraction))::geography) AS "lengthMeters"
+      FROM routing.route_occurrence o
+      JOIN routing.route_plan r ON r.route_plan_id = o.route_plan_id
+      WHERE o.route_occurrence_id = :routeOccurrenceId
+        AND r.status = 'PUBLISHED'
+      """,
+      nativeQuery = true)
+  Optional<RouteSegmentRow> findOccurrenceSegment(
+      @Param("routeOccurrenceId") long routeOccurrenceId,
+      @Param("fromFraction") double fromFraction,
+      @Param("toFraction") double toFraction);
+
+  interface RouteSegmentRow {
+    String getGeoJson();
+
+    Double getLengthMeters();
+  }
+
   default long create(
       long driverProfileId,
       long vehicleId,

@@ -51,3 +51,21 @@ Build/install the debug passenger app first, then run the smoke flow:
 ```bash
 scripts/qa-passenger-dev-run.sh
 ```
+
+## Seeded inventory and cost-control verification
+
+The Task 08 regression needs a searchable route in the departure window. Seed and verify with the
+local simulation helpers (see `scripts/simulation/README.md`):
+
+```bash
+scripts/simulation/seed-demo-route.sh 40        # Colombo Fort -> Nugegoda, departs now+40 min
+scripts/simulation/verify-cost-controls.sh      # session tokens, Redis caches, geometry, 429 limit
+```
+
+Environment notes for the emulator suite:
+
+- Build the debug dev client with `-PreactNativeDevServerPort=8082` (Metro runs on host 8082).
+- Start Metro with `EXPO_PUBLIC_API_BASE_URL=http://<mac-LAN-IP>:8080` — the emulator's
+  `10.0.2.2:8080` may be intercepted by unrelated local containers bound to host `127.0.0.1:8080`.
+- Run `verify-cost-controls.sh` after manual search QA (its rate-limit burst exhausts the sim
+  passenger's autocomplete quota for one minute).
