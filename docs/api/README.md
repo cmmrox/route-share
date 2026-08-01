@@ -2,9 +2,24 @@
 
 These files define the initial API contracts for each RouteShareApp application:
 
-- `passenger-app.openapi.json` — Passenger mobile app API
-- `driver-app.openapi.json` — Driver mobile app API
+- `mobile-app.openapi.json` — **ComiGo unified mobile app API** (passenger + driver, one account)
 - `admin-web.openapi.json` — Admin web app API
+
+`passenger-app.openapi.json` and `driver-app.openapi.json` were merged into `mobile-app.openapi.json`
+on 2026-08-01 and deleted (Decision 011). ComiGo ships one mobile application, so it has one client
+contract. The `/api/v1/passenger/**` and `/api/v1/driver/**` paths are retained — they are role-scoped
+resource namespaces, not app boundaries.
+
+Every operation in the mobile contract carries an `x-routeshare-status` extension:
+
+| Value | Meaning |
+| --- | --- |
+| `IMPLEMENTED` | Live in `apps/api` today |
+| `PLANNED_SLICE_NN` | Specified; built in that slice of the ComiGo backend plan |
+| `INTERNAL_NOT_FOR_CLIENTS` | Implemented, but outside the mobile client surface |
+| `CUT` | Deliberately removed from the product, with a reason |
+
+`API_BACKEND_RECONCILIATION.md` is generated from that field. Regenerate it rather than editing it.
 
 All documents use OpenAPI 3.1 JSON. Swagger UI, Swagger Editor, Redocly, Stoplight, Postman, and springdoc tooling can import these JSON files directly.
 

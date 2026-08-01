@@ -24,7 +24,7 @@ Executable mobile E2E automation lives under `qa/maestro/`, separated by app and
 
 ```text
 qa/maestro/
-  passenger-mobile/
+  mobile/
     smoke/        # fast critical-path checks for every mobile QA pass
     regression/   # broader feature journeys as screens stabilize
     release/      # release-candidate store-readiness journeys
@@ -33,12 +33,12 @@ qa/maestro/
 Current executable flows:
 
 ```text
-qa/maestro/passenger-mobile/smoke/auth-profile-smoke.yaml
-qa/maestro/passenger-mobile/smoke/home-search-route-discovery-smoke.yaml
-qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml
+qa/maestro/mobile/smoke/auth-profile-smoke.yaml
+qa/maestro/mobile/smoke/home-search-route-discovery-smoke.yaml
+qa/maestro/mobile/regression/task07-home-search-route-discovery.yaml
 ```
 
-Manual/functional QA specifications remain in `qa/test-cases/`. When a mobile task has a runnable screen, navigation path, native permission, provider-backed flow, or release-pipeline behavior, add or update the executable `.yaml` flow under the matching `qa/maestro/passenger-mobile/<suite>/` folder and link it from the test-case document.
+Manual/functional QA specifications remain in `qa/test-cases/`. When a mobile task has a runnable screen, navigation path, native permission, provider-backed flow, or release-pipeline behavior, add or update the executable `.yaml` flow under the matching `qa/maestro/mobile/<suite>/` folder and link it from the test-case document.
 
 ## Mobile task Maestro rule
 
@@ -47,9 +47,9 @@ Every mobile implementation task must have task-mapped Maestro automation unless
 Use these path conventions:
 
 ```text
-qa/maestro/passenger-mobile/smoke/<critical-path-name>-smoke.yaml
-qa/maestro/passenger-mobile/regression/taskNN-<task-slug>.yaml
-qa/maestro/passenger-mobile/release/taskNN-<task-slug>-release.yaml
+qa/maestro/mobile/smoke/<critical-path-name>-smoke.yaml
+qa/maestro/mobile/regression/taskNN-<task-slug>.yaml
+qa/maestro/mobile/release/taskNN-<task-slug>-release.yaml
 ```
 
 The flow can be a shared smoke only when the task explicitly links that smoke flow and states what behavior it covers. Otherwise create or update a task-specific regression flow.
@@ -81,9 +81,9 @@ Expected tools on the Mac:
 ```bash
 scripts/qa-passenger-android.sh
 # or directly:
-maestro --device emulator-5554 test qa/maestro/passenger-mobile/smoke/auth-profile-smoke.yaml
-maestro --device emulator-5554 test qa/maestro/passenger-mobile/smoke/home-search-route-discovery-smoke.yaml
-maestro --device emulator-5554 test qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml
+maestro --device emulator-5554 test qa/maestro/mobile/smoke/auth-profile-smoke.yaml
+maestro --device emulator-5554 test qa/maestro/mobile/smoke/home-search-route-discovery-smoke.yaml
+maestro --device emulator-5554 test qa/maestro/mobile/regression/task07-home-search-route-discovery.yaml
 ```
 
 Outputs screenshots and JUnit/log files under ignored `qa/reports/<timestamp>/`.

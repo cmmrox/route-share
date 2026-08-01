@@ -8,7 +8,7 @@ Every mobile implementation task must either create/update a task-mapped Maestro
 
 ```text
 qa/maestro/
-  passenger-mobile/
+  mobile/
     smoke/        # fast critical path: launch, auth, profile, basic app health
     regression/   # feature journeys mapped to `qa/test-cases/07-passenger-mobile-app/`
     release/      # release-candidate verification journeys
@@ -19,13 +19,13 @@ qa/maestro/
 Use task-numbered regression names for mobile feature slices:
 
 ```text
-qa/maestro/passenger-mobile/regression/taskNN-<task-slug>.yaml
+qa/maestro/mobile/regression/taskNN-<task-slug>.yaml
 ```
 
 Use smoke flows only for critical paths that intentionally cover multiple tasks:
 
 ```text
-qa/maestro/passenger-mobile/smoke/<critical-path-name>-smoke.yaml
+qa/maestro/mobile/smoke/<critical-path-name>-smoke.yaml
 ```
 
 When a flow is shared, every covered task file and QA case must link the shared YAML path and state which task behavior it verifies.
@@ -35,9 +35,9 @@ Task completion requires a fix-rerun loop: run the flow on emulator/device, fix 
 ## Current flows
 
 ```bash
-maestro --device emulator-5554 test qa/maestro/passenger-mobile/smoke/auth-profile-smoke.yaml
-maestro --device emulator-5554 test qa/maestro/passenger-mobile/smoke/home-search-route-discovery-smoke.yaml
-maestro --device emulator-5554 test qa/maestro/passenger-mobile/regression/task07-home-search-route-discovery.yaml
+maestro --device emulator-5554 test qa/maestro/mobile/smoke/auth-profile-smoke.yaml
+maestro --device emulator-5554 test qa/maestro/mobile/smoke/home-search-route-discovery-smoke.yaml
+maestro --device emulator-5554 test qa/maestro/mobile/regression/task07-home-search-route-discovery.yaml
 ```
 
 Preferred wrapper, because it configures adb reverse ports and saves screenshots/JUnit/log output under ignored `qa/reports/<timestamp>/`:

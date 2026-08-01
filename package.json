@@ -4,7 +4,10 @@
   "private": true,
   "packageManager": "pnpm@10.33.2",
   "scripts": {
-    "contracts:check": "pnpm --filter @routeshare/api-contracts typecheck"
+    "contracts:check": "pnpm --filter @routeshare/api-contracts typecheck",
+    "mobile:lint": "pnpm --filter @routeshare/mobile lint",
+    "mobile:typecheck": "pnpm --filter @routeshare/mobile typecheck",
+    "mobile:test": "pnpm --filter @routeshare/mobile test"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

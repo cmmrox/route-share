@@ -1,6 +1,120 @@
 # RouteShareApp Development Status
 
-2026-07-21 01:00 +0530
+2026-08-01 (slice 00 COMPLETE — unified app + merged contract)
+
+## 2026-08-01 — Slice 00 COMPLETE: unified app and merged client contract
+
+Executed the first slice of the ComiGo backend plan. **All verification green.**
+
+Repository:
+
+- `apps/passenger-mobile` → **`apps/mobile`** (`@routeshare/mobile`), design system, API client, auth and
+  profile features, native project and Maestro harness carried over intact. `apps/driver-mobile` deleted.
+- `qa/maestro/passenger-mobile` → `qa/maestro/mobile`; `scripts/qa-passenger-*.sh` → `scripts/qa-mobile-*.sh`.
+- App display name is now **ComiGo**. Native identity (slug, scheme, bundle id, android package) is
+  deliberately unchanged — renaming it requires regenerating the committed native projects, which is
+  blocked on the prebuild decision in Blocker 009. Pinned by test so the change is deliberate when it comes.
+
+Contract — `docs/api/mobile-app.openapi.json`, **186 paths / 221 operations / 85 schemas, lints clean**:
+
+- `passenger-app.openapi.json` + `driver-app.openapi.json` merged and deleted.
+- Every operation stamped `x-routeshare-status`: **120 IMPLEMENTED**, 91 PLANNED_SLICE_NN, 7 internal, 3 CUT.
+- **All 157 prototype screens map to at least one operation**, verified programmatically.
+
+Reconciling two independently-maintained contracts against the running backend surfaced **five real defects**:
+
+1. `SosRequest.tripId` was **uuid** in the driver contract and **int64** in the passenger one. The column is `BIGINT`, so a generated driver client would have failed at runtime.
+2. **22 implemented endpoints were in neither contract** — including the entire Places/directions surface the search screens depend on, and the presigned document-upload lifecycle.
+3. Two contract endpoints were **never implemented** (direct document uploads superseded by the presigned lifecycle).
+4. **17 uses of `nullable`**, which is OpenAPI 3.0 syntax and invalid in the 3.1 documents both files declared.
+5. Path parameter names disagree between contract and controllers (`{savedPlaceId}` vs `{id}`) — harmless, recorded.
+
+New: **`GET /api/v1/me/context`** — the app shell's single read, serving S07–S14 in one call instead of
+eight. Two deliberate behaviours: a **suspended caller is answered, not refused** (S13 needs the reason and
+appeal route, so it resolves the user without the ACTIVE guard), and fields owned by later slices return
+**zero values, never null**, so the shell never reshapes. `GET /auth/me` deprecated in its favour.
+
+Verification: backend `spotless:check verify` → **BUILD SUCCESS, 218 tests, JaCoCo gate met**;
+mobile `lint | typecheck | test` → **18 files / 86 tests**; `@routeshare/api-contracts` typecheck green;
+`redocly lint` on the mobile contract → **zero errors, zero warnings**.
+
+**Build note:** the API requires **JDK 21**; this machine's shell default is 17, which fails with a Lombok
+`TypeTag :: UNKNOWN` error. Use `JAVA_HOME=~/.sdkman/candidates/java/21.0.9-amzn`.
+
+Deferred with reasons: Maestro device reruns (needs emulator + live stack), Keycloak client consolidation
+(slice 01 owns auth), native identity rename (Blocker 009). New Blocker 012 records pre-existing OpenAPI
+3.1 violations in `admin-web.openapi.json`.
+
+Next: slice 01 — auth unification and mode gates.
+
+## 2026-08-01 — Live en-route booking confirmed in scope; real-time location architecture researched
+
+The product owner confirmed live en-route booking must ship in this release, citing Uber and PickMe, and
+asked that the design follow how those platforms actually achieve accuracy. Researched and recorded as
+**Decision 016**, with the full design at `docs/architecture/REALTIME-LOCATION-AND-LIVE-MATCHING.md`.
+
+The finding that shaped it: **an Uber driver has no published route, so Uber must map-match against the
+whole road network** (HMM in CatchME, 3D shadow matching for urban canyons). **A ComiGo driver publishes
+his route before departure**, already stored as a PostGIS `LineString`. That turns "which road is he on"
+into "how far along this one line is he" — a single `ST_LineLocatePoint`, no external API call, and more
+accurate for this question because the search space is one line rather than thousands of segments.
+
+Adopted from industry practice: Uber's H3 hexagonal index (res 7 coarse / res 9 fine) for candidate
+lookup, Uber's published sampling cadence (4 s in trip, 10–30 s idle), and hybrid WebSocket + FCM
+high-priority delivery because Android Doze defers WebSocket traffic while high-priority FCM wakes the
+radio.
+
+Explicitly rejected with reasons: Google Roads API snap-to-roads (100-point cap, per-ping cost — roughly
+450,000 calls/hour at 500 concurrent trips, and it would reverse the July 2026 cost work), 3D shadow
+matching, Ringpop-style consistent hashing, and DISCO-style dispatch rotation (ComiGo is rider-initiated,
+so there is no candidate queue). Self-hosted Valhalla/OSRM map matching is deferred, not rejected — it is
+only needed off-corridor, which the design handles by failing closed.
+
+Then the product owner supplied target scale — **500 trips/day, ~200 concurrent, 300 ceiling** — which
+right-sized the whole design (**Decision 017**). The arithmetic: ~19 requests/second against at most 300
+live rows. That is not a scale problem, so the complexity budget moved to accuracy.
+
+- **H3 dropped.** At ≤300 rows a GiST index with `ST_DWithin` is faster than a cell lookup and needs no
+  Postgres extension or JVM library. Revisit threshold recorded and alerted: sustained concurrency above
+  5,000, or joinable-query p95 above 50 ms. Kafka and sharding likewise declined with thresholds.
+  **No new Postgres extension is required** — managed Postgres is unconstrained.
+- **The two problems separated.** *Matching* (is he behind her pickup) tolerates ~50 m error and is
+  geometry. *Rendezvous* (can they find each other) is fatal at 50 m and is **not** a filtering problem —
+  the error is in the map pin. The prototype already knew this: *"the Rajagiriya junction bus halt, not the
+  roundabout. Silver Alto."*
+- **Named pickup points** added to slice 09 — curated / Google-Places-derived / learned, resolved at
+  booking, never per ping.
+- **Approach mode** added to slice 12 — within 500 m, sampling rises to 1–2 s and a two-way position window
+  opens, with the rider's position deleted when it closes. This is scale working in ComiGo's favour: it
+  costs ~25 req/sec here and lands precision on the ninety seconds that decide the pickup.
+- **Detour cap** added to slice 13 — 8 minutes, from UberX Share's published limit, filtered before the
+  driver is ever prompted.
+
+**Google cost audited against current pricing (Decision 018).** The plan was re-checked SKU by SKU and
+two paths that would have become the largest line items were caught and fixed:
+
+- **ETA** would naively have been a Google call. Now derived: `remainingRouteMeters ÷ smoothedObservedSpeed`.
+- **Live-request detour minutes** would naively have been a Directions call *per candidate* — thousands
+  per hour at 300 concurrent. Now pure geometry ÷ observed speed.
+- **Pickup points** resolved naively were ~30,000 Place Details calls/month (~$150), enough alone to break
+  the $200 credit. Now a cost-ordered chain — curated → persisted → route label → Places → raw — plus a
+  one-time seed of ~200 Colombo landmarks.
+
+Both derived values are **more accurate than the Google estimate**, because they use the traffic that
+driver is actually sitting in rather than a generic model of the road. Cost and accuracy pointed the same
+way, so nothing was traded.
+
+Estimated steady state at 500 trips/day: **~$132/month, inside the $200 credit** — Place Details sessions
+~$112, Distance Matrix misses ~$12, Directions on new routes ~$5, pickup points ~$3, location pipeline $0.
+Cost gates are hard items on the release checklist, not advisories.
+
+Plan status: **FINAL.** Sixteen slices, migrations `V027`–`V041`, thirteen scheduled jobs, five new
+modules plus a rewritten `location`. Former slices 12/13/14 renumbered to 13/14/15. Every task file has its
+matching QA file; all cross-references, links and migration numbers validated.
+
+Next: slice 00 — repo reset and contract rewrite.
+
+## 2026-07-31 (ComiGo unified-app pivot planned)
 
 ## Purpose
 
@@ -9,11 +123,51 @@ This file is the first file to read before continuing RouteShareApp development.
 ## Current State
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
-- Current Phase: `PHASE_07_PASSENGER_MOBILE_APP_STARTED`
-- Current Milestone: `MILESTONE_PASSENGER_HOME_SEARCH_ROUTE_DISCOVERY_BLOCKED_ON_MAP_KEYS_AND_DEVICE_QA`
-- Current Active Task: `Task 07 home, search, location, and route discovery is not production-complete until Google Maps keys, real map/place integration, and device QA evidence are complete`
-- Status: `PASSENGER_TASKS_01_07_UI_ALIGNED_TO_DESIGN_PDF_ANDROID_DEVICE_QA_GREEN`
-- Repository Git Status: `Working tree contains focused Phase 07 Task 07 implementation changes; generated QA reports remain ignored`
+- Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
+- Current Milestone: `MILESTONE_SLICE_00_COMPLETE_SLICE_01_NEXT`
+- Current Active Task: `Slice 01 — auth unification and mode gates (next)`
+- Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
+- Status: `SLICE_00_MERGED_CONTRACT_AND_UNIFIED_APP_VERIFIED`
+- Repository Git Status: `Branch feat/comigo-unified-app-slice-00; apps/mobile created, apps/driver-mobile removed, contracts merged`
+
+## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
+
+The team decided to ship **one** mobile application containing both the passenger and driver experience,
+replacing the two-app split (Decision 011). `ComiGo Prototype (Standalone).html` is the new specification.
+
+Work completed in this session — **documentation only, no code touched**:
+
+- Decoded the 1.8 MB prototype bundle into 28 readable JSX modules, committed at
+  `docs/source-assets/comigo-prototype/`. This is the specification of record: ~157 screen states plus a
+  machine-readable `POLICY` block that fixes every commercial rule.
+- Audited the existing backend (456 main Java files, 20 modules, Flyway V001–V026) against it. Gap:
+  **~65 capabilities — 45 missing, 2 built to a different rule, 18 partial**. Register at
+  `docs/development/implementation/tasks/comigo-unified-app-backend/00-prototype-gap-analysis.md`.
+- Wrote the backend production plan plus **15 production-ready task files** and **15 matching QA files**
+  under `qa/test-cases/comigo-unified-app-backend/`, per the planning standard.
+
+Three findings shape the whole plan:
+
+1. **The fare engine is a rewrite.** Current: `250 base + 90/km + 5/min` with a 10% fee added on top.
+   Prototype: `onRouteKm × vehicle.ratePerKm` less a route-match discount, commission taken **out of**
+   the fare. No base fare, no time component, per-vehicle rates inside admin-set bands.
+2. **A single account cannot currently drive.** `PhoneOtpAccessTokenAuthenticationFilter` hardcodes
+   `ROLE_PASSENGER` while all 10 driver endpoints require `hasRole('DRIVER')`. Hard blocker for one app.
+3. **Charge timing is unwired.** The product's central promise — captured at trip start — has no
+   implementation; there is no `capture(...)` call anywhere in `trip/service/impl`.
+
+Four subsystems have no foundation at all and are all in scope: penalties & dues, referral & rewards,
+live (en-route) booking, and booking chat.
+
+Decisions locked this session: 011 (one app), 012 (POLICY is authoritative, runtime-configurable),
+013 (admin-typed rate bands), 014 (direct dial, masking cut), 015 (pre-launch migrations may change
+column meaning in place).
+
+Next: slice 00 — repo reset and contract rewrite. `apps/passenger-mobile` is harvested into `apps/mobile`;
+`apps/driver-mobile` is deleted; the two client OpenAPI documents merge into `mobile-app.openapi.json`.
+
+Phase 07 (passenger mobile app) is **superseded**, not abandoned — its design system, API client, auth and
+profile features and green Maestro suites carry over into `apps/mobile`.
 
 ## 2026-07-21 — Google API cost-optimization + performance slice (branch `codex/perf-google-cost-optimization`)
 
