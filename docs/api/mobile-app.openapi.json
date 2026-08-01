@@ -7161,15 +7161,37 @@
         "tags": [
           "App Context"
         ],
-        "summary": "Persist the last used mode",
-        "x-routeshare-status": "PLANNED_SLICE_01",
+        "summary": "Persist the mode the user switched into",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActiveModeResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "mode is not PASSENGER or DRIVER",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -7178,7 +7200,24 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Account suspended — body carries {code, message, actionPath}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Mode unavailable — body carries the blocking gate code and actionPath",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -7186,12 +7225,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/ActiveModeRequest"
               }
             }
           }
         },
-        "operationId": "putMeActiveMode"
+        "operationId": "putMeActiveMode",
+        "description": "Remembers where the app should reopen. Switching to DRIVER is refused with 409 and the blocking gate code when driving is not available to this account, so the app can render the gate instead of guessing."
       }
     },
     "/api/v1/driver/reinstatement-requests": {
@@ -7200,14 +7240,26 @@
           "App Context"
         ],
         "summary": "Ask an admin to reinstate driving (D34)",
-        "x-routeshare-status": "PLANNED_SLICE_01",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/DriverReinstatementRequest"
+                    }
+                  }
                 }
               }
             }
@@ -7216,7 +7268,24 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Account suspended — body carries {code, message, actionPath}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Not deactivated, or a request is already open",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -7224,26 +7293,42 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/DriverReinstatementRequestBody"
               }
             }
           }
         },
-        "operationId": "postDriverReinstatementRequests"
+        "operationId": "postDriverReinstatementRequests",
+        "description": "D34's primary action. Reachable while the driver gate is refusing every other driver endpoint — the caller is exactly the person that gate is written for. A second request while one is open is refused."
       },
       "get": {
         "tags": [
           "App Context"
         ],
         "summary": "My reinstatement requests",
-        "x-routeshare-status": "PLANNED_SLICE_01",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DriverReinstatementRequest"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -7252,7 +7337,14 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Account suspended — body carries {code, message, actionPath}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "operationId": "getDriverReinstatementRequests"
@@ -11712,6 +11804,13 @@
                 }
               }
             }
+          },
+          "actionPath": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the app should send the user to clear the refusal. Populated on gated 403s and 409s; null otherwise."
           }
         }
       },
@@ -13967,6 +14066,106 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ActiveModeRequest": {
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "PASSENGER",
+              "DRIVER"
+            ]
+          }
+        }
+      },
+      "ActiveModeResponse": {
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "PASSENGER",
+              "DRIVER"
+            ]
+          }
+        }
+      },
+      "DriverReinstatementRequestBody": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "DriverReinstatementRequest": {
+        "type": "object",
+        "description": "A deactivated driver's request to be reinstated (board D34). Only one may be open at a time.",
+        "required": [
+          "requestId",
+          "deactivationId",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deactivationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "supportTicketId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       }

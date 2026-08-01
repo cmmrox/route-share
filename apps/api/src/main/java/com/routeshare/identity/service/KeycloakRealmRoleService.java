@@ -13,4 +13,16 @@ public interface KeycloakRealmRoleService {
    * managed set.
    */
   void setRealmRoles(String keycloakSubject, Set<String> desiredRoles);
+
+  /**
+   * Adds one managed role, leaving every other role alone.
+   *
+   * <p>{@link #setRealmRoles} states the whole managed set, which is right for the admin
+   * role-editing screen and wrong everywhere else: driver approval knows only that {@code DRIVER}
+   * should be added, and using the set form there would silently strip an admin who also drives.
+   */
+  void grantRealmRole(String keycloakSubject, String role);
+
+  /** Removes one managed role, leaving every other role alone. */
+  void revokeRealmRole(String keycloakSubject, String role);
 }

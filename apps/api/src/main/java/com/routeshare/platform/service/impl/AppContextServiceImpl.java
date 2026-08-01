@@ -2,19 +2,22 @@ package com.routeshare.platform.service.impl;
 
 import com.routeshare.booking.dto.response.PassengerBookingDetailResponse;
 import com.routeshare.booking.service.BookingService;
+import com.routeshare.common.errors.GateCodes;
+import com.routeshare.common.errors.GateConflictException;
 import com.routeshare.common.security.CurrentUser;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.common.security.RouteShareRoles;
+import com.routeshare.driver.domain.DriverGate;
 import com.routeshare.driver.facade.DriverFacade;
 import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.notification.service.NotificationService;
 import com.routeshare.passenger.facade.PassengerFacade;
+import com.routeshare.platform.dto.response.ActiveModeResponse;
 import com.routeshare.platform.dto.response.AppContextResponse;
 import com.routeshare.platform.service.AppContextService;
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -73,9 +76,9 @@ public class AppContextServiceImpl implements AppContextService {
         token.phone(),
         token.email(),
         null, // photo URL arrives with slice 08's visibility rules
-        availableModes(token, hasPassengerProfile, driverStatus),
-        MODE_PASSENGER, // last-used mode is persisted in slice 01
-        driver(driverStatus, suspended),
+        availableModes(token, user.appUserId(), hasPassengerProfile, driverStatus, suspended),
+        activeModeDefault(user.appUserId(), suspended),
+        driver(user.appUserId(), driverStatus, suspended),
         new AppContextResponse.Passenger("NONE", "MATCHED", false), // slice 08
         account(user, suspended),
         suspended ? null : activeTrip(),
@@ -86,15 +89,20 @@ public class AppContextServiceImpl implements AppContextService {
   }
 
   private Set<String> availableModes(
-      CurrentUser token, boolean hasPassengerProfile, String driverStatus) {
+      CurrentUser token,
+      long appUserId,
+      boolean hasPassengerProfile,
+      String driverStatus,
+      boolean suspended) {
     Set<String> modes = new LinkedHashSet<>();
     if (hasPassengerProfile || token.roles().contains(RouteShareRoles.PASSENGER)) {
       modes.add(MODE_PASSENGER);
     }
-    // A driver profile alone is not driver access: only an approved one puts the mode chip in
-    // reach.
-    if ("APPROVED".equalsIgnoreCase(driverStatus)
-        && token.roles().contains(RouteShareRoles.DRIVER)) {
+    // A driver profile alone is not driver access, and neither is the role on its own: the mode
+    // chip appears only when the account could actually drive right now.
+    if (!suspended
+        && "APPROVED".equalsIgnoreCase(driverStatus)
+        && drivers.gatesFor(appUserId).isEmpty()) {
       modes.add(MODE_DRIVER);
     }
     if (token.roles().stream().anyMatch(r -> r.contains("ADMIN") || r.contains("AGENT"))) {
@@ -106,52 +114,72 @@ public class AppContextServiceImpl implements AppContextService {
     return modes;
   }
 
-  private AppContextResponse.Driver driver(String driverStatus, boolean suspended) {
-    List<AppContextResponse.Gate> gates = new ArrayList<>();
+  /**
+   * Where the app reopens. A stored DRIVER preference is honoured only while driving is still
+   * available — otherwise a driver deactivated overnight would cold-start into a mode that refuses
+   * every call.
+   */
+  private String activeModeDefault(long appUserId, boolean suspended) {
+    if (suspended) {
+      return MODE_PASSENGER;
+    }
+    return identity
+        .lastActiveMode(appUserId)
+        .filter(mode -> !MODE_DRIVER.equals(mode) || drivers.gatesFor(appUserId).isEmpty())
+        .orElse(MODE_PASSENGER);
+  }
 
+  private AppContextResponse.Driver driver(long appUserId, String driverStatus, boolean suspended) {
     // Suspension outranks every driver gate: S13 replaces S08/S09, it does not stack with them.
     if (suspended) {
-      gates.add(
-          new AppContextResponse.Gate(
-              "ACCOUNT_SUSPENDED",
-              "Your account is on hold. You can't book or publish trips while this is open.",
-              "/support"));
-      return new AppContextResponse.Driver(driverStatus, List.copyOf(gates), false, false);
+      return new AppContextResponse.Driver(
+          driverStatus,
+          List.of(
+              new AppContextResponse.Gate(
+                  GateCodes.ACCOUNT_SUSPENDED,
+                  "Your account is on hold. You can't book or publish trips while this is open.",
+                  "/support")),
+          false,
+          false);
     }
 
-    switch (driverStatus == null ? "NONE" : driverStatus.toUpperCase(Locale.ROOT)) {
-      case "APPROVED" -> {
-        /* no gate — the real publish gate (documents, vehicle, rate band) lands in slices 01 and 02 */
-      }
-      case "PENDING_REVIEW", "SUBMITTED" ->
-          gates.add(
-              new AppContextResponse.Gate(
-                  "DRIVER_REVIEW_PENDING",
-                  "We're checking your documents. Usually done within one working day.",
-                  "/driver/verification-status"));
-      case "REJECTED" ->
-          gates.add(
-              new AppContextResponse.Gate(
-                  "DRIVER_APPLICATION_REJECTED",
-                  "One of your documents needs redoing.",
-                  "/driver/verification-status"));
-      case "SUSPENDED" ->
-          gates.add(
-              new AppContextResponse.Gate(
-                  "DRIVER_DEACTIVATED",
-                  "Your driver profile is deactivated. You can still ride as a passenger.",
-                  "/driver/reinstatement-requests"));
-      default ->
-          gates.add(
-              new AppContextResponse.Gate(
-                  "DRIVER_PROFILE_MISSING",
-                  "Publish the trips you already make and let riders book the empty seats.",
-                  "/driver/application"));
+    List<AppContextResponse.Gate> gates =
+        drivers.gatesFor(appUserId).stream().map(AppContextServiceImpl::toGate).toList();
+    boolean canPublish = gates.isEmpty() && drivers.publishGatesFor(appUserId).isEmpty();
+    // S12 needs the publishing blockers listed too, not just the fact that publishing is blocked.
+    if (gates.isEmpty() && !canPublish) {
+      gates =
+          drivers.publishGatesFor(appUserId).stream().map(AppContextServiceImpl::toGate).toList();
     }
+    // canSetWomenOnly is slice 08's preference gate.
+    return new AppContextResponse.Driver(driverStatus, gates, canPublish, false);
+  }
 
-    boolean approved = "APPROVED".equalsIgnoreCase(driverStatus);
-    // canPublish tightens in slice 01 (documents, vehicle) and slice 02 (rate band).
-    return new AppContextResponse.Driver(driverStatus, List.copyOf(gates), approved, false);
+  private static AppContextResponse.Gate toGate(DriverGate gate) {
+    return new AppContextResponse.Gate(gate.code(), gate.message(), gate.actionPath());
+  }
+
+  @Override
+  public ActiveModeResponse setActiveMode(String mode) {
+    CurrentUser token = currentUsers.requireCurrentUser();
+    // The ACTIVE guard applies: a suspended account has no mode to switch into.
+    AppUser user = identity.upsertFromToken(token);
+    String requested = mode == null ? "" : mode.toUpperCase(Locale.ROOT);
+    if (!MODE_PASSENGER.equals(requested) && !MODE_DRIVER.equals(requested)) {
+      throw new IllegalArgumentException("mode must be PASSENGER or DRIVER");
+    }
+    if (MODE_DRIVER.equals(requested)) {
+      // 409 rather than 403: the request is authorised, it conflicts with the account's state, and
+      // the app already knows how to render the gate it gets back.
+      drivers.gatesFor(user.appUserId()).stream()
+          .findFirst()
+          .ifPresent(
+              gate -> {
+                throw new GateConflictException(gate.code(), gate.message(), gate.actionPath());
+              });
+    }
+    identity.setLastActiveMode(user.appUserId(), requested);
+    return new ActiveModeResponse(requested);
   }
 
   private AppContextResponse.Account account(AppUser user, boolean suspended) {
@@ -162,7 +190,7 @@ public class AppContextServiceImpl implements AppContextService {
     return new AppContextResponse.Account(
         STATUS_SUSPENDED,
         change.map(IdentityFacade.StatusChange::reason).orElse(null),
-        change.map(c -> "SL-" + user.appUserId()).orElse(null),
+        change.map(IdentityFacade.StatusChange::caseRef).orElse(null),
         change.map(IdentityFacade.StatusChange::changedAt).orElse(null));
   }
 

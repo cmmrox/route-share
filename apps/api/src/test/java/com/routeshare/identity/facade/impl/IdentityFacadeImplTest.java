@@ -10,7 +10,9 @@ import com.routeshare.common.security.CurrentUser;
 import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.repository.AppUserRepository;
 import com.routeshare.identity.repository.AppUserStatusHistoryRepository;
+import com.routeshare.identity.service.AccountRoleService;
 import com.routeshare.identity.service.KeycloakRealmRoleService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +38,8 @@ class IdentityFacadeImplTest {
             repository,
             mock(AppUserStatusHistoryRepository.class),
             mock(KeycloakRealmRoleService.class),
+            mock(AccountRoleService.class),
+            new SimpleMeterRegistry(),
             300);
 
     assertThat(facade.upsertFromToken(TOKEN)).isEqualTo(APP_USER);
@@ -66,6 +70,8 @@ class IdentityFacadeImplTest {
             repository,
             mock(AppUserStatusHistoryRepository.class),
             mock(KeycloakRealmRoleService.class),
+            mock(AccountRoleService.class),
+            new SimpleMeterRegistry(),
             300);
 
     facade.upsertFromToken(TOKEN);
@@ -84,6 +90,8 @@ class IdentityFacadeImplTest {
             repository,
             mock(AppUserStatusHistoryRepository.class),
             mock(KeycloakRealmRoleService.class),
+            mock(AccountRoleService.class),
+            new SimpleMeterRegistry(),
             300);
 
     facade.upsertFromToken(TOKEN);
@@ -102,6 +110,8 @@ class IdentityFacadeImplTest {
             repository,
             mock(AppUserStatusHistoryRepository.class),
             mock(KeycloakRealmRoleService.class),
+            mock(AccountRoleService.class),
+            new SimpleMeterRegistry(),
             0);
 
     facade.upsertFromToken(TOKEN);

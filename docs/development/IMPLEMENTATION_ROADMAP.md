@@ -548,7 +548,7 @@ rule, and 18 have foundations but no product behaviour. Full register in
 | Slice | Title | Size | Status |
 | --- | --- | --- | --- |
 | 00 | Repo reset and contract rewrite | M | `COMPLETED` 2026-08-01 |
-| 01 | Auth unification and mode gates | M | `NOT_STARTED` |
+| 01 | Auth unification and mode gates | M | `PARTIALLY_COMPLETED` 2026-08-01 — code and automated verification complete; runtime smoke deferred (Blocker 013) |
 | 02 | Vehicle classes and rate bands | M | `NOT_STARTED` |
 | 03 | Fare engine rewrite | XL | `NOT_STARTED` |
 | 04 | Charge timing and capture correctness | L | `NOT_STARTED` |

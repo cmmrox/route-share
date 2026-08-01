@@ -17,6 +17,40 @@ Blocker Status Values:
 
 ## Active Blockers
 
+### Blocker 013 — Local stack will not start: host port 5433 is taken
+
+Status: `OPEN`
+Severity: `LOW`
+
+Description:
+
+`scripts/dev-up.sh` fails at `routeshare-postgres` with *Bind for 0.0.0.0:5433 failed: port is already
+allocated*. The port is published by an unrelated project's container on this machine
+(`cryptopilot-db-postgres-1`, running since well before this work). Redis, Keycloak, MinIO and Redpanda
+start normally; only Postgres is blocked, which takes the API and every database-backed check with it.
+
+Impact:
+
+- `scripts/simulation/verify-mode-gates.sh` (slice 01's named runtime verification) is written and
+  syntax-checked but has never been executed.
+- The Keycloak role-state and `audit.audit_action` manual checks in
+  `qa/test-cases/comigo-unified-app-backend/01-auth-unification-and-mode-gates-qa.md` depend on the
+  same run.
+- `FlywayPostgisMigrationIntegrationTest` skips for the same reason, so **migration `V027` has not been
+  applied against a real PostGIS database** — only reviewed. Apply it before trusting slice 02's
+  migrations to stack on top.
+
+Not blocking: the Maven gate (`spotless:check verify`, 264 tests) passes without Docker, and slice 01's
+behaviour is covered by unit tests.
+
+Resolution:
+
+Free the port (stop the other container, or republish RouteShare's Postgres on another host port and
+point `.env` at it), then run `scripts/dev-up.sh` followed by
+`scripts/simulation/verify-mode-gates.sh`. Record the output under `qa/reports/`.
+
+---
+
 ### Blocker 012 — `admin-web.openapi.json` fails OpenAPI 3.1 validation
 
 Status: `OPEN`

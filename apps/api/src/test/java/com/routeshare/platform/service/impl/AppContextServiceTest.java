@@ -1,6 +1,7 @@
 package com.routeshare.platform.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -9,8 +10,11 @@ import static org.mockito.Mockito.when;
 
 import com.routeshare.booking.dto.response.PassengerBookingDetailResponse;
 import com.routeshare.booking.service.BookingService;
+import com.routeshare.common.errors.GateCodes;
+import com.routeshare.common.errors.GateConflictException;
 import com.routeshare.common.security.CurrentUser;
 import com.routeshare.common.security.CurrentUserProvider;
+import com.routeshare.driver.domain.DriverGate;
 import com.routeshare.driver.facade.DriverFacade;
 import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.facade.IdentityFacade;
@@ -21,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -71,8 +76,27 @@ class AppContextServiceTest {
     when(passengers.existsPassengerProfileByAppUserId(42L)).thenReturn(hasPassengerProfile);
     when(drivers.findDriverStatusByAppUserId(42L))
         .thenReturn(driverStatus == null ? Optional.empty() : Optional.of(driverStatus));
+    // Gate derivation belongs to the driver module; the shell only composes what it is told.
+    List<DriverGate> gates = gatesFor(driverStatus);
+    when(drivers.gatesFor(42L)).thenReturn(gates);
+    when(drivers.publishGatesFor(42L)).thenReturn(gates);
+    when(identity.lastActiveMode(42L)).thenReturn(Optional.empty());
     when(bookings.getCurrentPassengerTrip()).thenReturn(Optional.empty());
     when(notifications.unreadCount()).thenReturn(0L);
+  }
+
+  private static List<DriverGate> gatesFor(String driverStatus) {
+    if (driverStatus == null) {
+      return List.of(new DriverGate(GateCodes.DRIVER_PROFILE_MISSING, "Become a driver", "/x"));
+    }
+    return switch (driverStatus) {
+      case "APPROVED" -> List.of();
+      case "REJECTED" ->
+          List.of(new DriverGate(GateCodes.DRIVER_APPLICATION_REJECTED, "Redo a document", "/x"));
+      case "SUSPENDED" ->
+          List.of(new DriverGate(GateCodes.DRIVER_DEACTIVATED, "Deactivated", "/x"));
+      default -> List.of(new DriverGate(GateCodes.DRIVER_REVIEW_PENDING, "In review", "/x"));
+    };
   }
 
   @Test
@@ -102,11 +126,13 @@ class AppContextServiceTest {
   }
 
   @Test
-  void approvedProfileWithoutTheRealmRoleDoesNotUnlockDriverMode() {
-    given(Set.of("PASSENGER"), true, "APPROVED", "ACTIVE");
+  void approvedProfileUnderAnOpenDeactivationDoesNotUnlockDriverMode() {
+    given(Set.of("PASSENGER", "DRIVER"), true, "APPROVED", "ACTIVE");
+    when(drivers.gatesFor(42L))
+        .thenReturn(List.of(new DriverGate(GateCodes.DRIVER_DEACTIVATED, "Deactivated", "/x")));
 
-    // Slice 01 grants the DRIVER realm role on approval. Until the token carries it, the mode chip
-    // must stay out of reach — a profile row alone is not authorisation.
+    // The mode chip follows the gate, not the profile row and not the token's role: a driver
+    // deactivated overnight must not be offered a mode that refuses every call.
     assertThat(service.current().availableModes()).containsExactly("PASSENGER");
   }
 
@@ -151,7 +177,10 @@ class AppContextServiceTest {
         .thenReturn(
             Optional.of(
                 new IdentityFacade.StatusChange(
-                    "SUSPENDED", "Two reports of a driver not matching the licence photo", NOW)));
+                    "SUSPENDED",
+                    "Two reports of a driver not matching the licence photo",
+                    "SL-42-9F1C2",
+                    NOW)));
 
     AppContextResponse ctx = service.current();
 
@@ -274,6 +303,54 @@ class AppContextServiceTest {
     assertThat(badges.home()).isFalse();
     assertThat(badges.account()).isFalse();
     assertThat(badges.trips()).isZero();
+  }
+
+  @Test
+  void switchingToDriverModeIsPersistedWhenDrivingIsAvailable() {
+    given(Set.of("PASSENGER", "DRIVER"), true, "APPROVED", "ACTIVE");
+    when(identity.upsertFromToken(token(Set.of("PASSENGER", "DRIVER"))))
+        .thenReturn(appUser("ACTIVE"));
+
+    assertThat(service.setActiveMode("DRIVER").mode()).isEqualTo("DRIVER");
+    verify(identity).setLastActiveMode(42L, "DRIVER");
+  }
+
+  @Test
+  void switchingToAnUnavailableModeConflictsWithTheBlockingGateCode() {
+    given(Set.of("PASSENGER"), true, "PENDING_REVIEW", "ACTIVE");
+    when(identity.upsertFromToken(token(Set.of("PASSENGER")))).thenReturn(appUser("ACTIVE"));
+
+    assertThatThrownBy(() -> service.setActiveMode("DRIVER"))
+        .isInstanceOf(GateConflictException.class)
+        .extracting(ex -> ((GateConflictException) ex).code())
+        .isEqualTo(GateCodes.DRIVER_REVIEW_PENDING);
+    verify(identity, never()).setLastActiveMode(anyLong(), org.mockito.ArgumentMatchers.any());
+  }
+
+  @Test
+  void anUnknownModeIsRejectedBeforeAnythingIsPersisted() {
+    given(Set.of("PASSENGER"), true, "APPROVED", "ACTIVE");
+    when(identity.upsertFromToken(token(Set.of("PASSENGER")))).thenReturn(appUser("ACTIVE"));
+
+    assertThatThrownBy(() -> service.setActiveMode("ADMIN"))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void aStoredDriverModeIsIgnoredOnceDrivingIsGated() {
+    given(Set.of("PASSENGER"), true, "SUSPENDED", "ACTIVE");
+    when(identity.lastActiveMode(42L)).thenReturn(Optional.of("DRIVER"));
+
+    // Otherwise a driver deactivated overnight cold-starts into a mode that refuses every call.
+    assertThat(service.current().activeModeDefault()).isEqualTo("PASSENGER");
+  }
+
+  @Test
+  void aStoredDriverModeIsHonouredWhileDrivingIsAvailable() {
+    given(Set.of("PASSENGER", "DRIVER"), true, "APPROVED", "ACTIVE");
+    when(identity.lastActiveMode(42L)).thenReturn(Optional.of("DRIVER"));
+
+    assertThat(service.current().activeModeDefault()).isEqualTo("DRIVER");
   }
 
   @Test

@@ -1,5 +1,6 @@
 package com.routeshare.driver.controller;
 
+import com.routeshare.common.security.DriverAccess;
 import com.routeshare.common.web.ApiResponse;
 import com.routeshare.driver.dto.response.DriverDocumentResponse;
 import com.routeshare.driver.service.DriverDocumentService;
@@ -8,7 +9,6 @@ import com.routeshare.storage.dto.UploadUrlRequest;
 import com.routeshare.storage.dto.UploadUrlResponse;
 import jakarta.validation.Valid;
 import java.util.List;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/driver/documents")
-@PreAuthorize("hasRole('DRIVER')")
+@DriverAccess
 public class DriverDocumentController {
   private final DriverDocumentService service;
 

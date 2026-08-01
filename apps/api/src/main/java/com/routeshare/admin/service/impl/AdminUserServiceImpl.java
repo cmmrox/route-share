@@ -11,7 +11,9 @@ import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.identity.repository.AppUserRepository;
 import com.routeshare.identity.repository.AppUserStatusHistoryRepository;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -102,7 +104,12 @@ public class AdminUserServiceImpl implements AdminUserService {
       identityFacade.invalidateProjection(user.getKeycloakSubject());
       statusHistory.save(
           AppUserStatusHistoryEntity.of(
-              appUserId, from, toStatus, reason, currentAdminAppUserId()));
+              appUserId,
+              from,
+              toStatus,
+              reason,
+              caseRef(appUserId, toStatus),
+              currentAdminAppUserId()));
       audit.record(
           "USER_STATUS_CHANGED",
           "APP_USER",
@@ -110,6 +117,19 @@ public class AdminUserServiceImpl implements AdminUserService {
           "{\"from\":\"" + from + "\",\"to\":\"" + toStatus + "\"}");
     }
     return toResponse(user);
+  }
+
+  /**
+   * S13 shows the user a case reference to quote when they appeal, so a suspension needs one the
+   * moment it is recorded. Reinstatement is not a case the user chases, so it gets none.
+   */
+  private String caseRef(long appUserId, String toStatus) {
+    if (!SUSPENDED.equals(toStatus)) {
+      return null;
+    }
+    return "SL-%d-%s"
+        .formatted(
+            appUserId, UUID.randomUUID().toString().substring(0, 5).toUpperCase(Locale.ROOT));
   }
 
   private AppUserEntity require(long appUserId) {

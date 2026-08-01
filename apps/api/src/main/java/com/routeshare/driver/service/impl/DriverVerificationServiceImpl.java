@@ -1,6 +1,7 @@
 package com.routeshare.driver.service.impl;
 
 import com.routeshare.common.security.CurrentUserProvider;
+import com.routeshare.driver.domain.RequiredDriverDocuments;
 import com.routeshare.driver.dto.response.DriverVerificationStatusResponse;
 import com.routeshare.driver.dto.response.DriverVerificationStatusResponse.DocumentStatus;
 import com.routeshare.driver.entity.DriverDocumentEntity;
@@ -21,9 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class DriverVerificationServiceImpl implements DriverVerificationService {
-  /** KYC documents every driver must have APPROVED before they can operate. */
-  static final List<String> REQUIRED_DOCUMENT_TYPES = List.of("IDENTITY", "LICENCE");
-
   private static final String NOT_STARTED = "NOT_STARTED";
   private static final String MISSING = "MISSING";
   private static final String APPROVED = "APPROVED";
@@ -41,7 +39,7 @@ public class DriverVerificationServiceImpl implements DriverVerificationService 
     Optional<Long> driverProfileId = drivers.findIdByAppUserId(app.appUserId());
     if (driverProfileId.isEmpty()) {
       List<DocumentStatus> missing =
-          REQUIRED_DOCUMENT_TYPES.stream()
+          RequiredDriverDocuments.TYPES.stream()
               .map(type -> new DocumentStatus(type, MISSING, null))
               .toList();
       return new DriverVerificationStatusResponse(
@@ -59,7 +57,7 @@ public class DriverVerificationServiceImpl implements DriverVerificationService 
     List<DocumentStatus> docStatuses = new ArrayList<>();
     List<String> nextSteps = new ArrayList<>();
     boolean allDocsApproved = true;
-    for (String type : REQUIRED_DOCUMENT_TYPES) {
+    for (String type : RequiredDriverDocuments.TYPES) {
       DriverDocumentEntity doc = latestByType.get(type);
       String status = doc == null ? MISSING : doc.getStatus();
       docStatuses.add(

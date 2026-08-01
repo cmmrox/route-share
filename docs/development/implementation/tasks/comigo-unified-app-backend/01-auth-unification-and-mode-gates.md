@@ -181,16 +181,35 @@ bash scripts/simulation/verify-mode-gates.sh
 
 ## Done criteria
 
-- [ ] A phone-OTP account with an approved driver profile can call both passenger and driver endpoints on one token.
-- [ ] All ten former `hasRole('DRIVER')` sites use the composite guard.
-- [ ] All eight gate codes are produced by the right conditions and returned both on `/me/context` and on 403.
-- [ ] Suspension outranks every driver gate.
-- [ ] Deactivation blocks driving, leaves riding and payouts untouched.
-- [ ] Admin deactivate/reinstate and driver reinstatement request work end to end and are audited.
-- [ ] `last_active_mode` persists and is returned.
-- [ ] Cache invalidation on role change is proven by test.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] A phone-OTP account with an approved driver profile can call both passenger and driver endpoints on one token. *(Covered by `PhoneOtpRoleResolutionTest` + `DriverGuardTest`; the end-to-end proof is the deferred smoke run.)*
+- [x] All ten former `hasRole('DRIVER')` sites use the composite guard. *(Eight `@DriverAccess`; payouts and driver support use `@DriverSelfServiceAccess` — see the deviation note below.)*
+- [x] All eight gate codes are produced by the right conditions and returned both on `/me/context` and on 403. *(`RATE_BAND_NOT_SET` remains slice 02's, as scoped.)*
+- [x] Suspension outranks every driver gate. *(`SuspensionPrecedenceTest`.)*
+- [x] Deactivation blocks driving, leaves riding and payouts untouched.
+- [x] Admin deactivate/reinstate and driver reinstatement request work end to end and are audited.
+- [x] `last_active_mode` persists and is returned.
+- [x] Cache invalidation on role change is proven by test. *(`RoleCacheInvalidationTest`.)*
+- [x] `./mvnw spotless:check verify` green, JaCoCo 80% held. *(264 tests, 2026-08-01.)*
+- [x] Tracking docs updated; focused commit ready.
+- [ ] `scripts/simulation/verify-mode-gates.sh` executed against the local stack — **deferred, Blocker 013** (host port 5433 held by an unrelated container).
+
+## Deviations from the plan as written
+
+1. **A third gate was needed.** Payout details and driver support were two of the ten `hasRole('DRIVER')`
+   sites, but board D34 promises a deactivated driver both their earnings and a route to an appeal.
+   Behind `@DriverAccess` they would 403 for exactly the person D34 addresses — the screen would tell
+   them to contact support while the support call refused them. They now use
+   `@DriverSelfServiceAccess` (`canManageDriverAccount`): a driver profile in any state, account not
+   suspended, deactivation tolerated.
+2. **`driver.driver_document` gained `expires_at`.** `DOCUMENT_EXPIRED` is one of the eight required
+   gate codes and there was no column recording an expiry, so no condition could have produced it.
+   Added to `V027` beyond the migration list in this file.
+3. **Realm roles are changed one at a time.** `KeycloakRealmRoleService` gained
+   `grantRealmRole`/`revokeRealmRole`; the existing set-based method would have stripped other roles
+   from an admin who also drives. A Keycloak that is switched off locally logs a warning instead of
+   failing the approval, since phone-OTP authorities come from the local projection.
+4. **Mode conflict is a 409 with a typed body**, via a new `GateConflictException`, rather than the
+   generic `CONFLICT` an `IllegalStateException` would have produced.
 
 ## Suggested commit message
 

@@ -1,6 +1,65 @@
 # RouteShareApp Development Status
 
-2026-08-01 (slice 00 COMPLETE — unified app + merged contract)
+2026-08-01 (slice 01 code-complete — one token drives and rides; runtime smoke deferred)
+
+## 2026-08-01 — Slice 01: auth unification and mode gates
+
+The blocker that made a single app impossible is gone. `PhoneOtpAccessTokenAuthenticationFilter`
+stamped `ROLE_PASSENGER` on every phone-OTP session while all ten driver endpoints required
+`hasRole('DRIVER')`, so **a phone-OTP user could never drive**. Authorities are now derived per
+request from the identity projection by a new `AccountRoleService`, cached briefly and invalidated on
+every grant, revoke and deactivation — so both token issuers end up with the same authorities for the
+same person, and a role taken away stops working on the next request rather than at cache expiry.
+
+**Gates are data, not exceptions.** A new `DriverGuard` replaces the bare role check with three
+independent facts — not suspended, approved profile, no open deactivation — and, when it refuses,
+throws the reason instead of returning `false`. Every gated 403 now carries `{code, message,
+actionPath}`, and the same structure appears pre-emptively on `/me/context`, so the app renders
+S07/S08/S09/S12/S13/D34 *before* the user taps something that fails. Nine gate codes are produced by
+the conditions that define them (`RATE_BAND_NOT_SET` is slice 02's, as scoped).
+
+Three decisions worth recording, because each one is a place the obvious implementation is wrong:
+
+1. **Suspension and deactivation are not the same refusal.** Suspension stops everything and outranks
+   every driver gate — a suspended driver under review must see S13's appeal route, not S08's "we're
+   checking your documents", since only one of those is actionable. Deactivation stops *driving* and
+   nothing else. D34 promises the driver both their rider account and the money they have already
+   earned, so payout and support endpoints sit behind a third, weaker gate
+   (`@DriverSelfServiceAccess`) rather than `@DriverAccess`. Putting them behind the driver gate would
+   have stranded exactly the person the screen is written for: told to contact support by a screen
+   whose support call returns 403.
+2. **Realm roles are granted one at a time.** The existing `setRealmRoles` states the whole managed
+   set, which is right for the admin role editor and wrong for driver approval — it would silently
+   strip an admin who also drives. Added `grantRealmRole`/`revokeRealmRole`, and made a Keycloak that
+   is switched off locally a logged warning rather than a failed approval, since the local projection
+   is authoritative for phone-OTP tokens either way.
+3. **A stored DRIVER mode is honoured only while driving is available.** Otherwise a driver
+   deactivated overnight cold-starts into a mode that refuses every call.
+
+Also landed: `PUT /me/active-mode` (409 with the blocking gate code when the mode is not available),
+driver reinstatement requests wired to a support ticket with one open request at a time, admin
+deactivate/reinstate with audit and role revocation, and a real `case_ref` on suspensions replacing
+slice 00's fabricated one.
+
+Scope notes: `driver.driver_document` gained an `expires_at` column — `DOCUMENT_EXPIRED` is one of the
+eight gate codes the task specifies and there was nowhere to record an expiry, so the code could not
+otherwise have been produced by anything. Eight of the ten former `hasRole('DRIVER')` sites use
+`@DriverAccess`; payouts and driver support use `@DriverSelfServiceAccess` for the D34 reason above.
+`POST /api/v1/routes` (publish) and the recurring-route POSTs now use `@DriverPublishAccess`.
+
+Verification: `./mvnw spotless:check verify` → **BUILD SUCCESS, 264 tests, JaCoCo gate met**;
+`redocly lint docs/api/mobile-app.openapi.json` → **zero errors**; `@routeshare/api-contracts`
+typecheck green. New tests: `DriverGuardTest`, `DriverGateServiceTest`, `PhoneOtpRoleResolutionTest`,
+`RoleCacheInvalidationTest`, `SuspensionPrecedenceTest`, `DriverDeactivationServiceImplTest`, plus
+`AppContextServiceTest` extended to 20 cases.
+
+**Deferred:** `scripts/simulation/verify-mode-gates.sh` is written but has not been run — host port
+5433 is held by an unrelated project's container, so the local Postgres will not start (Blocker 013).
+The Keycloak role-state and audit-extract manual checks in the QA file depend on the same run.
+
+Next: run the smoke script once the port is free, then slice 02 — vehicle classes and rate bands.
+
+## 2026-08-01 (slice 00 COMPLETE — unified app + merged contract)
 
 ## 2026-08-01 — Slice 00 COMPLETE: unified app and merged client contract
 
@@ -124,11 +183,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_00_COMPLETE_SLICE_01_NEXT`
-- Current Active Task: `Slice 01 — auth unification and mode gates (next)`
+- Current Milestone: `MILESTONE_SLICE_01_CODE_COMPLETE_RUNTIME_SMOKE_PENDING`
+- Current Active Task: `Slice 01 — auth unification and mode gates (runtime smoke pending, Blocker 013); slice 02 next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_00_MERGED_CONTRACT_AND_UNIFIED_APP_VERIFIED`
-- Repository Git Status: `Branch feat/comigo-unified-app-slice-00; apps/mobile created, apps/driver-mobile removed, contracts merged`
+- Status: `SLICE_01_ONE_TOKEN_BOTH_MODES_VERIFIED_BY_TESTS`
+- Repository Git Status: `Slice 01 changes uncommitted on main; migration V027 added, ten driver role checks replaced by the composite guard`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

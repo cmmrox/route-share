@@ -18,12 +18,15 @@ rate-band component of `canPublish` (slice 02) and the automatic deactivation tr
 
 ## Automated test coverage
 
+Status 2026-08-01: all present and green (`./mvnw spotless:check verify` → 264 tests, JaCoCo gate met).
+
 - `PhoneOtpRoleResolutionTest` — OTP token carries the account's real roles, not a hardcoded one.
 - `DriverGuardTest` — the composite gate across every combination of role, profile status and deactivation.
 - `DriverGateServiceTest` — all eight gate codes from the right conditions.
-- `AppContextServiceTest` — gates surfaced on context.
+- `AppContextServiceTest` — gates surfaced on context, plus active-mode persistence and its 409.
 - `RoleCacheInvalidationTest` — a revoked role stops working immediately.
 - `SuspensionPrecedenceTest` — suspension outranks every driver gate.
+- `DriverDeactivationServiceImplTest` — deactivate/reinstate, role revocation, and the one-open-request rule.
 
 ## Maestro automation
 
@@ -59,6 +62,10 @@ owned by the mobile feature plan and must link back to this QA file.
 - Confirm `audit.audit_action` rows exist for each grant, revoke, deactivate and reinstate with actor and case ref.
 
 ## Evidence to collect
+
+**Not yet collected — Blocker 013.** The script exists and is syntax-checked; the local Postgres will
+not start because host port 5433 is held by an unrelated container, so nothing below has been captured.
+Run all three together once the port is free and file the output under `qa/reports/`.
 
 - `scripts/simulation/verify-mode-gates.sh` output.
 - Keycloak role state before and after approval and deactivation.

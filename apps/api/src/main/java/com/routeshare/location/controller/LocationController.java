@@ -1,11 +1,11 @@
 package com.routeshare.location.controller;
 
+import com.routeshare.common.security.DriverAccess;
 import com.routeshare.common.web.ApiResponse;
 import com.routeshare.location.dto.request.LocationUpdateRequest;
 import com.routeshare.location.service.LocationService;
 import jakarta.validation.Valid;
 import java.util.Map;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/location")
-@PreAuthorize("hasRole('DRIVER')")
+@DriverAccess
 public class LocationController {
   private final LocationService locations;
 

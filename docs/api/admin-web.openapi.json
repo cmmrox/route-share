@@ -4360,6 +4360,177 @@
           }
         ]
       }
+    },
+    "/api/v1/admin/drivers/{driverProfileId}/deactivate": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Deactivate a driver",
+        "description": "Stops the driver driving and revokes the DRIVER realm role. Their rider account, and any money already earned, are untouched (board D34). Idempotent: an already-deactivated driver keeps the original case reference.",
+        "operationId": "VerificationDeactivateDriver",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "driverProfileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminDriverDeactivationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminDriverDeactivation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Driver profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/drivers/{driverProfileId}/reinstate": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Reinstate a deactivated driver",
+        "description": "Clears the deactivation, restores the DRIVER realm role, and closes any open reinstatement request. Audited with actor and case reference.",
+        "operationId": "VerificationReinstateDriver",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "driverProfileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "note",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Decision note recorded against the request."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminDriverDeactivation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Driver profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Driver is not deactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5535,6 +5706,65 @@
           },
           "verificationStatus": {
             "type": "string"
+          }
+        }
+      },
+      "AdminDriverDeactivationRequest": {
+        "type": "object",
+        "required": [
+          "reason",
+          "caseRef"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Shown to the driver on D34 — user-safe wording only."
+          },
+          "caseRef": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "The reference the driver quotes when they appeal."
+          }
+        }
+      },
+      "AdminDriverDeactivation": {
+        "type": "object",
+        "description": "A driver stopped from driving. Riding and pending payouts are deliberately unaffected.",
+        "required": [
+          "driverProfileId",
+          "reason",
+          "caseRef",
+          "active"
+        ],
+        "properties": {
+          "deactivationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "driverProfileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "caseRef": {
+            "type": "string"
+          },
+          "deactivatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reinstatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "active": {
+            "type": "boolean"
           }
         }
       }

@@ -1,5 +1,6 @@
 package com.routeshare.support.controller;
 
+import com.routeshare.common.security.DriverSelfServiceAccess;
 import com.routeshare.common.web.ApiResponse;
 import com.routeshare.support.dto.CreateTicketRequest;
 import com.routeshare.support.dto.SupportMessageResponse;
@@ -8,7 +9,6 @@ import com.routeshare.support.dto.TicketMessageRequest;
 import com.routeshare.support.service.SupportService;
 import jakarta.validation.Valid;
 import java.util.List;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/driver/support/tickets")
-@PreAuthorize("hasRole('DRIVER')")
+@DriverSelfServiceAccess
 public class DriverSupportController {
   private final SupportService service;
 

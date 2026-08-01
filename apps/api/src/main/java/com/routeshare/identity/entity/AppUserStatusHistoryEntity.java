@@ -34,6 +34,10 @@ public class AppUserStatusHistoryEntity {
 
   private String reason;
 
+  /** Shown beside the reason on S13 so the user can quote it when they appeal. */
+  @Column(name = "case_ref")
+  private String caseRef;
+
   @Column(name = "changed_by")
   private Long changedBy;
 
@@ -41,12 +45,18 @@ public class AppUserStatusHistoryEntity {
   private Instant createdAt;
 
   public static AppUserStatusHistoryEntity of(
-      long appUserId, String fromStatus, String toStatus, String reason, Long changedBy) {
+      long appUserId,
+      String fromStatus,
+      String toStatus,
+      String reason,
+      String caseRef,
+      Long changedBy) {
     var e = new AppUserStatusHistoryEntity();
     e.appUserId = appUserId;
     e.fromStatus = fromStatus;
     e.toStatus = toStatus;
     e.reason = reason;
+    e.caseRef = caseRef;
     e.changedBy = changedBy;
     return e;
   }

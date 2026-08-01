@@ -23,8 +23,10 @@ public class RouteController {
     this.routes = routes;
   }
 
+  // Publishing is the one driver action with its own gate: approved documents, an approved
+  // vehicle and (slice 02) a rate band. Admins keep their operational override.
   @PostMapping
-  @PreAuthorize("hasAnyRole('DRIVER','ADMIN','SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN') or @driverGuard.canPublish(authentication)")
   ApiResponse<Map<String, Object>> publish(@Valid @RequestBody RoutePublishRequest req) {
     return ApiResponse.ok(routes.publish(req));
   }
