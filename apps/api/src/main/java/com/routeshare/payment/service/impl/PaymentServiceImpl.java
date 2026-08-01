@@ -48,6 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
   private final FareLedgerRepository fareLedger;
   private final PaymentGatewayPort gateway;
   private final CommissionProperties commission;
+  private final com.routeshare.pricing.facade.PricingFacade pricing;
   private final PaymentMethodRepository paymentMethods;
   private final RateLimiter rateLimiter;
   private final RateLimitProperties rateLimits;
@@ -217,10 +218,25 @@ public class PaymentServiceImpl implements PaymentService {
   }
 
   /**
+   * The commission on this booking, read from the quote that priced it.
+   *
+   * <p>Recomputing it from a rate would let payment and pricing drift apart the first time the
+   * commission percentage changes: the passenger would have been charged under the old quote and
+   * the platform would settle under the new rate. The configured rate remains only as a fallback
+   * for bookings made before quotes existed.
+   */
+  private BigDecimal commissionFor(long bookingId, BigDecimal gross) {
+    return pricing
+        .quoteForBooking(bookingId)
+        .map(com.routeshare.pricing.domain.FareQuote::commissionAmount)
+        .orElseGet(() -> commission.commissionOn(gross));
+  }
+
+  /**
    * Writes audit ledger rows splitting a settled amount into platform commission and net earning.
    */
   private void recordSettlement(long bookingId, BigDecimal gross, String currency) {
-    BigDecimal commissionAmount = commission.commissionOn(gross);
+    BigDecimal commissionAmount = commissionFor(bookingId, gross);
     BigDecimal net = gross.subtract(commissionAmount);
     if (commissionAmount.signum() > 0) {
       fareLedger.recordPaymentLifecycleIfAbsent(
@@ -286,7 +302,10 @@ public class PaymentServiceImpl implements PaymentService {
     if (gross == null) {
       gross = BigDecimal.ZERO;
     }
-    BigDecimal commissionAmount = commission.commissionOn(gross);
+    BigDecimal commissionAmount = fareLedger.sumDriverCommission(app.appUserId());
+    if (commissionAmount == null) {
+      commissionAmount = BigDecimal.ZERO;
+    }
     BigDecimal net = gross.subtract(commissionAmount);
     return Map.of(
         "currency", DEFAULT_CURRENCY,

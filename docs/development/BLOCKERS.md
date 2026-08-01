@@ -17,6 +17,72 @@ Blocker Status Values:
 
 ## Active Blockers
 
+### Blocker 014 — `Vehicle` contract field names do not match the API
+
+Status: `OPEN`
+Severity: `MEDIUM`
+
+Description:
+
+`docs/api/mobile-app.openapi.json` describes `Vehicle` with `year`, `passengerSeatCapacity` and
+`verificationStatus`. `VehicleResponse` returns `manufactureYear`, `seatCount` and `status`. A client
+generated from the contract would read three fields that never arrive.
+
+Found during slice 02 while adding `classKey`, `bandStatus` and `chosenRatePerKm` to the same schema
+(those three do match). The drift predates the slice — it survived slice 00's reconciliation because
+that pass compared paths and operations, not property names.
+
+Impact: `GET/POST /api/v1/driver/vehicles` only. No runtime failure today, since no generated client
+is in use yet.
+
+Resolution:
+
+Decide which side is authoritative — the contract reads better, the API is what exists — then change
+one and reconcile in a single commit. Worth doing before the mobile feature plan wires D06/D07, and
+worth a property-level sweep of the whole contract at the same time, since this class of drift would
+not be caught by the checks slice 00 ran.
+
+---
+
+### Blocker 013 — Local stack will not start: host port 5433 is taken
+
+Status: `OPEN`
+Severity: `LOW`
+
+Description:
+
+`scripts/dev-up.sh` fails at `routeshare-postgres` with *Bind for 0.0.0.0:5433 failed: port is already
+allocated*. The port is published by an unrelated project's container on this machine
+(`cryptopilot-db-postgres-1`, running since well before this work). Redis, Keycloak, MinIO and Redpanda
+start normally; only Postgres is blocked, which takes the API and every database-backed check with it.
+
+Impact:
+
+- `scripts/simulation/verify-mode-gates.sh` (slice 01), `scripts/simulation/verify-rate-bands.sh`
+  (slice 02) and `scripts/simulation/verify-fare-engine.sh` (slice 03) are written and
+  syntax-checked but have never been executed. Between them they are the only checks that exercise
+  slice 02's two database triggers and slice 03's two fare-quote CHECK constraints, so none of the
+  four has ever run.
+- The Keycloak role-state and `audit.audit_action` manual checks in
+  `qa/test-cases/comigo-unified-app-backend/01-auth-unification-and-mode-gates-qa.md` depend on the
+  same run.
+- `FlywayPostgisMigrationIntegrationTest` skips for the same reason, so **migrations `V027`–`V029`
+  have not been applied against a real PostGIS database** — only reviewed. `V028` adds two PL/pgSQL
+  trigger functions and `V029` drops and recreates `pricing.fare_quote` and seeds 35 policy rows;
+  nothing has yet parsed any of it. Apply all three before trusting slice 04's migrations to stack
+  on top.
+
+Not blocking: the Maven gate (`spotless:check verify`, 264 tests) passes without Docker, and slice 01's
+behaviour is covered by unit tests.
+
+Resolution:
+
+Free the port (stop the other container, or republish RouteShare's Postgres on another host port and
+point `.env` at it), then run `scripts/dev-up.sh` followed by
+`scripts/simulation/verify-mode-gates.sh`. Record the output under `qa/reports/`.
+
+---
+
 ### Blocker 012 — `admin-web.openapi.json` fails OpenAPI 3.1 validation
 
 Status: `OPEN`

@@ -7,9 +7,8 @@ import com.routeshare.booking.service.EarlyDropOffService;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.payment.service.PaymentService;
-import com.routeshare.pricing.domain.FareCalculator;
+import com.routeshare.pricing.facade.PricingFacade;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,7 @@ public class EarlyDropOffServiceImpl implements EarlyDropOffService {
   private final IdentityFacade identityFacade;
   private final BookingRepository bookings;
   private final PaymentService payments;
-  private final FareCalculator fareCalculator = FareCalculator.defaultSriLankaCalculator();
+  private final PricingFacade pricing;
 
   @Override
   @Transactional
@@ -49,13 +48,12 @@ public class EarlyDropOffServiceImpl implements EarlyDropOffService {
     double exit = Math.max(pickup, Math.min(dropoff, ctx.getExitFraction()));
     long traveledMeters = Math.round(ctx.getRouteLengthM().doubleValue() * (exit - pickup));
 
-    int seats = ctx.getSeats() == null ? 1 : Math.max(1, ctx.getSeats());
+    // Repriced on the distance actually travelled, at the rate and tier the rider booked under.
+    // Slice 05 owns the twice-a-month allowance that decides whether this is allowed at all.
     BigDecimal finalFare =
-        fareCalculator
-            .estimate(traveledMeters)
-            .totalFare()
-            .multiply(BigDecimal.valueOf(seats))
-            .setScale(2, RoundingMode.HALF_UP);
+        pricing
+            .repriceForActualDistance(bookingId, BigDecimal.valueOf(traveledMeters))
+            .passengerPays();
 
     bookings.updateDropoffFraction(bookingId, BigDecimal.valueOf(exit));
     var result = payments.finalizeBookingFare(bookingId, finalFare);

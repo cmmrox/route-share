@@ -37,4 +37,8 @@ public class AppUserEntity {
 
   @Column(name = "local_status", insertable = false)
   private String localStatus;
+
+  /** The mode the app reopens in. Null until the user has switched at least once. */
+  @Column(name = "last_active_mode", insertable = false)
+  private String lastActiveMode;
 }

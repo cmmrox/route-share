@@ -58,6 +58,19 @@ owned by the mobile feature plan and must link back to this QA file.
 - Confirm `FareCalculator`, `FareBreakdown` and the old estimate endpoint are deleted, not deprecated.
 - Confirm the admin fare-policy surface no longer offers base fare or per-minute.
 
+## Automated test coverage status (2026-08-01)
+
+All green under `./mvnw spotless:check verify` (319 tests). `FareEngineTest` asserts the `data.jsx`
+fixtures directly and sweeps ~4,000 rounding paths for both invariants; `MatchDiscountTierTest`
+pins the band edges; `PolicySettingTest` covers typed reads, cache eviction on write, history and
+type validation; `PricingArchitectureTest` fails the build on an inlined policy figure, on a
+surviving `FareCalculator`/`FareBreakdown`, or on any pricing input declared in a request DTO.
+
+**Not yet collected — Blocker 013.** `scripts/simulation/verify-fare-engine.sh` exists and is
+syntax-checked, but the local Postgres will not start (host port 5433 held by an unrelated
+container). It is the only check that exercises the two `pricing.fare_quote` CHECK constraints and
+reproduces the fixtures through a live API. Run it and file the output under `qa/reports/`.
+
 ## Evidence to collect
 
 - `scripts/simulation/verify-fare-engine.sh` output showing the fixture comparison.

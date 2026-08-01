@@ -16,9 +16,10 @@ import com.routeshare.common.security.CurrentUser;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.notification.facade.NotificationFacade;
-import com.routeshare.pricing.domain.FareCalculator;
+import com.routeshare.pricing.facade.PricingFacade;
 import com.routeshare.routing.facade.RoutingFacade;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -50,7 +51,7 @@ public class BookingServiceImpl implements BookingService {
   private final IdempotencyKeyRepository idempotencyKeys;
   private final NotificationFacade notifications;
   private final ObjectMapper objectMapper;
-  private final FareCalculator fareCalculator = FareCalculator.defaultSriLankaCalculator();
+  private final PricingFacade pricing;
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
       Map.of(
           "REQUESTED",
@@ -100,12 +101,30 @@ public class BookingServiceImpl implements BookingService {
         Math.round(
             reservation.routeLengthMeters()
                 * (req.dropoffRouteFraction() - req.pickupRouteFraction()));
-    BigDecimal fareEstimate =
-        fareCalculator
-            .estimate(matchedDistanceMeters)
-            .totalFare()
-            .multiply(BigDecimal.valueOf(req.seats()));
+    // Overlap percent is what the rider actually shares of the driver's road, which is what the
+    // discount tier is banded on.
+    BigDecimal matchPercent =
+        BigDecimal.valueOf((req.dropoffRouteFraction() - req.pickupRouteFraction()) * 100)
+            .setScale(2, RoundingMode.HALF_UP);
+    var quote =
+        pricing.quoteForMatch(
+            reservation.routeOccurrenceId(),
+            reservation.vehicleId(),
+            BigDecimal.valueOf(matchedDistanceMeters),
+            matchPercent,
+            req.seats());
+    // fare_estimate mirrors passengerPays so existing readers keep working; the quote is the
+    // record of what was charged and why.
+    BigDecimal fareEstimate = quote.passengerPays();
     long bookingId = bookings.create(app.appUserId(), req, reservation.routePlanId(), fareEstimate);
+    pricing.persistForBooking(
+        bookingId,
+        reservation.routeOccurrenceId(),
+        reservation.vehicleId(),
+        app.appUserId(),
+        BigDecimal.valueOf(matchedDistanceMeters),
+        matchPercent,
+        req.seats());
     statusHistory.recordInitialStatus(
         bookingId, CONFIRMED, app.appUserId(), INITIAL_CONFIRMATION_REASON);
     Map<String, Object> response =

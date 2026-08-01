@@ -4360,6 +4360,628 @@
           }
         ]
       }
+    },
+    "/api/v1/admin/drivers/{driverProfileId}/deactivate": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Deactivate a driver",
+        "description": "Stops the driver driving and revokes the DRIVER realm role. Their rider account, and any money already earned, are untouched (board D34). Idempotent: an already-deactivated driver keeps the original case reference.",
+        "operationId": "VerificationDeactivateDriver",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "driverProfileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminDriverDeactivationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminDriverDeactivation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Driver profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/drivers/{driverProfileId}/reinstate": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Reinstate a deactivated driver",
+        "description": "Clears the deactivation, restores the DRIVER realm role, and closes any open reinstatement request. Audited with actor and case reference.",
+        "operationId": "VerificationReinstateDriver",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "driverProfileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "note",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Decision note recorded against the request."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminDriverDeactivation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Driver profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Driver is not deactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/vehicles/{vehicleId}/rate-band": {
+      "get": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Read a vehicle's rate band",
+        "operationId": "VerificationGetVehicleRateBand",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminRateBand"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Vehicle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Assess a vehicle's rate band",
+        "description": "Sets the per-km band and activates it, defaulting the driver's rate to the midpoint so the vehicle is publishable immediately. Restricted to ADMIN, SUPER_ADMIN and FINANCE_ADMIN: approving papers and setting a price are different authorities. Audited with before and after values.",
+        "operationId": "VerificationAssessVehicleRateBand",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRateBandAssessment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminRateBand"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Vehicle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "BAND_OUTSIDE_CLASS — the band is outside the vehicle class's range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/rate-band-review-requests": {
+      "get": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "List rate-band review requests",
+        "operationId": "VerificationListRateBandReviewRequests",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "OPEN",
+                "APPROVED",
+                "REJECTED"
+              ],
+              "default": "OPEN"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AdminRateBandReviewRequest"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/rate-band-review-requests/{requestId}/decide": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Decide a rate-band review request",
+        "description": "APPROVED with new numbers writes a new band; REJECTED leaves the live band exactly as it was. Either way the vehicle keeps earning throughout.",
+        "operationId": "VerificationDecideRateBandReview",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRateBandReviewDecision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminRateBandReviewRequest"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already decided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/policy-settings": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "List runtime policy settings",
+        "description": "Commission, route-match discount tiers, penalty percentages, waiting times and payout floors. Every figure the product states as a rule lives here so it can be corrected without a deploy.",
+        "operationId": "FinanceListPolicySettings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AdminPolicySetting"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/policy-settings/{policyKey}": {
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "Change a policy setting",
+        "description": "Restricted to ADMIN, SUPER_ADMIN and FINANCE_ADMIN: changing the commission changes what every driver earns on their next trip. Audited with old and new value, and kept in a history table.",
+        "operationId": "FinanceUpdatePolicySetting",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policyKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPolicySettingUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminPolicySetting"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Value is not valid for this setting's type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown policy key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5229,12 +5851,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "baseFare": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "perKm": {
-            "$ref": "#/components/schemas/Money"
-          },
           "minimumFare": {
             "$ref": "#/components/schemas/Money"
           },
@@ -5535,6 +6151,285 @@
           },
           "verificationStatus": {
             "type": "string"
+          }
+        }
+      },
+      "AdminDriverDeactivationRequest": {
+        "type": "object",
+        "required": [
+          "reason",
+          "caseRef"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Shown to the driver on D34 — user-safe wording only."
+          },
+          "caseRef": {
+            "type": "string",
+            "maxLength": 60,
+            "description": "The reference the driver quotes when they appeal."
+          }
+        }
+      },
+      "AdminDriverDeactivation": {
+        "type": "object",
+        "description": "A driver stopped from driving. Riding and pending payouts are deliberately unaffected.",
+        "required": [
+          "driverProfileId",
+          "reason",
+          "caseRef",
+          "active"
+        ],
+        "properties": {
+          "deactivationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "driverProfileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "caseRef": {
+            "type": "string"
+          },
+          "deactivatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reinstatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdminRateBandFactor": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "delta"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "AGE",
+              "INSURANCE",
+              "FUEL",
+              "SERVICE"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "delta": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AdminRateBandAssessment": {
+        "type": "object",
+        "description": "An admin's assessment. The band is typed directly (decision D2); the factors explain it to the driver and are never used to compute it.",
+        "required": [
+          "rateMin",
+          "rateMax"
+        ],
+        "properties": {
+          "rateMin": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateMax": {
+            "type": "number",
+            "format": "double"
+          },
+          "factors": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/components/schemas/AdminRateBandFactor"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminRateBandReviewDecision": {
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "rateMin": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateMax": {
+            "type": "number",
+            "format": "double"
+          },
+          "factors": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/components/schemas/AdminRateBandFactor"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminRateBand": {
+        "type": "object",
+        "properties": {
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicleLabel": {
+            "type": "string"
+          },
+          "classKey": {
+            "type": "string"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "band": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              }
+            }
+          },
+          "classBand": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              }
+            }
+          },
+          "chosenRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOT_SET",
+              "PENDING_ASSESSMENT",
+              "ACTIVE",
+              "UNDER_REVIEW"
+            ]
+          }
+        }
+      },
+      "AdminRateBandReviewRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decisionNote": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminPolicySetting": {
+        "type": "object",
+        "properties": {
+          "policyKey": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "valueType": {
+            "type": "string",
+            "enum": [
+              "INT",
+              "DECIMAL",
+              "BOOLEAN",
+              "STRING"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminPolicySettingUpdate": {
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "string",
+            "maxLength": 200
           }
         }
       }

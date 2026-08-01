@@ -22,15 +22,11 @@ public class FarePolicyEntity {
   @Column(nullable = false)
   private String name;
 
-  @Column(name = "base_fare", nullable = false)
-  private BigDecimal baseFare;
-
-  @Column(name = "per_km", nullable = false)
-  private BigDecimal perKm;
-
-  @Column(name = "per_min", nullable = false)
-  private BigDecimal perMin = BigDecimal.ZERO;
-
+  /**
+   * The floor a fare may not price below. Base fare, per-km and per-minute were retired with the
+   * old model in slice 03: a rate band prices the distance, and the platform's cut comes out of the
+   * fare rather than being added to it.
+   */
   @Column(name = "min_fare", nullable = false)
   private BigDecimal minFare = BigDecimal.ZERO;
 

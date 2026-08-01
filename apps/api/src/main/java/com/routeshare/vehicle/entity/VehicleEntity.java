@@ -43,4 +43,7 @@ public class VehicleEntity {
 
   @Column(insertable = false)
   private String status;
+
+  @Column(name = "class_key", nullable = false)
+  private String classKey;
 }

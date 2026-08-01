@@ -20,6 +20,19 @@ public class RoutingFacadeImpl implements RoutingFacade {
         .map(
             row ->
                 new RouteReservation(
-                    row.getRoutePlanId(), routeOccurrenceId, row.getRouteLengthMeters()));
+                    row.getRoutePlanId(),
+                    routeOccurrenceId,
+                    row.getVehicleId(),
+                    row.getRouteLengthMeters()));
+  }
+
+  @Override
+  public Optional<PriceableTrip> findPriceableTrip(long routeOccurrenceId) {
+    return occurrences
+        .findPriceableTrip(routeOccurrenceId)
+        .map(
+            row ->
+                new PriceableTrip(
+                    routeOccurrenceId, row.getVehicleId(), row.getRouteLengthMeters()));
   }
 }

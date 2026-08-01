@@ -1,5 +1,6 @@
 package com.routeshare.notification.controller;
 
+import com.routeshare.common.security.DriverAccess;
 import com.routeshare.common.web.ApiResponse;
 import com.routeshare.notification.dto.NotificationPreferenceResponse;
 import com.routeshare.notification.dto.NotificationResponse;
@@ -8,7 +9,6 @@ import com.routeshare.notification.dto.UpdatePreferencesRequest;
 import com.routeshare.notification.service.NotificationService;
 import jakarta.validation.Valid;
 import java.util.List;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@PreAuthorize("hasRole('DRIVER')")
+@DriverAccess
 public class DriverNotificationController {
   private final NotificationService service;
 

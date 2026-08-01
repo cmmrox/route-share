@@ -17,6 +17,18 @@ public interface IdentityFacade {
   void setRealmRoles(String keycloakSubject, Set<String> roles);
 
   /**
+   * Grants one managed role to an account and drops its cached authorities.
+   *
+   * <p>Keycloak is the authority for its own tokens; the phone-OTP path resolves authorities from
+   * the local projection instead. Both are updated here, and a Keycloak that is switched off
+   * locally does not fail the business operation — the local derivation still holds.
+   */
+  void grantRealmRole(long appUserId, String role);
+
+  /** Revokes one managed role from an account and drops its cached authorities immediately. */
+  void revokeRealmRole(long appUserId, String role);
+
+  /**
    * Drops the cached projection for a subject so status changes (suspend/activate) are enforced on
    * the user's next request instead of after cache expiry.
    */
@@ -35,5 +47,13 @@ public interface IdentityFacade {
   /** Most recent account status change, for the reason and case reference shown on S13. */
   Optional<StatusChange> latestStatusChange(long appUserId);
 
-  record StatusChange(String toStatus, String reason, Instant changedAt) {}
+  /** The mode the app should reopen in, empty until the user has switched at least once. */
+  Optional<String> lastActiveMode(long appUserId);
+
+  /**
+   * Persists the mode the user is switching into, so the next cold start lands in the same place.
+   */
+  void setLastActiveMode(long appUserId, String mode);
+
+  record StatusChange(String toStatus, String reason, String caseRef, Instant changedAt) {}
 }

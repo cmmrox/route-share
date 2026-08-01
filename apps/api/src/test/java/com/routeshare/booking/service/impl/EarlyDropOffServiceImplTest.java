@@ -30,8 +30,10 @@ class EarlyDropOffServiceImplTest {
   private final IdentityFacade identityFacade = mock(IdentityFacade.class);
   private final BookingRepository bookings = mock(BookingRepository.class);
   private final PaymentService payments = mock(PaymentService.class);
+  private final com.routeshare.pricing.facade.PricingFacade pricing =
+      mock(com.routeshare.pricing.facade.PricingFacade.class);
   private final EarlyDropOffServiceImpl service =
-      new EarlyDropOffServiceImpl(current, identityFacade, bookings, payments);
+      new EarlyDropOffServiceImpl(current, identityFacade, bookings, payments, pricing);
 
   @BeforeEach
   void setUp() {
@@ -39,6 +41,38 @@ class EarlyDropOffServiceImplTest {
     var appUser = new AppUser(5L, UUID.randomUUID(), "sub", "p@test", null, "P", "ACTIVE");
     when(current.requireCurrentUser()).thenReturn(user);
     when(identityFacade.upsertFromToken(user)).thenReturn(appUser);
+    when(pricing.repriceForActualDistance(
+            org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.any()))
+        .thenAnswer(
+            inv -> {
+              // The repriced fare follows the distance actually travelled, at the booked rate.
+              java.math.BigDecimal meters = inv.getArgument(1);
+              java.math.BigDecimal pays =
+                  meters
+                      .divide(java.math.BigDecimal.valueOf(1000), 4, java.math.RoundingMode.HALF_UP)
+                      .multiply(new java.math.BigDecimal("50"))
+                      .setScale(0, java.math.RoundingMode.HALF_UP)
+                      .setScale(2, java.math.RoundingMode.UNNECESSARY);
+              return new com.routeshare.pricing.domain.FareQuote(
+                  "LKR",
+                  meters,
+                  meters.divide(
+                      java.math.BigDecimal.valueOf(1000), 4, java.math.RoundingMode.HALF_UP),
+                  new java.math.BigDecimal("50.00"),
+                  1,
+                  pays,
+                  new java.math.BigDecimal("92.00"),
+                  com.routeshare.pricing.domain.MatchDiscountTier.MID,
+                  java.math.BigDecimal.ZERO,
+                  java.math.BigDecimal.ZERO,
+                  pays,
+                  new java.math.BigDecimal("10.00"),
+                  java.math.BigDecimal.ZERO,
+                  pays,
+                  false,
+                  java.time.Instant.parse("2026-08-01T09:41:00Z"),
+                  "v1");
+            });
   }
 
   private static BookingRepository.EarlyDropOffContext ctx(

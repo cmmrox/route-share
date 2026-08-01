@@ -7161,15 +7161,37 @@
         "tags": [
           "App Context"
         ],
-        "summary": "Persist the last used mode",
-        "x-routeshare-status": "PLANNED_SLICE_01",
+        "summary": "Persist the mode the user switched into",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActiveModeResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "mode is not PASSENGER or DRIVER",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -7178,7 +7200,24 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Account suspended — body carries {code, message, actionPath}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Mode unavailable — body carries the blocking gate code and actionPath",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -7186,12 +7225,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/ActiveModeRequest"
               }
             }
           }
         },
-        "operationId": "putMeActiveMode"
+        "operationId": "putMeActiveMode",
+        "description": "Remembers where the app should reopen. Switching to DRIVER is refused with 409 and the blocking gate code when driving is not available to this account, so the app can render the gate instead of guessing."
       }
     },
     "/api/v1/driver/reinstatement-requests": {
@@ -7200,14 +7240,26 @@
           "App Context"
         ],
         "summary": "Ask an admin to reinstate driving (D34)",
-        "x-routeshare-status": "PLANNED_SLICE_01",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/DriverReinstatementRequest"
+                    }
+                  }
                 }
               }
             }
@@ -7216,7 +7268,24 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Account suspended — body carries {code, message, actionPath}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Not deactivated, or a request is already open",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -7224,26 +7293,42 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/DriverReinstatementRequestBody"
               }
             }
           }
         },
-        "operationId": "postDriverReinstatementRequests"
+        "operationId": "postDriverReinstatementRequests",
+        "description": "D34's primary action. Reachable while the driver gate is refusing every other driver endpoint — the caller is exactly the person that gate is written for. A second request while one is open is refused."
       },
       "get": {
         "tags": [
           "App Context"
         ],
         "summary": "My reinstatement requests",
-        "x-routeshare-status": "PLANNED_SLICE_01",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DriverReinstatementRequest"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -7252,7 +7337,14 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Account suspended — body carries {code, message, actionPath}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "operationId": "getDriverReinstatementRequests"
@@ -7264,23 +7356,35 @@
           "Vehicles"
         ],
         "summary": "Vehicle classes with seat caps and default bands",
-        "x-routeshare-status": "PLANNED_SLICE_02",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/VehicleClass"
+                      }
+                    }
+                  }
                 }
               }
             }
           },
           "401": {
             "description": "Unauthenticated"
-          },
-          "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverVehicleClasses"
@@ -7292,14 +7396,26 @@
           "Vehicles"
         ],
         "summary": "The per-km band for this vehicle (D39)",
-        "x-routeshare-status": "PLANNED_SLICE_02",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RateBand"
+                    }
+                  }
                 }
               }
             }
@@ -7308,7 +7424,24 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Not your vehicle, or account suspended",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Vehicle not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -7330,14 +7463,26 @@
           "Vehicles"
         ],
         "summary": "Choose a rate inside the band",
-        "x-routeshare-status": "PLANNED_SLICE_02",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RateBand"
+                    }
+                  }
                 }
               }
             }
@@ -7346,7 +7491,24 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Not your vehicle, or account suspended",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RATE_OUTSIDE_BAND or RATE_BAND_NOT_SET — body carries the code and actionPath",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -7364,12 +7526,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/ChosenRateRequest"
               }
             }
           }
         },
-        "operationId": "putDriverVehiclesByVehicleIdRateBandChosenRate"
+        "operationId": "putDriverVehiclesByVehicleIdRateBandChosenRate",
+        "description": "Picks a rate inside the assessed band. A rate outside it is refused with RATE_OUTSIDE_BAND; a vehicle with no live band with RATE_BAND_NOT_SET."
       }
     },
     "/api/v1/driver/vehicles/{vehicleId}/rate-band/review-requests": {
@@ -7378,14 +7541,26 @@
           "Vehicles"
         ],
         "summary": "Request one re-assessment",
-        "x-routeshare-status": "PLANNED_SLICE_02",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RateBandReviewRequest"
+                    }
+                  }
                 }
               }
             }
@@ -7394,7 +7569,24 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Not your vehicle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RATE_REVIEW_ALREADY_OPEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -7412,26 +7604,42 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/RateBandReviewRequestBody"
               }
             }
           }
         },
-        "operationId": "postDriverVehiclesByVehicleIdRateBandReviewRequests"
+        "operationId": "postDriverVehiclesByVehicleIdRateBandReviewRequests",
+        "description": "One open re-assessment per vehicle. The current band stays live while it is open."
       },
       "get": {
         "tags": [
           "Vehicles"
         ],
         "summary": "Review request status",
-        "x-routeshare-status": "PLANNED_SLICE_02",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RateBandReviewRequest"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -7440,7 +7648,14 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Not your vehicle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -7461,15 +7676,37 @@
         "tags": [
           "Pricing"
         ],
-        "summary": "Fare quote v2 from coordinates (reshaped)",
-        "x-routeshare-status": "PLANNED_SLICE_03",
+        "summary": "Fare estimate for a segment of a published trip",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RouteFareResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -7477,8 +7714,25 @@
           "401": {
             "description": "Unauthenticated"
           },
-          "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+          "404": {
+            "description": "Trip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RATE_BAND_NOT_SET — the trip's vehicle has no live rate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -7486,12 +7740,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/RouteFareEstimateRequest"
               }
             }
           }
         },
-        "operationId": "postPricingEstimateByRoute"
+        "operationId": "postPricingEstimateByRoute",
+        "description": "Prices the on-route distance between two points on the driver's stored route line, at that vehicle's assessed per-km rate, less the route-match discount. The driver's cut is withheld — this is a passenger surface."
       }
     },
     "/api/v1/driver/trips/{tripId}/start-extension": {
@@ -11625,50 +11880,6 @@
         "x-routeshare-use-instead": "/api/v1/passenger/payments/intents",
         "operationId": "postPaymentsIntents"
       }
-    },
-    "/api/v1/pricing/estimate": {
-      "post": {
-        "tags": [
-          "Pricing"
-        ],
-        "summary": "Removed — accepted a client-supplied distance",
-        "x-routeshare-status": "CUT",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthenticated"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          }
-        },
-        "description": "Slice 03 removes this endpoint. Fare inputs must be server-derived; a client-supplied distance is a free-money bug. Use POST /api/v1/pricing/estimate-by-route.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "deprecated": true,
-        "x-routeshare-cut-reason": "Accepted a client-supplied distance; replaced by estimate-by-route in slice 03.",
-        "operationId": "postPricingEstimate"
-      }
     }
   },
   "components": {
@@ -11712,6 +11923,13 @@
                 }
               }
             }
+          },
+          "actionPath": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the app should send the user to clear the refusal. Populated on gated 403s and 409s; null otherwise."
           }
         }
       },
@@ -13020,6 +13238,32 @@
           },
           "isPrimary": {
             "type": "boolean"
+          },
+          "classKey": {
+            "type": "string",
+            "enum": [
+              "CAR",
+              "SUV",
+              "VAN",
+              "THREE_WHEELER"
+            ]
+          },
+          "bandStatus": {
+            "type": "string",
+            "enum": [
+              "NOT_SET",
+              "PENDING_ASSESSMENT",
+              "ACTIVE",
+              "UNDER_REVIEW"
+            ],
+            "description": "D06 shows this per vehicle: approved papers with no band still cannot carry a trip."
+          },
+          "chosenRatePerKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
           }
         }
       },
@@ -13031,7 +13275,8 @@
           "year",
           "color",
           "registrationNumber",
-          "passengerSeatCapacity"
+          "passengerSeatCapacity",
+          "vehicleClass"
         ],
         "properties": {
           "make": {
@@ -13058,6 +13303,16 @@
           "features": {
             "type": "object",
             "additionalProperties": true
+          },
+          "vehicleClass": {
+            "type": "string",
+            "enum": [
+              "CAR",
+              "SUV",
+              "VAN",
+              "THREE_WHEELER"
+            ],
+            "description": "Drives the seat cap (D07) and the range the band must sit inside."
           }
         }
       },
@@ -13967,6 +14222,577 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ActiveModeRequest": {
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "PASSENGER",
+              "DRIVER"
+            ]
+          }
+        }
+      },
+      "ActiveModeResponse": {
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "PASSENGER",
+              "DRIVER"
+            ]
+          }
+        }
+      },
+      "DriverReinstatementRequestBody": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "DriverReinstatementRequest": {
+        "type": "object",
+        "description": "A deactivated driver's request to be reinstated (board D34). Only one may be open at a time.",
+        "required": [
+          "requestId",
+          "deactivationId",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deactivationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "supportTicketId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "VehicleClass": {
+        "type": "object",
+        "description": "A class of vehicle: what it may carry, and the range its per-km band must sit inside.",
+        "required": [
+          "classKey",
+          "label",
+          "maxPassengerSeats",
+          "defaultRateMin",
+          "defaultRateMax"
+        ],
+        "properties": {
+          "classKey": {
+            "type": "string",
+            "enum": [
+              "CAR",
+              "SUV",
+              "VAN",
+              "THREE_WHEELER"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "example": "SUV / Wagon"
+          },
+          "maxPassengerSeats": {
+            "type": "integer"
+          },
+          "defaultRateMin": {
+            "type": "number",
+            "format": "double"
+          },
+          "defaultRateMax": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RateBandRange": {
+        "type": "object",
+        "required": [
+          "min",
+          "max"
+        ],
+        "properties": {
+          "min": {
+            "type": "number",
+            "format": "double"
+          },
+          "max": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RateBandFactor": {
+        "type": "object",
+        "description": "One line of the arithmetic on D39. Typed by an admin as justification; never an input the band was computed from.",
+        "required": [
+          "key",
+          "label",
+          "delta"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "AGE",
+              "INSURANCE",
+              "FUEL",
+              "SERVICE"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "example": "Insurance"
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Comprehensive cover · renews 14 Mar"
+          },
+          "delta": {
+            "type": "number",
+            "format": "double",
+            "description": "Signed adjustment in LKR/km."
+          }
+        }
+      },
+      "RatePositionOption": {
+        "type": "object",
+        "description": "Where a rate sits in the band and what that costs in visibility. Copy, not a ranking multiplier — the server applies no such thing.",
+        "required": [
+          "key",
+          "label",
+          "rank",
+          "demand"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "min",
+              "mid",
+              "max"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "string"
+          },
+          "demand": {
+            "type": "string"
+          }
+        }
+      },
+      "RateBandReviewRequest": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "vehicleId",
+          "reason",
+          "status",
+          "requestedAt"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RateBand": {
+        "type": "object",
+        "description": "The band ComiGo assessed and the rate the driver chose inside it (D39, D39b, D39c, D40). A driver never types a price; they pick a point in this range.",
+        "required": [
+          "vehicleId",
+          "classKey",
+          "classBand",
+          "band",
+          "status"
+        ],
+        "properties": {
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicleLabel": {
+            "type": "string",
+            "example": "Toyota · WP CAB-4417"
+          },
+          "classKey": {
+            "type": "string"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "classBand": {
+            "$ref": "#/components/schemas/RateBandRange"
+          },
+          "band": {
+            "$ref": "#/components/schemas/RateBandRange"
+          },
+          "chosenRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOT_SET",
+              "PENDING_ASSESSMENT",
+              "ACTIVE",
+              "UNDER_REVIEW"
+            ]
+          },
+          "setBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Always \"ComiGo\" — the assessing admin is never named to the driver."
+          },
+          "setAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "factors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RateBandFactor"
+            }
+          },
+          "netEffect": {
+            "type": "number",
+            "format": "double",
+            "description": "Sum of the factor deltas."
+          },
+          "position": {
+            "$ref": "#/components/schemas/RatePositionOption"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RatePositionOption"
+            }
+          },
+          "reviewRequest": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RateBandReviewRequestSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "RateBandReviewRequestSummary": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "slaDays": {
+            "type": "integer",
+            "description": "Working days ComiGo answers within (D39)."
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ChosenRateRequest": {
+        "type": "object",
+        "required": [
+          "ratePerKm"
+        ],
+        "properties": {
+          "ratePerKm": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RateBandReviewRequestBody": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "FareQuote": {
+        "type": "object",
+        "description": "A priced ride, with every line the fare screens draw so no client does arithmetic on money. The commission comes OUT of what the passenger pays, never on top: driverNet + commissionAmount == passengerPays always holds, and is enforced by a database constraint. commissionAmount and driverNet are omitted on passenger surfaces.",
+        "required": [
+          "currency",
+          "onRouteDistanceMeters",
+          "ratePerKm",
+          "seats",
+          "grossFare",
+          "passengerPays"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string",
+            "example": "LKR"
+          },
+          "onRouteDistanceMeters": {
+            "type": "number",
+            "format": "double",
+            "description": "Server-derived from the matched substring of the driver's route line."
+          },
+          "onRouteDistanceKm": {
+            "type": "number",
+            "format": "double"
+          },
+          "ratePerKm": {
+            "type": "number",
+            "format": "double",
+            "description": "The vehicle's own chosen rate inside its assessed band."
+          },
+          "seats": {
+            "type": "integer"
+          },
+          "grossFare": {
+            "type": "number",
+            "format": "double"
+          },
+          "matchPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "matchTier": {
+            "type": "string",
+            "enum": [
+              "HIGH",
+              "MID",
+              "LOW",
+              "BASE"
+            ]
+          },
+          "discountPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "discountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "passengerPays": {
+            "type": "number",
+            "format": "double",
+            "description": "The single headline number."
+          },
+          "commissionPercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Driver surfaces only."
+          },
+          "commissionAmount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Driver surfaces only."
+          },
+          "driverNet": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Driver surfaces only."
+          },
+          "minFareApplied": {
+            "type": "boolean"
+          },
+          "quotedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "policyVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Fingerprint of the pricing rules in force when this was quoted."
+          }
+        }
+      },
+      "RouteFareEstimateRequest": {
+        "type": "object",
+        "description": "Locates a rider's pickup and drop-off along a published trip's route line. No distance, rate or fare may be sent — every pricing input is server-derived.",
+        "required": [
+          "routeOccurrenceId",
+          "pickupRouteFraction",
+          "dropoffRouteFraction"
+        ],
+        "properties": {
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pickupRouteFraction": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "dropoffRouteFraction": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "seats": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        }
+      },
+      "RouteFareResponse": {
+        "type": "object",
+        "properties": {
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "onRouteDistanceMeters": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fare": {
+            "$ref": "#/components/schemas/FareQuote"
           }
         }
       }

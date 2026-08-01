@@ -54,6 +54,7 @@ class AppFacingRouteAliasControllerTest {
             8_000L,
             new java.math.BigDecimal("980.00"),
             "LKR",
+            null,
             "Nimal Perera",
             "Toyota",
             "Aqua",

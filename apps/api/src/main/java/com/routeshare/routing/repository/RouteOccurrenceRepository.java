@@ -32,14 +32,35 @@ public interface RouteOccurrenceRepository extends JpaRepository<RouteOccurrence
         AND occurrence.status = 'PUBLISHED'
         AND occurrence.scheduled_departure_at > now()
         AND occurrence.available_seats >= :seats
-      RETURNING occurrence.route_plan_id AS "routePlanId", route.route_length_m AS "routeLengthMeters"
+      RETURNING occurrence.route_plan_id AS "routePlanId", route.vehicle_id AS "vehicleId",
+                route.route_length_m AS "routeLengthMeters"
       """,
       nativeQuery = true)
   Optional<RouteReservationRow> reserveSeatsAndReturnRouteLength(
       @Param("routeOccurrenceId") long routeOccurrenceId, @Param("seats") int seats);
 
+  @Query(
+      value =
+          """
+      SELECT route.vehicle_id AS "vehicleId", route.route_length_m AS "routeLengthMeters"
+      FROM routing.route_occurrence occurrence
+      JOIN routing.route_plan route ON route.route_plan_id = occurrence.route_plan_id
+      WHERE occurrence.route_occurrence_id = :routeOccurrenceId
+      """,
+      nativeQuery = true)
+  Optional<PriceableTripRow> findPriceableTrip(@Param("routeOccurrenceId") long routeOccurrenceId);
+
+  interface PriceableTripRow {
+    long getVehicleId();
+
+    double getRouteLengthMeters();
+  }
+
   interface RouteReservationRow {
     long getRoutePlanId();
+
+    /** The vehicle whose rate band prices the booking being made. */
+    long getVehicleId();
 
     double getRouteLengthMeters();
   }

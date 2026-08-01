@@ -61,6 +61,10 @@ public class DriverDocumentEntity {
   @Column(name = "submitted_at")
   private Instant submittedAt;
 
+  /** Set at review when the document itself carries an expiry (a licence, an insurance note). */
+  @Column(name = "expires_at")
+  private Instant expiresAt;
+
   @Column(name = "created_at", insertable = false, updatable = false)
   private Instant createdAt;
 

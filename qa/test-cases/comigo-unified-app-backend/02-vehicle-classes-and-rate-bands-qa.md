@@ -56,6 +56,20 @@ owned by the mobile feature plan and must link back to this QA file.
 - Confirm every assessment and review decision is audited with old and new `rateMin`/`rateMax`.
 - Confirm the pending-assessment gauge increments and decrements as vehicles move through.
 
+## Automated test coverage status (2026-08-01)
+
+All green under `./mvnw spotless:check verify` (294 tests): `RateBandServiceImplTest` covers
+assessment, band-inside-class refusal, rate choice inside and outside the band, ownership, the
+one-open-review rule and both review decisions; `RatePositionTest` pins the position copy;
+`VehicleServiceImplTest` covers the class cap and band creation on approval; `DriverGateServiceTest`
+covers `RATE_BAND_NOT_SET` in the publish gate.
+
+**Not yet collected — Blocker 013.** `scripts/simulation/verify-rate-bands.sh` exists and is
+syntax-checked, but the local Postgres will not start (host port 5433 held by an unrelated
+container). It is the only check that exercises the `vehicle_seats_within_class` and
+`vehicle_rate_band_within_class` triggers, so **neither trigger has ever run**. Run it and file the
+output under `qa/reports/` once the port is free.
+
 ## Evidence to collect
 
 - `scripts/simulation/verify-rate-bands.sh` output.

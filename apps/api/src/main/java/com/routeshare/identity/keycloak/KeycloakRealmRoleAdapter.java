@@ -84,6 +84,32 @@ public class KeycloakRealmRoleAdapter implements KeycloakRealmRoleService {
     }
   }
 
+  @Override
+  public void grantRealmRole(String keycloakSubject, String role) {
+    changeSingleRole(keycloakSubject, role, HttpMethod.POST);
+  }
+
+  @Override
+  public void revokeRealmRole(String keycloakSubject, String role) {
+    changeSingleRole(keycloakSubject, role, HttpMethod.DELETE);
+  }
+
+  private void changeSingleRole(String keycloakSubject, String role, HttpMethod method) {
+    if (!MANAGED_ROLES.contains(role)) {
+      throw new IllegalArgumentException("Unsupported role: " + role);
+    }
+    if (!properties.enabled() || !properties.hasAdminCredentials()) {
+      throw new IllegalStateException(
+          "Keycloak admin is not configured; cannot update realm roles");
+    }
+    String token = adminAccessToken();
+    Map<String, Object> rep = roleRepresentation(role, token);
+    if (rep == null) {
+      return; // role not defined in the realm; nothing to map
+    }
+    roleMappings(keycloakSubject, token, method, List.of(rep));
+  }
+
   private String adminAccessToken() {
     var form = new LinkedMultiValueMap<String, String>();
     form.add("client_id", properties.clientId());

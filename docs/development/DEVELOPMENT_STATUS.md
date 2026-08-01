@@ -1,6 +1,184 @@
 # RouteShareApp Development Status
 
-2026-08-01 (slice 00 COMPLETE — unified app + merged contract)
+2026-08-01 (slice 03 code-complete — the fare engine is the prototype's, not the old calculator's)
+
+## 2026-08-01 — Slice 03: fare engine rewrite
+
+The money model is now the product's. Out: `250 base + 90/km + 5/min` with a 10% fee **added** on
+top. In: `gross = onRouteKm × that vehicle's chosen rate`, less a route-match discount, with the
+commission taken **out of** what the passenger pays. There is no base fare and no time component —
+a rider pays for the distance they actually ride on a road the driver was taking anyway, and
+charging for time would charge them for his traffic.
+
+`FareEngine` is pure and reproduces every figure in `data.jsx` exactly: 11.4 km at LKR 50/km grosses
+570; a 5.8 km seat on a 92% match is gross 290, discount 23, **passenger pays 267**, commission 27,
+**driver nets 240**.
+
+**Money is rounded to whole rupees**, not to two decimal places as the task specified. The
+prototype rounds every figure it shows, and a receipt reading "LKR 266.80" is a number nobody can
+hand over; scale-2 arithmetic misses the fixtures by 20 cents at every step. Values are still
+carried as `BigDecimal` at scale 2 and stored in `NUMERIC(12,2)`.
+
+Two invariants hold for every quote ever produced, and are **database CHECK constraints** rather
+than comments: `driverNet + commissionAmount = passengerPays`, and
+`passengerPays = grossFare − discountAmount`. `driverNet` is computed by subtraction, never by its
+own multiplication — rounding two percentages independently and hoping they add back is how a
+ledger drifts a rupee per trip. A test walks 4,000 rounding paths and both hold throughout.
+
+**Quotes are persisted, never recomputed.** Rate bands move and discount tiers are tunable, so a
+receipt read three months later must show the fare that was charged at the rate then in force.
+Every booking links its quote; the early drop-off reprices against the *original* rate and tier,
+because the passenger travelled less but the terms she booked under have not changed.
+
+**The policy surface (decision D1) exists.** `platform.policy_setting` holds 35 seeded rules —
+commission, the four discount tiers and their thresholds, penalty percentages, waiting times,
+payout floors, referral rates — with a history table, admin CRUD restricted to money roles, and a
+Caffeine cache evicted on write. `PricingArchitectureTest` fails the build if any of those figures
+is inlined as a Java constant again.
+
+**`POST /pricing/estimate` is deleted, not deprecated.** It took a distance from the request body,
+which let a client name the number its own fare was computed from — a free-money bug wearing the
+shape of an API. `estimate-by-route` now names a published trip and two fractions along the
+driver's stored line; the architecture test asserts no pricing input is declared in any request
+DTO. `FareCalculator` and `FareBreakdown` are gone, and `finance.fare_policy` keeps only `min_fare`.
+
+Payment now reads the commission from the persisted quote rather than recomputing it from a
+configured rate: otherwise the first commission change would settle old bookings under new terms.
+The driver earnings summary sums the commission rows the ledger already holds, so the headline can
+never disagree with the rows beneath it.
+
+Verification: `./mvnw spotless:check verify` → **BUILD SUCCESS, 319 tests, JaCoCo gate met**;
+`redocly lint` clean; `@routeshare/api-contracts` typecheck green. New tests: `FareEngineTest`
+(11 cases including the fixtures and the invariant sweep), `MatchDiscountTierTest`,
+`PolicySettingTest`, `PricingArchitectureTest`.
+
+**Deferred:** `scripts/simulation/verify-fare-engine.sh` is written but unrun (Blocker 013). It is
+the only check that exercises the two new CHECK constraints and the fixture reproduction through a
+live API.
+
+Next: slice 04 — charge timing and capture correctness, the product's central promise.
+
+## 2026-08-01 — Slice 02: vehicle classes and rate bands
+
+## 2026-08-01 — Slice 02: vehicle classes and rate bands
+
+The product's central pricing rule now exists in the database: **a driver never types a price.**
+ComiGo assesses a min–max per-km band per vehicle and the driver picks a point inside it, which is
+why two cars on the same road are not the same price and why search will be able to explain "why
+Priya's rate is LKR 46". Nothing here prices a trip — slice 03 owns the fare engine; this slice
+stores and governs the number.
+
+Four classes are seeded with seat caps and default ranges (`CAR` 3/38–62, `SUV` 4/46–74, `VAN`
+6/40–68, `THREE_WHEELER` 2/26–42). The band has its own lifecycle —
+`NOT_SET → PENDING_ASSESSMENT → ACTIVE → UNDER_REVIEW` — deliberately separate from vehicle
+approval, because **approved papers are not a price**: without a band there is no legal figure to
+put on a seat. That state is board D40, a first-class screen rather than an error, and it is now
+also a real publish gate: slice 01's `RATE_BAND_NOT_SET` fires from `canPublish` the moment a driver
+has an approved vehicle and no live band.
+
+Three things are enforced by the database rather than by service code, because each one is a pricing
+incident rather than a validation slip:
+
+1. **A band outside its class range** — a `BEFORE INSERT OR UPDATE` trigger, since a `CHECK` cannot
+   read another table. The service refuses it too; the trigger is what makes a bad migration or a
+   direct SQL edit fail as well.
+2. **A seat count above the class cap** — same mechanism. Selling a fourth seat in a three-seat
+   class is a capacity lie told to a rider.
+3. **One open re-assessment per vehicle** — a partial unique index, so D39's "one re-assessment"
+   is a constraint rather than a sentence in a spec.
+
+Two decisions worth recording:
+
+- **The four factor rows are displayed justification, not inputs** (decision D2). The admin types
+  the band; the factors explain it. The service checks that the deltas roughly explain the offset
+  from the class default and **warns rather than refuses** — the prose must never be able to block
+  an operational price change.
+- **Assessment defaults the chosen rate to the midpoint**, and keeps an existing rate if it still
+  fits. Otherwise a band would land and the car would still be unpublishable until the driver
+  happened to open a screen.
+
+Authority is split deliberately: a verification agent may approve a car's papers but may **not**
+price it — band assessment is restricted to `ADMIN`, `SUPER_ADMIN` and `FINANCE_ADMIN`. A driver
+setting their own band would be the most valuable escalation in the system, and it is tested
+explicitly. Rate positions (bottom/middle/top, with their ranking and demand copy) are derived
+server-side so the driver's screen and the passenger's explanation can never disagree.
+
+Verification: `./mvnw spotless:check verify` → **BUILD SUCCESS, 294 tests, JaCoCo gate met**;
+`redocly lint` on the mobile contract → zero errors; `@routeshare/api-contracts` typecheck green.
+New tests: `RateBandServiceImplTest` (19 cases), `RatePositionTest`, plus class-cap and
+band-lifecycle cases added to `VehicleServiceImplTest` and `DriverGateServiceTest`.
+
+**Deferred:** `scripts/simulation/verify-rate-bands.sh` is written but unrun — same cause as slice
+01, host port 5433 (Blocker 013). It is the only check that exercises the two database triggers, so
+neither trigger has executed yet.
+
+**Found, not fixed:** the mobile contract's `Vehicle` schema uses `year`, `passengerSeatCapacity`
+and `verificationStatus` where the API returns `manufactureYear`, `seatCount` and `status`. That
+drift predates this slice (it survived slice 00's reconciliation) and would break a generated
+client. Recorded as Blocker 014 rather than renamed mid-slice.
+
+Next: slice 03 — the fare engine rewrite, which reads the chosen rate this slice stores.
+
+## 2026-08-01 — Slice 01: auth unification and mode gates
+
+## 2026-08-01 — Slice 01: auth unification and mode gates
+
+The blocker that made a single app impossible is gone. `PhoneOtpAccessTokenAuthenticationFilter`
+stamped `ROLE_PASSENGER` on every phone-OTP session while all ten driver endpoints required
+`hasRole('DRIVER')`, so **a phone-OTP user could never drive**. Authorities are now derived per
+request from the identity projection by a new `AccountRoleService`, cached briefly and invalidated on
+every grant, revoke and deactivation — so both token issuers end up with the same authorities for the
+same person, and a role taken away stops working on the next request rather than at cache expiry.
+
+**Gates are data, not exceptions.** A new `DriverGuard` replaces the bare role check with three
+independent facts — not suspended, approved profile, no open deactivation — and, when it refuses,
+throws the reason instead of returning `false`. Every gated 403 now carries `{code, message,
+actionPath}`, and the same structure appears pre-emptively on `/me/context`, so the app renders
+S07/S08/S09/S12/S13/D34 *before* the user taps something that fails. Nine gate codes are produced by
+the conditions that define them (`RATE_BAND_NOT_SET` is slice 02's, as scoped).
+
+Three decisions worth recording, because each one is a place the obvious implementation is wrong:
+
+1. **Suspension and deactivation are not the same refusal.** Suspension stops everything and outranks
+   every driver gate — a suspended driver under review must see S13's appeal route, not S08's "we're
+   checking your documents", since only one of those is actionable. Deactivation stops *driving* and
+   nothing else. D34 promises the driver both their rider account and the money they have already
+   earned, so payout and support endpoints sit behind a third, weaker gate
+   (`@DriverSelfServiceAccess`) rather than `@DriverAccess`. Putting them behind the driver gate would
+   have stranded exactly the person the screen is written for: told to contact support by a screen
+   whose support call returns 403.
+2. **Realm roles are granted one at a time.** The existing `setRealmRoles` states the whole managed
+   set, which is right for the admin role editor and wrong for driver approval — it would silently
+   strip an admin who also drives. Added `grantRealmRole`/`revokeRealmRole`, and made a Keycloak that
+   is switched off locally a logged warning rather than a failed approval, since the local projection
+   is authoritative for phone-OTP tokens either way.
+3. **A stored DRIVER mode is honoured only while driving is available.** Otherwise a driver
+   deactivated overnight cold-starts into a mode that refuses every call.
+
+Also landed: `PUT /me/active-mode` (409 with the blocking gate code when the mode is not available),
+driver reinstatement requests wired to a support ticket with one open request at a time, admin
+deactivate/reinstate with audit and role revocation, and a real `case_ref` on suspensions replacing
+slice 00's fabricated one.
+
+Scope notes: `driver.driver_document` gained an `expires_at` column — `DOCUMENT_EXPIRED` is one of the
+eight gate codes the task specifies and there was nowhere to record an expiry, so the code could not
+otherwise have been produced by anything. Eight of the ten former `hasRole('DRIVER')` sites use
+`@DriverAccess`; payouts and driver support use `@DriverSelfServiceAccess` for the D34 reason above.
+`POST /api/v1/routes` (publish) and the recurring-route POSTs now use `@DriverPublishAccess`.
+
+Verification: `./mvnw spotless:check verify` → **BUILD SUCCESS, 264 tests, JaCoCo gate met**;
+`redocly lint docs/api/mobile-app.openapi.json` → **zero errors**; `@routeshare/api-contracts`
+typecheck green. New tests: `DriverGuardTest`, `DriverGateServiceTest`, `PhoneOtpRoleResolutionTest`,
+`RoleCacheInvalidationTest`, `SuspensionPrecedenceTest`, `DriverDeactivationServiceImplTest`, plus
+`AppContextServiceTest` extended to 20 cases.
+
+**Deferred:** `scripts/simulation/verify-mode-gates.sh` is written but has not been run — host port
+5433 is held by an unrelated project's container, so the local Postgres will not start (Blocker 013).
+The Keycloak role-state and audit-extract manual checks in the QA file depend on the same run.
+
+Next: run the smoke script once the port is free, then slice 02 — vehicle classes and rate bands.
+
+## 2026-08-01 (slice 00 COMPLETE — unified app + merged contract)
 
 ## 2026-08-01 — Slice 00 COMPLETE: unified app and merged client contract
 
@@ -124,11 +302,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_00_COMPLETE_SLICE_01_NEXT`
-- Current Active Task: `Slice 01 — auth unification and mode gates (next)`
+- Current Milestone: `MILESTONE_SLICE_03_CODE_COMPLETE_RUNTIME_SMOKE_PENDING`
+- Current Active Task: `Slices 01–03 code-complete (runtime smoke pending, Blocker 013); slice 04 — charge timing and capture correctness — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_00_MERGED_CONTRACT_AND_UNIFIED_APP_VERIFIED`
-- Repository Git Status: `Branch feat/comigo-unified-app-slice-00; apps/mobile created, apps/driver-mobile removed, contracts merged`
+- Status: `SLICE_03_FARE_ENGINE_MATCHES_PROTOTYPE_FIXTURES`
+- Repository Git Status: `Slices 01–03 merged to main; migrations V027–V029 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

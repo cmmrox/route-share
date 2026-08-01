@@ -1,5 +1,6 @@
 package com.routeshare.common.errors;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.*;
@@ -18,6 +19,26 @@ import org.springframework.web.server.ResponseStatusException;
 public class GlobalExceptionHandler {
   private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+  private final MeterRegistry meters;
+
+  public GlobalExceptionHandler(MeterRegistry meters) {
+    this.meters = meters;
+  }
+
+  /**
+   * A gated refusal renders as data: the app reads {@code code} and {@code actionPath} and shows
+   * the matching screen instead of an opaque "access denied".
+   *
+   * <p>Declared before {@link #denied} matters only to readers — Spring picks the most specific
+   * handler — but the pairing is the point: this one is the explained case, that one the residue.
+   */
+  @ExceptionHandler(GateDeniedException.class)
+  ResponseEntity<ApiError> gateDenied(GateDeniedException ex, HttpServletRequest req) {
+    meters.counter("routeshare_gate_denied_total", "code", ex.code()).increment();
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        .body(ApiError.gate(ex.code(), ex.getMessage(), ex.actionPath(), correlation(req)));
+  }
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   ResponseEntity<ApiError> validation(MethodArgumentNotValidException ex, HttpServletRequest req) {
     var fields =
@@ -30,6 +51,7 @@ public class GlobalExceptionHandler {
                 "VALIDATION_FAILED",
                 "Request validation failed",
                 correlation(req),
+                null,
                 fields,
                 java.time.Instant.now()));
   }
@@ -64,6 +86,13 @@ public class GlobalExceptionHandler {
   ResponseEntity<ApiError> denied(AccessDeniedException ex, HttpServletRequest req) {
     return ResponseEntity.status(HttpStatus.FORBIDDEN)
         .body(ApiError.of("ACCESS_DENIED", "Access denied", correlation(req)));
+  }
+
+  @ExceptionHandler(GateConflictException.class)
+  ResponseEntity<ApiError> gateConflict(GateConflictException ex, HttpServletRequest req) {
+    meters.counter("routeshare_gate_denied_total", "code", ex.code()).increment();
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(ApiError.gate(ex.code(), ex.getMessage(), ex.actionPath(), correlation(req)));
   }
 
   @ExceptionHandler(IllegalArgumentException.class)
