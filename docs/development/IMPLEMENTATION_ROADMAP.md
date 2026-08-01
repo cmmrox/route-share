@@ -527,3 +527,64 @@ across list/map/grouped + ride detail; fare LKR 1,206). Evidence:
 follow-up.
 
 Next: Task 09 — seat selection, booking idempotency, and cancellation.
+
+---
+
+## Phase 08 — ComiGo Unified App Backend
+
+Status: `IN_PROGRESS`
+Added: 2026-07-31
+Plan: `docs/development/implementation/tasks/comigo-unified-app-backend/`
+QA: `qa/test-cases/comigo-unified-app-backend/`
+
+Supersedes the separate passenger/driver app split (Decision 011). The `ComiGo Prototype (Standalone).html`
+supplied on 2026-07-31 is the new specification — ~157 screen states with a machine-readable `POLICY`
+block (Decision 012). Decoded source of record: `docs/source-assets/comigo-prototype/`.
+
+Gap against the existing backend: ~65 capabilities, of which 45 do not exist, 2 are built to a different
+rule, and 18 have foundations but no product behaviour. Full register in
+`tasks/comigo-unified-app-backend/00-prototype-gap-analysis.md`.
+
+| Slice | Title | Size | Status |
+| --- | --- | --- | --- |
+| 00 | Repo reset and contract rewrite | M | `COMPLETED` 2026-08-01 |
+| 01 | Auth unification and mode gates | M | `NOT_STARTED` |
+| 02 | Vehicle classes and rate bands | M | `NOT_STARTED` |
+| 03 | Fare engine rewrite | XL | `NOT_STARTED` |
+| 04 | Charge timing and capture correctness | L | `NOT_STARTED` |
+| 05 | Trip timers and reliability | XL | `NOT_STARTED` |
+| 06 | Penalties, dues and compensation | L | `NOT_STARTED` |
+| 07 | Booking depth: seats, approval modes, expiry | L | `NOT_STARTED` |
+| 08 | Preferences, verification and eligibility | L | `NOT_STARTED` |
+| 09 | Search and discovery v2 | M | `NOT_STARTED` |
+| 10 | Chat, notifications, safety and support | L | `NOT_STARTED` |
+| 11 | Referral and rewards | L | `NOT_STARTED` |
+| 12 | Real-time location pipeline | L | `NOT_STARTED` |
+| 13 | Live (en-route) booking | XL | `NOT_STARTED` |
+| 14 | Money operations: payouts, ledger, adjustments | M | `NOT_STARTED` |
+| 15 | Ratings and reviews v2 | M | `NOT_STARTED` |
+
+Critical path is 00 → 01 → 02 → 03 → 04. Nothing downstream is trustworthy until money moves at the right
+moment for the right amount. Slices 08–15 can parallelise across two workstreams once 04 lands, except
+that 13 cannot start before 12.
+
+New backend modules: `penalty`, `rewards`, `chat`, `reliability`, `scheduling`; `location` is rewritten.
+Migrations: `V027`–`V041` (Decision 015 permits in-place semantic changes until launch).
+Live-booking architecture (Decisions 016 + 017): `docs/architecture/REALTIME-LOCATION-AND-LIVE-MATCHING.md`.
+Target scale: 500 trips/day, ~200 concurrent, 300 ceiling — H3, Kafka and sharding declined with recorded
+revisit thresholds; PostGIS is the only spatial dependency.
+Google cost is a design constraint (Decision 018): ETA and live-request detour are derived from stored
+geometry and observed speed rather than bought; pickup-point resolution is cost-ordered with Places last;
+the location pipeline adds zero calls. Modelled steady state ~$132/month, inside the $200 credit.
+
+Phase exit: `tasks/comigo-unified-app-backend/release-readiness-checklist.md` fully ticked.
+
+## Phase 09 — ComiGo Unified Mobile App
+
+Status: `NOT_STARTED`
+Added: 2026-07-31
+
+The ~157 ComiGo screens built against `apps/mobile`. A separate feature folder, planned after the backend
+contract stabilises at slice 00. Phase 07 (passenger mobile app) is superseded; its verified work — design
+system, API client, auth and profile features, and the green Maestro suites — is harvested into
+`apps/mobile` by slice 00 rather than discarded.

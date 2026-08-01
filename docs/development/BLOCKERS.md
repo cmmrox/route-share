@@ -17,6 +17,30 @@ Blocker Status Values:
 
 ## Active Blockers
 
+### Blocker 012 — `admin-web.openapi.json` fails OpenAPI 3.1 validation
+
+Status: `OPEN`
+Severity: `LOW`
+
+Description:
+
+`docs/api/admin-web.openapi.json` declares `openapi: 3.1.0` but uses the OpenAPI **3.0** `nullable`
+keyword, which is invalid in 3.1 and silently ignored by 3.1 tooling. `redocly lint` reports 8 struct
+errors. Pre-existing since commit `0bd5fdf` (Phase 06.6-K); untouched by the ComiGo slice 00 work,
+which fixed the same class of defect in the merged mobile contract.
+
+Impact:
+
+- A generated admin client would treat nullable fields as non-nullable.
+- Low urgency: `apps/admin-web` is still a README stub, so nothing consumes this contract yet.
+
+Recommended Action:
+
+- Apply the same `nullable` → type-union conversion used on `mobile-app.openapi.json`, and add
+  `redocly lint` for both documents to the verification gate.
+- Do it when admin-web implementation starts, or as a standalone chore.
+
+
 ### Blocker 011 — Google Maps Platform keys required for Task 07 production map/search
 
 Status: `IN_PROGRESS`

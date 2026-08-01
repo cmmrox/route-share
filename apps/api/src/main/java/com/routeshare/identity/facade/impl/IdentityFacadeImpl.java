@@ -6,9 +6,11 @@ import com.routeshare.common.security.CurrentUser;
 import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.identity.repository.AppUserRepository;
+import com.routeshare.identity.repository.AppUserStatusHistoryRepository;
 import com.routeshare.identity.service.KeycloakRealmRoleService;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -25,14 +27,17 @@ public class IdentityFacadeImpl implements IdentityFacade {
   private static final int MAX_CACHED_PROJECTIONS = 20_000;
 
   private final AppUserRepository appUsers;
+  private final AppUserStatusHistoryRepository statusHistory;
   private final KeycloakRealmRoleService keycloakRealmRoleService;
   private final Cache<String, CachedProjection> projections;
 
   public IdentityFacadeImpl(
       AppUserRepository appUsers,
+      AppUserStatusHistoryRepository statusHistory,
       KeycloakRealmRoleService keycloakRealmRoleService,
       @Value("${routeshare.identity.projection-cache-ttl-seconds:300}") long cacheTtlSeconds) {
     this.appUsers = appUsers;
+    this.statusHistory = statusHistory;
     this.keycloakRealmRoleService = keycloakRealmRoleService;
     this.projections =
         cacheTtlSeconds <= 0
@@ -60,6 +65,20 @@ public class IdentityFacadeImpl implements IdentityFacade {
   @Override
   public void setRealmRoles(String keycloakSubject, Set<String> roles) {
     keycloakRealmRoleService.setRealmRoles(keycloakSubject, roles);
+  }
+
+  @Override
+  public AppUser upsertFromTokenAllowingSuspended(CurrentUser currentUser) {
+    appUsers.upsertTokenUser(
+        currentUser.subject(), currentUser.email(), currentUser.phone(), currentUser.displayName());
+    return appUsers.findBySubject(currentUser.subject()).orElseThrow();
+  }
+
+  @Override
+  public Optional<StatusChange> latestStatusChange(long appUserId) {
+    return statusHistory.findByAppUserIdOrderByIdDesc(appUserId).stream()
+        .findFirst()
+        .map(h -> new StatusChange(h.getToStatus(), h.getReason(), h.getCreatedAt()));
   }
 
   @Override

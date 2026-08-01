@@ -1,676 +1,330 @@
-// Generated lightweight API contract inventory for app client wiring readiness.
-// Source of truth remains docs/api/*.openapi.json.
+// Generated API contract inventory for ComiGo client wiring.
+// Source of truth: docs/api/mobile-app.openapi.json and docs/api/admin-web.openapi.json.
+// Regenerate rather than hand-editing.
+//
+// The ComiGo mobile app is a single application containing both the passenger and driver
+// experience (Decision 011). `/passenger/**` and `/driver/**` are role-scoped resource
+// namespaces, not app boundaries.
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type ApiEndpoint = { method: HttpMethod; path: string };
 
-export const passengerApiEndpoints = [
-  {
-    "method": "GET",
-    "path": "/api/v1/auth/me"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/auth/otp/request"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/auth/otp/verify"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/profile"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/passenger/profile"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/saved-places"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/saved-places"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/v1/passenger/saved-places/{savedPlaceId}"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/passenger/saved-places/{savedPlaceId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/saved-places/{savedPlaceId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/trusted-contacts"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/trusted-contacts"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/v1/passenger/trusted-contacts/{contactId}"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/passenger/trusted-contacts/{contactId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/trusted-contacts/{contactId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/places/autocomplete"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/places/{placeId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/directions"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/route-occurrences/{routeOccurrenceId}/geometry"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/ride-searches"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/bookings"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/bookings"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/bookings/{bookingId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/bookings/{bookingId}/cancel"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/trips/current"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/trips/{tripId}/live-state"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/bookings/{bookingId}/share-link"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/sos-events"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/bookings/{bookingId}/rating"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/notifications"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/support/tickets"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/support/tickets"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/app/config"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/profile/avatar-upload"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/verification/status"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/verification/documents"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/payment-methods"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/payment-methods"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/v1/passenger/payment-methods/{paymentMethodId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/payment-methods/{paymentMethodId}/default"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/payments/intents"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/bookings/{bookingId}/early-drop-off"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/bookings/{bookingId}/receipt"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/trips/history"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/bookings/{bookingId}/share"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/notifications/{notificationId}/read"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/notification-preferences"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/passenger/notification-preferences"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/push-registrations"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/passenger/support/tickets/{ticketId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/passenger/support/tickets/{ticketId}/messages"
-  }
-] as const satisfies readonly ApiEndpoint[];
+/**
+ * Implementation status of an endpoint in the ComiGo backend plan.
+ *  - IMPLEMENTED              live in apps/api today
+ *  - PLANNED_SLICE_NN         specified, built in that slice
+ *  - CUT                      deliberately removed from the product
+ *  - INTERNAL_NOT_FOR_CLIENTS implemented, but outside the mobile client surface
+ */
+export type EndpointStatus =
+  | 'IMPLEMENTED'
+  | 'CUT'
+  | 'INTERNAL_NOT_FOR_CLIENTS'
+  | `PLANNED_SLICE_${string}`;
 
-export const driverApiEndpoints = [
-  {
-    "method": "GET",
-    "path": "/api/v1/app/config"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/auth/me"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/application"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/bookings/{bookingId}/approve"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/bookings/{bookingId}/cash-collected"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/bookings/{bookingId}/decline"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/bookings/{bookingId}/fare-adjustment-request"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/documents"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/documents"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/documents/{documentId}/submit"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/earnings/summary"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/earnings/transactions"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/driver/kyc/identity"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/driver/kyc/licence"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/notification-preferences"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/driver/notification-preferences"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/notifications"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/notifications/{notificationId}/read"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/payout-profile"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/driver/payout-profile"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/profile"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/push-registrations"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/ratings"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/recurring-routes"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/recurring-routes"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/v1/driver/recurring-routes/{routeId}"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/driver/recurring-routes/{routeId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/recurring-routes/{routeId}/generate-occurrences"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/routes"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/routes"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/routes/{routeId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/routes/{routeId}/cancel"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/routes/{routeId}/publish"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/routes/{routeId}/share-link"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/sos-events"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/support/tickets"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/support/tickets"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/support/tickets/{ticketId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/support/tickets/{ticketId}/messages"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/trips"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/trips/{tripId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/trips/{tripId}/arrived-pickup"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/trips/{tripId}/booking-requests"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/trips/{tripId}/complete"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/trips/{tripId}/location-updates"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/board"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/drop-off"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/no-show"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/trips/{tripId}/pre-trip-checklist"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/trips/{tripId}/start"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/vehicles"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/vehicles"
-  },
-  {
-    "method": "DELETE",
-    "path": "/api/v1/driver/vehicles/{vehicleId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/vehicles/{vehicleId}"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/driver/vehicles/{vehicleId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/vehicles/{vehicleId}/documents"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/vehicles/{vehicleId}/documents"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/driver/vehicles/{vehicleId}/documents/{documentId}/submit"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/driver/verification-status"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/location/updates"
-  }
-] as const satisfies readonly ApiEndpoint[];
+export type MobileApiEndpoint = ApiEndpoint & {
+  status: EndpointStatus;
+  operationId: string;
+};
+
+export const mobileApiEndpoints = [
+  {"method": "GET", "path": "/api/v1/app/config", "status": "IMPLEMENTED", "operationId": "getAppConfig"},
+  {"method": "GET", "path": "/api/v1/auth/me", "status": "IMPLEMENTED", "operationId": "getAuthMe"},
+  {"method": "POST", "path": "/api/v1/auth/otp/request", "status": "IMPLEMENTED", "operationId": "postAuthOtpRequest"},
+  {"method": "POST", "path": "/api/v1/auth/otp/verify", "status": "IMPLEMENTED", "operationId": "postAuthOtpVerify"},
+  {"method": "GET", "path": "/api/v1/badges", "status": "PLANNED_SLICE_10", "operationId": "getBadges"},
+  {"method": "POST", "path": "/api/v1/bookings", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "postBookings"},
+  {"method": "GET", "path": "/api/v1/bookings/{bookingId}/chat", "status": "PLANNED_SLICE_10", "operationId": "getBookingsByBookingIdChat"},
+  {"method": "GET", "path": "/api/v1/bookings/{bookingId}/chat/messages", "status": "PLANNED_SLICE_10", "operationId": "getBookingsByBookingIdChatMessages"},
+  {"method": "POST", "path": "/api/v1/bookings/{bookingId}/chat/messages", "status": "PLANNED_SLICE_10", "operationId": "postBookingsByBookingIdChatMessages"},
+  {"method": "POST", "path": "/api/v1/bookings/{bookingId}/chat/read", "status": "PLANNED_SLICE_10", "operationId": "postBookingsByBookingIdChatRead"},
+  {"method": "GET", "path": "/api/v1/bookings/{bookingId}/rating", "status": "PLANNED_SLICE_15", "operationId": "getBookingsByBookingIdRating"},
+  {"method": "POST", "path": "/api/v1/bookings/{bookingId}/rating", "status": "PLANNED_SLICE_15", "operationId": "postBookingsByBookingIdRating"},
+  {"method": "PATCH", "path": "/api/v1/bookings/{bookingId}/status", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "patchBookingsByBookingIdStatus"},
+  {"method": "POST", "path": "/api/v1/driver/application", "status": "IMPLEMENTED", "operationId": "postDriverApplication"},
+  {"method": "POST", "path": "/api/v1/driver/bookings/{bookingId}/approve", "status": "IMPLEMENTED", "operationId": "postDriverBookingsByBookingIdApprove"},
+  {"method": "POST", "path": "/api/v1/driver/bookings/{bookingId}/cash-collected", "status": "IMPLEMENTED", "operationId": "postDriverBookingsByBookingIdCashCollected"},
+  {"method": "GET", "path": "/api/v1/driver/bookings/{bookingId}/contact", "status": "PLANNED_SLICE_07", "operationId": "getDriverBookingsByBookingIdContact"},
+  {"method": "POST", "path": "/api/v1/driver/bookings/{bookingId}/decline", "status": "IMPLEMENTED", "operationId": "postDriverBookingsByBookingIdDecline"},
+  {"method": "POST", "path": "/api/v1/driver/bookings/{bookingId}/fare-adjustment-request", "status": "IMPLEMENTED", "operationId": "postDriverBookingsByBookingIdFareAdjustmentRequest"},
+  {"method": "POST", "path": "/api/v1/driver/bookings/{bookingId}/fare-adjustments", "status": "PLANNED_SLICE_14", "operationId": "postDriverBookingsByBookingIdFareAdjustments"},
+  {"method": "GET", "path": "/api/v1/driver/documents", "status": "IMPLEMENTED", "operationId": "getDriverDocuments"},
+  {"method": "POST", "path": "/api/v1/driver/documents", "status": "CUT", "operationId": "postDriverDocuments"},
+  {"method": "POST", "path": "/api/v1/driver/documents/upload-url", "status": "IMPLEMENTED", "operationId": "postDriverDocumentsUploadUrl"},
+  {"method": "GET", "path": "/api/v1/driver/documents/{documentId}/download-url", "status": "IMPLEMENTED", "operationId": "getDriverDocumentsByDocumentIdDownloadUrl"},
+  {"method": "POST", "path": "/api/v1/driver/documents/{documentId}/submit", "status": "IMPLEMENTED", "operationId": "postDriverDocumentsByDocumentIdSubmit"},
+  {"method": "GET", "path": "/api/v1/driver/earnings/summary", "status": "IMPLEMENTED", "operationId": "getDriverEarningsSummary"},
+  {"method": "GET", "path": "/api/v1/driver/earnings/transactions", "status": "IMPLEMENTED", "operationId": "getDriverEarningsTransactions"},
+  {"method": "GET", "path": "/api/v1/driver/fare-adjustments/{fareAdjustmentId}", "status": "PLANNED_SLICE_14", "operationId": "getDriverFareAdjustmentsByFareAdjustmentId"},
+  {"method": "PUT", "path": "/api/v1/driver/kyc/identity", "status": "IMPLEMENTED", "operationId": "putDriverKycIdentity"},
+  {"method": "PUT", "path": "/api/v1/driver/kyc/licence", "status": "IMPLEMENTED", "operationId": "putDriverKycLicence"},
+  {"method": "GET", "path": "/api/v1/driver/ledger", "status": "PLANNED_SLICE_14", "operationId": "getDriverLedger"},
+  {"method": "POST", "path": "/api/v1/driver/live-requests/{liveRequestId}/accept", "status": "PLANNED_SLICE_13", "operationId": "postDriverLiveRequestsByLiveRequestIdAccept"},
+  {"method": "POST", "path": "/api/v1/driver/live-requests/{liveRequestId}/decline", "status": "PLANNED_SLICE_13", "operationId": "postDriverLiveRequestsByLiveRequestIdDecline"},
+  {"method": "GET", "path": "/api/v1/driver/location-policy", "status": "PLANNED_SLICE_12", "operationId": "getDriverLocationPolicy"},
+  {"method": "GET", "path": "/api/v1/driver/notification-preferences", "status": "IMPLEMENTED", "operationId": "getDriverNotificationPreferences"},
+  {"method": "PUT", "path": "/api/v1/driver/notification-preferences", "status": "IMPLEMENTED", "operationId": "putDriverNotificationPreferences"},
+  {"method": "GET", "path": "/api/v1/driver/notifications", "status": "IMPLEMENTED", "operationId": "getDriverNotifications"},
+  {"method": "POST", "path": "/api/v1/driver/notifications/{notificationId}/read", "status": "IMPLEMENTED", "operationId": "postDriverNotificationsByNotificationIdRead"},
+  {"method": "GET", "path": "/api/v1/driver/payout-profile", "status": "IMPLEMENTED", "operationId": "getDriverPayoutProfile"},
+  {"method": "PUT", "path": "/api/v1/driver/payout-profile", "status": "IMPLEMENTED", "operationId": "putDriverPayoutProfile"},
+  {"method": "GET", "path": "/api/v1/driver/payouts", "status": "PLANNED_SLICE_14", "operationId": "getDriverPayouts"},
+  {"method": "GET", "path": "/api/v1/driver/payouts/{payoutBatchItemId}", "status": "PLANNED_SLICE_14", "operationId": "getDriverPayoutsByPayoutBatchItemId"},
+  {"method": "GET", "path": "/api/v1/driver/penalties", "status": "PLANNED_SLICE_06", "operationId": "getDriverPenalties"},
+  {"method": "POST", "path": "/api/v1/driver/penalties/{penaltyId}/dispute", "status": "PLANNED_SLICE_06", "operationId": "postDriverPenaltiesByPenaltyIdDispute"},
+  {"method": "GET", "path": "/api/v1/driver/preferences", "status": "PLANNED_SLICE_08", "operationId": "getDriverPreferences"},
+  {"method": "PUT", "path": "/api/v1/driver/preferences", "status": "PLANNED_SLICE_08", "operationId": "putDriverPreferences"},
+  {"method": "GET", "path": "/api/v1/driver/preferences/eligibility-impact", "status": "PLANNED_SLICE_08", "operationId": "getDriverPreferencesEligibilityImpact"},
+  {"method": "GET", "path": "/api/v1/driver/profile", "status": "IMPLEMENTED", "operationId": "getDriverProfile"},
+  {"method": "POST", "path": "/api/v1/driver/push-registrations", "status": "IMPLEMENTED", "operationId": "postDriverPushRegistrations"},
+  {"method": "GET", "path": "/api/v1/driver/ratings", "status": "IMPLEMENTED", "operationId": "getDriverRatings"},
+  {"method": "GET", "path": "/api/v1/driver/recurring-routes", "status": "IMPLEMENTED", "operationId": "getDriverRecurringRoutes"},
+  {"method": "POST", "path": "/api/v1/driver/recurring-routes", "status": "IMPLEMENTED", "operationId": "postDriverRecurringRoutes"},
+  {"method": "PUT", "path": "/api/v1/driver/recurring-routes/{routeId}", "status": "IMPLEMENTED", "operationId": "putDriverRecurringRoutesByRouteId"},
+  {"method": "DELETE", "path": "/api/v1/driver/recurring-routes/{routeId}", "status": "IMPLEMENTED", "operationId": "deleteDriverRecurringRoutesByRouteId"},
+  {"method": "POST", "path": "/api/v1/driver/recurring-routes/{routeId}/generate-occurrences", "status": "IMPLEMENTED", "operationId": "postDriverRecurringRoutesByRouteIdGenerateOccurrences"},
+  {"method": "GET", "path": "/api/v1/driver/reinstatement-requests", "status": "PLANNED_SLICE_01", "operationId": "getDriverReinstatementRequests"},
+  {"method": "POST", "path": "/api/v1/driver/reinstatement-requests", "status": "PLANNED_SLICE_01", "operationId": "postDriverReinstatementRequests"},
+  {"method": "GET", "path": "/api/v1/driver/reliability", "status": "PLANNED_SLICE_05", "operationId": "getDriverReliability"},
+  {"method": "PUT", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/approval-mode", "status": "PLANNED_SLICE_07", "operationId": "putDriverRouteOccurrencesByRouteOccurrenceIdApprovalMode"},
+  {"method": "POST", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/cancel", "status": "PLANNED_SLICE_07", "operationId": "postDriverRouteOccurrencesByRouteOccurrenceIdCancel"},
+  {"method": "GET", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/cancellation-terms", "status": "PLANNED_SLICE_07", "operationId": "getDriverRouteOccurrencesByRouteOccurrenceIdCancellationTerms"},
+  {"method": "GET", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/share", "status": "PLANNED_SLICE_09", "operationId": "getDriverRouteOccurrencesByRouteOccurrenceIdShare"},
+  {"method": "GET", "path": "/api/v1/driver/routes", "status": "IMPLEMENTED", "operationId": "getDriverRoutes"},
+  {"method": "POST", "path": "/api/v1/driver/routes", "status": "IMPLEMENTED", "operationId": "postDriverRoutes"},
+  {"method": "GET", "path": "/api/v1/driver/routes/{routeId}", "status": "IMPLEMENTED", "operationId": "getDriverRoutesByRouteId"},
+  {"method": "POST", "path": "/api/v1/driver/routes/{routeId}/cancel", "status": "IMPLEMENTED", "operationId": "postDriverRoutesByRouteIdCancel"},
+  {"method": "POST", "path": "/api/v1/driver/routes/{routeId}/publish", "status": "IMPLEMENTED", "operationId": "postDriverRoutesByRouteIdPublish"},
+  {"method": "POST", "path": "/api/v1/driver/routes/{routeId}/share-link", "status": "IMPLEMENTED", "operationId": "postDriverRoutesByRouteIdShareLink"},
+  {"method": "GET", "path": "/api/v1/driver/sos-events", "status": "IMPLEMENTED", "operationId": "getDriverSosEvents"},
+  {"method": "POST", "path": "/api/v1/driver/sos-events", "status": "IMPLEMENTED", "operationId": "postDriverSosEvents"},
+  {"method": "GET", "path": "/api/v1/driver/support/tickets", "status": "IMPLEMENTED", "operationId": "getDriverSupportTickets"},
+  {"method": "POST", "path": "/api/v1/driver/support/tickets", "status": "IMPLEMENTED", "operationId": "postDriverSupportTickets"},
+  {"method": "GET", "path": "/api/v1/driver/support/tickets/{ticketId}", "status": "IMPLEMENTED", "operationId": "getDriverSupportTicketsByTicketId"},
+  {"method": "POST", "path": "/api/v1/driver/support/tickets/{ticketId}/messages", "status": "IMPLEMENTED", "operationId": "postDriverSupportTicketsByTicketIdMessages"},
+  {"method": "GET", "path": "/api/v1/driver/trips", "status": "IMPLEMENTED", "operationId": "getDriverTrips"},
+  {"method": "GET", "path": "/api/v1/driver/trips/{tripId}", "status": "IMPLEMENTED", "operationId": "getDriverTripsByTripId"},
+  {"method": "GET", "path": "/api/v1/driver/trips/{tripId}/approach", "status": "PLANNED_SLICE_12", "operationId": "getDriverTripsByTripIdApproach"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/arrived-pickup", "status": "IMPLEMENTED", "operationId": "postDriverTripsByTripIdArrivedPickup"},
+  {"method": "GET", "path": "/api/v1/driver/trips/{tripId}/booking-requests", "status": "IMPLEMENTED", "operationId": "getDriverTripsByTripIdBookingRequests"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/complete", "status": "IMPLEMENTED", "operationId": "postDriverTripsByTripIdComplete"},
+  {"method": "GET", "path": "/api/v1/driver/trips/{tripId}/live-requests/current", "status": "PLANNED_SLICE_13", "operationId": "getDriverTripsByTripIdLiveRequestsCurrent"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/live-requests/mute", "status": "PLANNED_SLICE_13", "operationId": "postDriverTripsByTripIdLiveRequestsMute"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/location-updates", "status": "IMPLEMENTED", "operationId": "postDriverTripsByTripIdLocationUpdates"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/board", "status": "IMPLEMENTED", "operationId": "postDriverTripsByTripIdPassengersByBookingIdBoard"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/drop-off", "status": "IMPLEMENTED", "operationId": "postDriverTripsByTripIdPassengersByBookingIdDropOff"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/no-show", "status": "IMPLEMENTED", "operationId": "postDriverTripsByTripIdPassengersByBookingIdNoShow"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/release-seat", "status": "PLANNED_SLICE_05", "operationId": "postDriverTripsByTripIdPassengersByBookingIdReleaseSeat"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/wait-extension", "status": "PLANNED_SLICE_05", "operationId": "postDriverTripsByTripIdPassengersByBookingIdWaitExtension"},
+  {"method": "GET", "path": "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/wait-window", "status": "PLANNED_SLICE_05", "operationId": "getDriverTripsByTripIdPassengersByBookingIdWaitWindow"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/pre-trip-checklist", "status": "IMPLEMENTED", "operationId": "postDriverTripsByTripIdPreTripChecklist"},
+  {"method": "GET", "path": "/api/v1/driver/trips/{tripId}/progress", "status": "PLANNED_SLICE_12", "operationId": "getDriverTripsByTripIdProgress"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/start", "status": "IMPLEMENTED", "operationId": "postDriverTripsByTripIdStart"},
+  {"method": "POST", "path": "/api/v1/driver/trips/{tripId}/start-extension", "status": "PLANNED_SLICE_05", "operationId": "postDriverTripsByTripIdStartExtension"},
+  {"method": "GET", "path": "/api/v1/driver/trips/{tripId}/start-window", "status": "PLANNED_SLICE_05", "operationId": "getDriverTripsByTripIdStartWindow"},
+  {"method": "GET", "path": "/api/v1/driver/vehicle-classes", "status": "PLANNED_SLICE_02", "operationId": "getDriverVehicleClasses"},
+  {"method": "GET", "path": "/api/v1/driver/vehicles", "status": "IMPLEMENTED", "operationId": "getDriverVehicles"},
+  {"method": "POST", "path": "/api/v1/driver/vehicles", "status": "IMPLEMENTED", "operationId": "postDriverVehicles"},
+  {"method": "GET", "path": "/api/v1/driver/vehicles/{vehicleId}", "status": "IMPLEMENTED", "operationId": "getDriverVehiclesByVehicleId"},
+  {"method": "PUT", "path": "/api/v1/driver/vehicles/{vehicleId}", "status": "IMPLEMENTED", "operationId": "putDriverVehiclesByVehicleId"},
+  {"method": "DELETE", "path": "/api/v1/driver/vehicles/{vehicleId}", "status": "IMPLEMENTED", "operationId": "deleteDriverVehiclesByVehicleId"},
+  {"method": "GET", "path": "/api/v1/driver/vehicles/{vehicleId}/documents", "status": "IMPLEMENTED", "operationId": "getDriverVehiclesByVehicleIdDocuments"},
+  {"method": "POST", "path": "/api/v1/driver/vehicles/{vehicleId}/documents", "status": "CUT", "operationId": "postDriverVehiclesByVehicleIdDocuments"},
+  {"method": "POST", "path": "/api/v1/driver/vehicles/{vehicleId}/documents/upload-url", "status": "IMPLEMENTED", "operationId": "postDriverVehiclesByVehicleIdDocumentsUploadUrl"},
+  {"method": "GET", "path": "/api/v1/driver/vehicles/{vehicleId}/documents/{documentId}/download-url", "status": "IMPLEMENTED", "operationId": "getDriverVehiclesByVehicleIdDocumentsByDocumentIdDownloadUrl"},
+  {"method": "POST", "path": "/api/v1/driver/vehicles/{vehicleId}/documents/{documentId}/submit", "status": "IMPLEMENTED", "operationId": "postDriverVehiclesByVehicleIdDocumentsByDocumentIdSubmit"},
+  {"method": "GET", "path": "/api/v1/driver/vehicles/{vehicleId}/rate-band", "status": "PLANNED_SLICE_02", "operationId": "getDriverVehiclesByVehicleIdRateBand"},
+  {"method": "PUT", "path": "/api/v1/driver/vehicles/{vehicleId}/rate-band/chosen-rate", "status": "PLANNED_SLICE_02", "operationId": "putDriverVehiclesByVehicleIdRateBandChosenRate"},
+  {"method": "GET", "path": "/api/v1/driver/vehicles/{vehicleId}/rate-band/review-requests", "status": "PLANNED_SLICE_02", "operationId": "getDriverVehiclesByVehicleIdRateBandReviewRequests"},
+  {"method": "POST", "path": "/api/v1/driver/vehicles/{vehicleId}/rate-band/review-requests", "status": "PLANNED_SLICE_02", "operationId": "postDriverVehiclesByVehicleIdRateBandReviewRequests"},
+  {"method": "GET", "path": "/api/v1/driver/verification-status", "status": "IMPLEMENTED", "operationId": "getDriverVerificationStatus"},
+  {"method": "GET", "path": "/api/v1/driver/wallet", "status": "PLANNED_SLICE_14", "operationId": "getDriverWallet"},
+  {"method": "POST", "path": "/api/v1/location/updates", "status": "IMPLEMENTED", "operationId": "postLocationUpdates"},
+  {"method": "PUT", "path": "/api/v1/me/active-mode", "status": "PLANNED_SLICE_01", "operationId": "putMeActiveMode"},
+  {"method": "GET", "path": "/api/v1/me/context", "status": "IMPLEMENTED", "operationId": "getMeContext"},
+  {"method": "POST", "path": "/api/v1/me/data-export", "status": "PLANNED_SLICE_10", "operationId": "postMeDataExport"},
+  {"method": "POST", "path": "/api/v1/me/deletion-request", "status": "PLANNED_SLICE_10", "operationId": "postMeDeletionRequest"},
+  {"method": "GET", "path": "/api/v1/me/rating-summary", "status": "PLANNED_SLICE_15", "operationId": "getMeRatingSummary"},
+  {"method": "GET", "path": "/api/v1/me/referral", "status": "PLANNED_SLICE_11", "operationId": "getMeReferral"},
+  {"method": "POST", "path": "/api/v1/me/referral/claim", "status": "PLANNED_SLICE_11", "operationId": "postMeReferralClaim"},
+  {"method": "GET", "path": "/api/v1/me/rewards", "status": "PLANNED_SLICE_11", "operationId": "getMeRewards"},
+  {"method": "PUT", "path": "/api/v1/me/rewards/auto-apply", "status": "PLANNED_SLICE_11", "operationId": "putMeRewardsAutoApply"},
+  {"method": "GET", "path": "/api/v1/me/rewards/withdrawals", "status": "PLANNED_SLICE_11", "operationId": "getMeRewardsWithdrawals"},
+  {"method": "POST", "path": "/api/v1/me/rewards/withdrawals", "status": "PLANNED_SLICE_11", "operationId": "postMeRewardsWithdrawals"},
+  {"method": "GET", "path": "/api/v1/me/settings", "status": "PLANNED_SLICE_10", "operationId": "getMeSettings"},
+  {"method": "PUT", "path": "/api/v1/me/settings", "status": "PLANNED_SLICE_10", "operationId": "putMeSettings"},
+  {"method": "GET", "path": "/api/v1/notification-preferences", "status": "PLANNED_SLICE_10", "operationId": "getNotificationPreferences"},
+  {"method": "PUT", "path": "/api/v1/notification-preferences", "status": "PLANNED_SLICE_10", "operationId": "putNotificationPreferences"},
+  {"method": "GET", "path": "/api/v1/notifications", "status": "PLANNED_SLICE_10", "operationId": "getNotifications"},
+  {"method": "POST", "path": "/api/v1/notifications/read-all", "status": "PLANNED_SLICE_10", "operationId": "postNotificationsReadAll"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings", "status": "IMPLEMENTED", "operationId": "getPassengerBookings"},
+  {"method": "POST", "path": "/api/v1/passenger/bookings", "status": "IMPLEMENTED", "operationId": "postPassengerBookings"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings/{bookingId}", "status": "IMPLEMENTED", "operationId": "getPassengerBookingsByBookingId"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings/{bookingId}/alternatives", "status": "PLANNED_SLICE_07", "operationId": "getPassengerBookingsByBookingIdAlternatives"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings/{bookingId}/approach", "status": "PLANNED_SLICE_12", "operationId": "getPassengerBookingsByBookingIdApproach"},
+  {"method": "POST", "path": "/api/v1/passenger/bookings/{bookingId}/approach-position", "status": "PLANNED_SLICE_12", "operationId": "postPassengerBookingsByBookingIdApproachPosition"},
+  {"method": "POST", "path": "/api/v1/passenger/bookings/{bookingId}/cancel", "status": "IMPLEMENTED", "operationId": "postPassengerBookingsByBookingIdCancel"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings/{bookingId}/cancellation-terms", "status": "PLANNED_SLICE_05", "operationId": "getPassengerBookingsByBookingIdCancellationTerms"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings/{bookingId}/contact", "status": "PLANNED_SLICE_07", "operationId": "getPassengerBookingsByBookingIdContact"},
+  {"method": "POST", "path": "/api/v1/passenger/bookings/{bookingId}/early-drop-off", "status": "IMPLEMENTED", "operationId": "postPassengerBookingsByBookingIdEarlyDropOff"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings/{bookingId}/fare-adjustment", "status": "PLANNED_SLICE_14", "operationId": "getPassengerBookingsByBookingIdFareAdjustment"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings/{bookingId}/pickup-window", "status": "PLANNED_SLICE_05", "operationId": "getPassengerBookingsByBookingIdPickupWindow"},
+  {"method": "POST", "path": "/api/v1/passenger/bookings/{bookingId}/rating", "status": "IMPLEMENTED", "operationId": "postPassengerBookingsByBookingIdRating"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings/{bookingId}/receipt", "status": "IMPLEMENTED", "operationId": "getPassengerBookingsByBookingIdReceipt"},
+  {"method": "POST", "path": "/api/v1/passenger/bookings/{bookingId}/share", "status": "IMPLEMENTED", "operationId": "postPassengerBookingsByBookingIdShare"},
+  {"method": "POST", "path": "/api/v1/passenger/bookings/{bookingId}/share-link", "status": "IMPLEMENTED", "operationId": "postPassengerBookingsByBookingIdShareLink"},
+  {"method": "DELETE", "path": "/api/v1/passenger/bookings/{bookingId}/share/{token}", "status": "IMPLEMENTED", "operationId": "deletePassengerBookingsByBookingIdShareByToken"},
+  {"method": "GET", "path": "/api/v1/passenger/commute", "status": "PLANNED_SLICE_09", "operationId": "getPassengerCommute"},
+  {"method": "PUT", "path": "/api/v1/passenger/commute", "status": "PLANNED_SLICE_09", "operationId": "putPassengerCommute"},
+  {"method": "GET", "path": "/api/v1/passenger/directions", "status": "IMPLEMENTED", "operationId": "getPassengerDirections"},
+  {"method": "GET", "path": "/api/v1/passenger/documents", "status": "IMPLEMENTED", "operationId": "getPassengerDocuments"},
+  {"method": "POST", "path": "/api/v1/passenger/documents/upload-url", "status": "IMPLEMENTED", "operationId": "postPassengerDocumentsUploadUrl"},
+  {"method": "GET", "path": "/api/v1/passenger/documents/{documentId}/download-url", "status": "IMPLEMENTED", "operationId": "getPassengerDocumentsByDocumentIdDownloadUrl"},
+  {"method": "POST", "path": "/api/v1/passenger/documents/{documentId}/submit", "status": "IMPLEMENTED", "operationId": "postPassengerDocumentsByDocumentIdSubmit"},
+  {"method": "GET", "path": "/api/v1/passenger/dues", "status": "PLANNED_SLICE_06", "operationId": "getPassengerDues"},
+  {"method": "GET", "path": "/api/v1/passenger/early-drop-allowance", "status": "PLANNED_SLICE_05", "operationId": "getPassengerEarlyDropAllowance"},
+  {"method": "POST", "path": "/api/v1/passenger/fare-adjustments/{fareAdjustmentId}/dispute", "status": "PLANNED_SLICE_14", "operationId": "postPassengerFareAdjustmentsByFareAdjustmentIdDispute"},
+  {"method": "POST", "path": "/api/v1/passenger/live-requests", "status": "PLANNED_SLICE_13", "operationId": "postPassengerLiveRequests"},
+  {"method": "GET", "path": "/api/v1/passenger/live-requests/{liveRequestId}", "status": "PLANNED_SLICE_13", "operationId": "getPassengerLiveRequestsByLiveRequestId"},
+  {"method": "DELETE", "path": "/api/v1/passenger/live-requests/{liveRequestId}", "status": "PLANNED_SLICE_13", "operationId": "deletePassengerLiveRequestsByLiveRequestId"},
+  {"method": "POST", "path": "/api/v1/passenger/live-searches", "status": "PLANNED_SLICE_13", "operationId": "postPassengerLiveSearches"},
+  {"method": "GET", "path": "/api/v1/passenger/notification-preferences", "status": "IMPLEMENTED", "operationId": "getPassengerNotificationPreferences"},
+  {"method": "PUT", "path": "/api/v1/passenger/notification-preferences", "status": "IMPLEMENTED", "operationId": "putPassengerNotificationPreferences"},
+  {"method": "GET", "path": "/api/v1/passenger/notifications", "status": "IMPLEMENTED", "operationId": "getPassengerNotifications"},
+  {"method": "POST", "path": "/api/v1/passenger/notifications/{notificationId}/read", "status": "IMPLEMENTED", "operationId": "postPassengerNotificationsByNotificationIdRead"},
+  {"method": "GET", "path": "/api/v1/passenger/payment-methods", "status": "IMPLEMENTED", "operationId": "getPassengerPaymentMethods"},
+  {"method": "POST", "path": "/api/v1/passenger/payment-methods", "status": "IMPLEMENTED", "operationId": "postPassengerPaymentMethods"},
+  {"method": "DELETE", "path": "/api/v1/passenger/payment-methods/{paymentMethodId}", "status": "IMPLEMENTED", "operationId": "deletePassengerPaymentMethodsByPaymentMethodId"},
+  {"method": "POST", "path": "/api/v1/passenger/payment-methods/{paymentMethodId}/default", "status": "IMPLEMENTED", "operationId": "postPassengerPaymentMethodsByPaymentMethodIdDefault"},
+  {"method": "POST", "path": "/api/v1/passenger/payments/intents", "status": "IMPLEMENTED", "operationId": "postPassengerPaymentsIntents"},
+  {"method": "GET", "path": "/api/v1/passenger/penalties", "status": "PLANNED_SLICE_06", "operationId": "getPassengerPenalties"},
+  {"method": "POST", "path": "/api/v1/passenger/penalties/{penaltyId}/dispute", "status": "PLANNED_SLICE_06", "operationId": "postPassengerPenaltiesByPenaltyIdDispute"},
+  {"method": "POST", "path": "/api/v1/passenger/pickup-points/resolve", "status": "PLANNED_SLICE_09", "operationId": "postPassengerPickupPointsResolve"},
+  {"method": "GET", "path": "/api/v1/passenger/places/autocomplete", "status": "IMPLEMENTED", "operationId": "getPassengerPlacesAutocomplete"},
+  {"method": "GET", "path": "/api/v1/passenger/places/{placeId}", "status": "IMPLEMENTED", "operationId": "getPassengerPlacesByPlaceId"},
+  {"method": "GET", "path": "/api/v1/passenger/profile", "status": "IMPLEMENTED", "operationId": "getPassengerProfile"},
+  {"method": "PUT", "path": "/api/v1/passenger/profile", "status": "IMPLEMENTED", "operationId": "putPassengerProfile"},
+  {"method": "POST", "path": "/api/v1/passenger/profile/avatar-upload", "status": "IMPLEMENTED", "operationId": "postPassengerProfileAvatarUpload"},
+  {"method": "GET", "path": "/api/v1/passenger/profile/photo-visibility", "status": "PLANNED_SLICE_08", "operationId": "getPassengerProfilePhotoVisibility"},
+  {"method": "PUT", "path": "/api/v1/passenger/profile/photo-visibility", "status": "PLANNED_SLICE_08", "operationId": "putPassengerProfilePhotoVisibility"},
+  {"method": "POST", "path": "/api/v1/passenger/push-registrations", "status": "IMPLEMENTED", "operationId": "postPassengerPushRegistrations"},
+  {"method": "GET", "path": "/api/v1/passenger/reliability", "status": "PLANNED_SLICE_05", "operationId": "getPassengerReliability"},
+  {"method": "POST", "path": "/api/v1/passenger/ride-searches", "status": "IMPLEMENTED", "operationId": "postPassengerRideSearches"},
+  {"method": "GET", "path": "/api/v1/passenger/route-occurrences/{routeOccurrenceId}/geometry", "status": "IMPLEMENTED", "operationId": "getPassengerRouteOccurrencesByRouteOccurrenceIdGeometry"},
+  {"method": "GET", "path": "/api/v1/passenger/route-occurrences/{routeOccurrenceId}/seats", "status": "PLANNED_SLICE_07", "operationId": "getPassengerRouteOccurrencesByRouteOccurrenceIdSeats"},
+  {"method": "GET", "path": "/api/v1/passenger/saved-places", "status": "IMPLEMENTED", "operationId": "getPassengerSavedPlaces"},
+  {"method": "POST", "path": "/api/v1/passenger/saved-places", "status": "IMPLEMENTED", "operationId": "postPassengerSavedPlaces"},
+  {"method": "GET", "path": "/api/v1/passenger/saved-places/{savedPlaceId}", "status": "IMPLEMENTED", "operationId": "getPassengerSavedPlacesBySavedPlaceId"},
+  {"method": "PUT", "path": "/api/v1/passenger/saved-places/{savedPlaceId}", "status": "IMPLEMENTED", "operationId": "putPassengerSavedPlacesBySavedPlaceId"},
+  {"method": "DELETE", "path": "/api/v1/passenger/saved-places/{savedPlaceId}", "status": "IMPLEMENTED", "operationId": "deletePassengerSavedPlacesBySavedPlaceId"},
+  {"method": "GET", "path": "/api/v1/passenger/sos-events", "status": "IMPLEMENTED", "operationId": "getPassengerSosEvents"},
+  {"method": "POST", "path": "/api/v1/passenger/sos-events", "status": "IMPLEMENTED", "operationId": "postPassengerSosEvents"},
+  {"method": "GET", "path": "/api/v1/passenger/support/tickets", "status": "IMPLEMENTED", "operationId": "getPassengerSupportTickets"},
+  {"method": "POST", "path": "/api/v1/passenger/support/tickets", "status": "IMPLEMENTED", "operationId": "postPassengerSupportTickets"},
+  {"method": "GET", "path": "/api/v1/passenger/support/tickets/{ticketId}", "status": "IMPLEMENTED", "operationId": "getPassengerSupportTicketsByTicketId"},
+  {"method": "POST", "path": "/api/v1/passenger/support/tickets/{ticketId}/messages", "status": "IMPLEMENTED", "operationId": "postPassengerSupportTicketsByTicketIdMessages"},
+  {"method": "GET", "path": "/api/v1/passenger/trips/current", "status": "IMPLEMENTED", "operationId": "getPassengerTripsCurrent"},
+  {"method": "GET", "path": "/api/v1/passenger/trips/history", "status": "IMPLEMENTED", "operationId": "getPassengerTripsHistory"},
+  {"method": "GET", "path": "/api/v1/passenger/trips/{tripId}/live-state", "status": "IMPLEMENTED", "operationId": "getPassengerTripsByTripIdLiveState"},
+  {"method": "GET", "path": "/api/v1/passenger/trusted-contacts", "status": "IMPLEMENTED", "operationId": "getPassengerTrustedContacts"},
+  {"method": "POST", "path": "/api/v1/passenger/trusted-contacts", "status": "IMPLEMENTED", "operationId": "postPassengerTrustedContacts"},
+  {"method": "GET", "path": "/api/v1/passenger/trusted-contacts/{contactId}", "status": "IMPLEMENTED", "operationId": "getPassengerTrustedContactsByContactId"},
+  {"method": "PUT", "path": "/api/v1/passenger/trusted-contacts/{contactId}", "status": "IMPLEMENTED", "operationId": "putPassengerTrustedContactsByContactId"},
+  {"method": "DELETE", "path": "/api/v1/passenger/trusted-contacts/{contactId}", "status": "IMPLEMENTED", "operationId": "deletePassengerTrustedContactsByContactId"},
+  {"method": "GET", "path": "/api/v1/passenger/verification", "status": "PLANNED_SLICE_08", "operationId": "getPassengerVerification"},
+  {"method": "POST", "path": "/api/v1/passenger/verification/documents", "status": "IMPLEMENTED", "operationId": "postPassengerVerificationDocuments"},
+  {"method": "POST", "path": "/api/v1/passenger/verification/sessions", "status": "PLANNED_SLICE_08", "operationId": "postPassengerVerificationSessions"},
+  {"method": "GET", "path": "/api/v1/passenger/verification/status", "status": "IMPLEMENTED", "operationId": "getPassengerVerificationStatus"},
+  {"method": "POST", "path": "/api/v1/passenger/verification/submit", "status": "PLANNED_SLICE_08", "operationId": "postPassengerVerificationSubmit"},
+  {"method": "POST", "path": "/api/v1/payments/intents", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "postPaymentsIntents"},
+  {"method": "POST", "path": "/api/v1/pricing/estimate", "status": "CUT", "operationId": "postPricingEstimate"},
+  {"method": "POST", "path": "/api/v1/pricing/estimate-by-route", "status": "PLANNED_SLICE_03", "operationId": "postPricingEstimateByRoute"},
+  {"method": "GET", "path": "/api/v1/public/trip-shares/{token}", "status": "IMPLEMENTED", "operationId": "getPublicTripSharesByToken"},
+  {"method": "GET", "path": "/api/v1/rating-tags", "status": "PLANNED_SLICE_15", "operationId": "getRatingTags"},
+  {"method": "GET", "path": "/api/v1/realtime/token", "status": "PLANNED_SLICE_12", "operationId": "getRealtimeToken"},
+  {"method": "POST", "path": "/api/v1/reviews/{reviewId}/reply", "status": "PLANNED_SLICE_15", "operationId": "postReviewsByReviewIdReply"},
+  {"method": "POST", "path": "/api/v1/routes", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "postRoutes"},
+  {"method": "POST", "path": "/api/v1/routes/search", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "postRoutesSearch"},
+  {"method": "POST", "path": "/api/v1/sos-events", "status": "PLANNED_SLICE_10", "operationId": "postSosEvents"},
+  {"method": "POST", "path": "/api/v1/trips/{id}/transition", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "postTripsByIdTransition"},
+  {"method": "PATCH", "path": "/api/v1/trips/{tripId}/passengers/{bookingId}/state", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "patchTripsByTripIdPassengersByBookingIdState"},
+  {"method": "GET", "path": "/api/v1/users/{appUserId}/reviews", "status": "PLANNED_SLICE_15", "operationId": "getUsersByAppUserIdReviews"}
+] as const satisfies readonly MobileApiEndpoint[];
 
 export const adminApiEndpoints = [
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/audit/actions"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/bookings"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/bookings/{bookingId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/bookings/{bookingId}/status-history"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/cash-collections"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/commission-rules"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/commission-rules"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/admin/commission-rules/{ruleId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/dashboard"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/documents/{documentId}/download-url"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/driver-applications"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/driver-applications/{driverId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/driver-applications/{driverId}/review"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/driver-documents/{documentId}/review"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/fare-policies"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/fare-policies"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/admin/fare-policies/{policyId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/finance/adjustments"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/notifications/broadcasts"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/payments"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/payments/{paymentIntentId}"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/payments/{paymentIntentId}/events"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/payments/{paymentIntentId}/refund"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/payments/{paymentIntentId}/void"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/reports/export"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/reports/summary"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/safety/sos-events"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/safety/sos-events/{sosEventId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/safety/sos-events/{sosEventId}/resolve"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/settlements/driver-balances"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/settlements/payout-batches"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/settlements/payout-batches"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/settlements/payout-batches/{batchId}/mark-paid"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/support/tickets"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/support/tickets/{ticketId}"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/admin/support/tickets/{ticketId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/support/tickets/{ticketId}/messages"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/trips"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/trips/live"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/trips/{tripId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/trips/{tripId}/cancel"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/trips/{tripId}/location-trail"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/users"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/users/{appUserId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/users/{appUserId}/activate"
-  },
-  {
-    "method": "PUT",
-    "path": "/api/v1/admin/users/{appUserId}/roles"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/users/{appUserId}/status-history"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/users/{appUserId}/suspend"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/vehicle-documents/{documentId}/review"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/vehicles"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/admin/vehicles/{vehicleId}"
-  },
-  {
-    "method": "POST",
-    "path": "/api/v1/admin/vehicles/{vehicleId}/review"
-  },
-  {
-    "method": "GET",
-    "path": "/api/v1/auth/me"
-  }
+  {"method": "GET", "path": "/api/v1/admin/audit/actions"},
+  {"method": "GET", "path": "/api/v1/admin/bookings"},
+  {"method": "GET", "path": "/api/v1/admin/bookings/{bookingId}"},
+  {"method": "GET", "path": "/api/v1/admin/bookings/{bookingId}/status-history"},
+  {"method": "GET", "path": "/api/v1/admin/cash-collections"},
+  {"method": "GET", "path": "/api/v1/admin/commission-rules"},
+  {"method": "POST", "path": "/api/v1/admin/commission-rules"},
+  {"method": "PUT", "path": "/api/v1/admin/commission-rules/{ruleId}"},
+  {"method": "GET", "path": "/api/v1/admin/dashboard"},
+  {"method": "POST", "path": "/api/v1/admin/documents/{documentId}/download-url"},
+  {"method": "GET", "path": "/api/v1/admin/driver-applications"},
+  {"method": "GET", "path": "/api/v1/admin/driver-applications/{driverId}"},
+  {"method": "POST", "path": "/api/v1/admin/driver-applications/{driverId}/review"},
+  {"method": "POST", "path": "/api/v1/admin/driver-documents/{documentId}/review"},
+  {"method": "POST", "path": "/api/v1/admin/drivers/{id}/review"},
+  {"method": "GET", "path": "/api/v1/admin/fare-policies"},
+  {"method": "POST", "path": "/api/v1/admin/fare-policies"},
+  {"method": "PUT", "path": "/api/v1/admin/fare-policies/{policyId}"},
+  {"method": "POST", "path": "/api/v1/admin/finance/adjustments"},
+  {"method": "GET", "path": "/api/v1/admin/matching-settings"},
+  {"method": "PUT", "path": "/api/v1/admin/matching-settings"},
+  {"method": "POST", "path": "/api/v1/admin/notifications/broadcasts"},
+  {"method": "GET", "path": "/api/v1/admin/payments"},
+  {"method": "GET", "path": "/api/v1/admin/payments/{paymentIntentId}"},
+  {"method": "GET", "path": "/api/v1/admin/payments/{paymentIntentId}/events"},
+  {"method": "POST", "path": "/api/v1/admin/payments/{paymentIntentId}/refund"},
+  {"method": "POST", "path": "/api/v1/admin/payments/{paymentIntentId}/void"},
+  {"method": "POST", "path": "/api/v1/admin/reports/export"},
+  {"method": "GET", "path": "/api/v1/admin/reports/summary"},
+  {"method": "GET", "path": "/api/v1/admin/reports/{reportType}"},
+  {"method": "GET", "path": "/api/v1/admin/reports/{reportType}/export"},
+  {"method": "GET", "path": "/api/v1/admin/safety/sos-events"},
+  {"method": "GET", "path": "/api/v1/admin/safety/sos-events/{sosEventId}"},
+  {"method": "POST", "path": "/api/v1/admin/safety/sos-events/{sosEventId}/resolve"},
+  {"method": "GET", "path": "/api/v1/admin/settlements/driver-balances"},
+  {"method": "GET", "path": "/api/v1/admin/settlements/payout-batches"},
+  {"method": "POST", "path": "/api/v1/admin/settlements/payout-batches"},
+  {"method": "POST", "path": "/api/v1/admin/settlements/payout-batches/{batchId}/mark-paid"},
+  {"method": "GET", "path": "/api/v1/admin/support/tickets"},
+  {"method": "GET", "path": "/api/v1/admin/support/tickets/{ticketId}"},
+  {"method": "PUT", "path": "/api/v1/admin/support/tickets/{ticketId}"},
+  {"method": "POST", "path": "/api/v1/admin/support/tickets/{ticketId}/messages"},
+  {"method": "GET", "path": "/api/v1/admin/trips"},
+  {"method": "GET", "path": "/api/v1/admin/trips/live"},
+  {"method": "GET", "path": "/api/v1/admin/trips/{tripId}"},
+  {"method": "POST", "path": "/api/v1/admin/trips/{tripId}/cancel"},
+  {"method": "GET", "path": "/api/v1/admin/trips/{tripId}/location-trail"},
+  {"method": "GET", "path": "/api/v1/admin/users"},
+  {"method": "GET", "path": "/api/v1/admin/users/{appUserId}"},
+  {"method": "POST", "path": "/api/v1/admin/users/{appUserId}/activate"},
+  {"method": "PUT", "path": "/api/v1/admin/users/{appUserId}/roles"},
+  {"method": "GET", "path": "/api/v1/admin/users/{appUserId}/status-history"},
+  {"method": "POST", "path": "/api/v1/admin/users/{appUserId}/suspend"},
+  {"method": "POST", "path": "/api/v1/admin/vehicle-documents/{documentId}/review"},
+  {"method": "GET", "path": "/api/v1/admin/vehicles"},
+  {"method": "GET", "path": "/api/v1/admin/vehicles/{vehicleId}"},
+  {"method": "POST", "path": "/api/v1/admin/vehicles/{vehicleId}/review"},
+  {"method": "GET", "path": "/api/v1/auth/me"}
 ] as const satisfies readonly ApiEndpoint[];
 
+/** Endpoints the mobile app may call today. */
+export const mobileApiLiveEndpoints = mobileApiEndpoints.filter(
+  (e) => e.status === 'IMPLEMENTED',
+);
+
+/** Endpoints specified but not yet built — calling one is a bug, not a runtime error to handle. */
+export const mobileApiPlannedEndpoints = mobileApiEndpoints.filter((e) =>
+  e.status.startsWith('PLANNED_SLICE_'),
+);
+
 export const apiContractCounts = {
-  passenger: passengerApiEndpoints.length,
-  driver: driverApiEndpoints.length,
+  mobile: mobileApiEndpoints.length,
+  mobileImplemented: 120,
+  mobilePlanned: 91,
   admin: adminApiEndpoints.length,
 } as const;

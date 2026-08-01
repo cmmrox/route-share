@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.routeshare.common.security.CurrentUser;
 import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.repository.AppUserRepository;
+import com.routeshare.identity.repository.AppUserStatusHistoryRepository;
 import com.routeshare.identity.service.KeycloakRealmRoleService;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,12 @@ class IdentityFacadeImplTest {
   void cachesProjectionSoRepeatRequestsSkipTheDatabaseWrite() {
     var repository = mock(AppUserRepository.class);
     when(repository.upsertFromToken(TOKEN)).thenReturn(APP_USER);
-    var facade = new IdentityFacadeImpl(repository, mock(KeycloakRealmRoleService.class), 300);
+    var facade =
+        new IdentityFacadeImpl(
+            repository,
+            mock(AppUserStatusHistoryRepository.class),
+            mock(KeycloakRealmRoleService.class),
+            300);
 
     assertThat(facade.upsertFromToken(TOKEN)).isEqualTo(APP_USER);
     assertThat(facade.upsertFromToken(TOKEN)).isEqualTo(APP_USER);
@@ -55,7 +61,12 @@ class IdentityFacadeImplTest {
             "ACTIVE");
     when(repository.upsertFromToken(TOKEN)).thenReturn(APP_USER);
     when(repository.upsertFromToken(changedToken)).thenReturn(changedUser);
-    var facade = new IdentityFacadeImpl(repository, mock(KeycloakRealmRoleService.class), 300);
+    var facade =
+        new IdentityFacadeImpl(
+            repository,
+            mock(AppUserStatusHistoryRepository.class),
+            mock(KeycloakRealmRoleService.class),
+            300);
 
     facade.upsertFromToken(TOKEN);
     assertThat(facade.upsertFromToken(changedToken)).isEqualTo(changedUser);
@@ -68,7 +79,12 @@ class IdentityFacadeImplTest {
   void invalidationForcesTheNextRequestBackToTheDatabase() {
     var repository = mock(AppUserRepository.class);
     when(repository.upsertFromToken(TOKEN)).thenReturn(APP_USER);
-    var facade = new IdentityFacadeImpl(repository, mock(KeycloakRealmRoleService.class), 300);
+    var facade =
+        new IdentityFacadeImpl(
+            repository,
+            mock(AppUserStatusHistoryRepository.class),
+            mock(KeycloakRealmRoleService.class),
+            300);
 
     facade.upsertFromToken(TOKEN);
     facade.invalidateProjection("subject-1");
@@ -81,7 +97,12 @@ class IdentityFacadeImplTest {
   void zeroTtlDisablesCachingEntirely() {
     var repository = mock(AppUserRepository.class);
     when(repository.upsertFromToken(TOKEN)).thenReturn(APP_USER);
-    var facade = new IdentityFacadeImpl(repository, mock(KeycloakRealmRoleService.class), 0);
+    var facade =
+        new IdentityFacadeImpl(
+            repository,
+            mock(AppUserStatusHistoryRepository.class),
+            mock(KeycloakRealmRoleService.class),
+            0);
 
     facade.upsertFromToken(TOKEN);
     facade.upsertFromToken(TOKEN);
