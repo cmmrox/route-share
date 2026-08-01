@@ -42,6 +42,8 @@ class BookingServiceTest {
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final com.routeshare.notification.facade.NotificationFacade notifications =
       org.mockito.Mockito.mock(com.routeshare.notification.facade.NotificationFacade.class);
+  private final com.routeshare.pricing.facade.PricingFacade pricing =
+      org.mockito.Mockito.mock(com.routeshare.pricing.facade.PricingFacade.class);
   private final BookingServiceImpl service =
       new BookingServiceImpl(
           current,
@@ -51,10 +53,41 @@ class BookingServiceTest {
           routingFacade,
           idempotencyKeys,
           notifications,
-          objectMapper);
+          objectMapper,
+          pricing);
+
+  private static com.routeshare.pricing.domain.FareQuote quote(String passengerPays) {
+    var amount = new java.math.BigDecimal(passengerPays);
+    return new com.routeshare.pricing.domain.FareQuote(
+        "LKR",
+        new java.math.BigDecimal("5800.00"),
+        new java.math.BigDecimal("5.8000"),
+        new java.math.BigDecimal("50.00"),
+        1,
+        new java.math.BigDecimal("290.00"),
+        new java.math.BigDecimal("92.00"),
+        com.routeshare.pricing.domain.MatchDiscountTier.MID,
+        new java.math.BigDecimal("8.00"),
+        new java.math.BigDecimal("23.00"),
+        amount,
+        new java.math.BigDecimal("10.00"),
+        new java.math.BigDecimal("27.00"),
+        amount.subtract(new java.math.BigDecimal("27.00")),
+        false,
+        java.time.Instant.parse("2026-08-01T09:41:00Z"),
+        "v1");
+  }
 
   @BeforeEach
   void setUp() {
+    org.mockito.Mockito.when(
+            pricing.quoteForMatch(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyInt()))
+        .thenReturn(quote("267.00"));
     var user =
         new CurrentUser(
             "subject", "passenger@example.test", null, "Passenger", Set.of("PASSENGER"));
@@ -77,15 +110,16 @@ class BookingServiceTest {
     when(idempotencyKeys.reserveNew(anyString(), anyString(), anyString(), anyString()))
         .thenReturn("key-1");
     when(routingFacade.reserveSeatsAndReturnRouteLength(44L, 2))
-        .thenReturn(java.util.Optional.of(new RouteReservation(12L, 44L, 10_000.0)));
-    when(bookings.create(7L, request, 12L, new BigDecimal("1540.00"))).thenReturn(99L);
+        .thenReturn(java.util.Optional.of(new RouteReservation(12L, 44L, 91L, 10_000.0)));
+    when(bookings.create(7L, request, 12L, new BigDecimal("267.00"))).thenReturn(99L);
 
     var response = service.book(request, "key-1");
 
     assertThat(response).containsEntry("bookingId", 99L);
     assertThat(response).containsEntry("status", "CONFIRMED");
     assertThat(response).containsEntry("routeOccurrenceId", 44L);
-    verify(bookings).create(7L, request, 12L, new BigDecimal("1540.00"));
+    // The stored estimate mirrors what the quote said the passenger pays.
+    verify(bookings).create(7L, request, 12L, new BigDecimal("267.00"));
   }
 
   @Test
@@ -94,8 +128,8 @@ class BookingServiceTest {
     when(idempotencyKeys.reserveNew(anyString(), anyString(), anyString(), anyString()))
         .thenReturn("key-2");
     when(routingFacade.reserveSeatsAndReturnRouteLength(44L, 1))
-        .thenReturn(java.util.Optional.of(new RouteReservation(12L, 44L, 8_000.0)));
-    when(bookings.create(7L, request, 12L, new BigDecimal("671.00"))).thenReturn(100L);
+        .thenReturn(java.util.Optional.of(new RouteReservation(12L, 44L, 91L, 8_000.0)));
+    when(bookings.create(7L, request, 12L, new BigDecimal("267.00"))).thenReturn(100L);
 
     service.book(request, "key-2");
 
@@ -131,8 +165,8 @@ class BookingServiceTest {
     when(idempotencyKeys.reserveNew("key-store", "subject", "booking:create", requestHash(request)))
         .thenReturn("key-store");
     when(routingFacade.reserveSeatsAndReturnRouteLength(44L, 1))
-        .thenReturn(java.util.Optional.of(new RouteReservation(12L, 44L, 8_000.0)));
-    when(bookings.create(7L, request, 12L, new BigDecimal("671.00"))).thenReturn(100L);
+        .thenReturn(java.util.Optional.of(new RouteReservation(12L, 44L, 91L, 8_000.0)));
+    when(bookings.create(7L, request, 12L, new BigDecimal("267.00"))).thenReturn(100L);
 
     service.book(request, "key-store");
 

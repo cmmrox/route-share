@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
+@lombok.extern.slf4j.Slf4j
 public class RouteServiceImpl implements RouteService {
   public static final int MIN_ROUTE_POINTS = 2;
   public static final int MAX_ROUTE_POINTS = 500;
@@ -60,8 +61,7 @@ public class RouteServiceImpl implements RouteService {
   private final RouteOccurrenceRepository occurrences;
   private final RouteBucketCellRepository bucketCells;
   private final MatchingSettingsRepository matchingSettings;
-  private final com.routeshare.pricing.domain.FareCalculator fareCalculator =
-      com.routeshare.pricing.domain.FareCalculator.defaultSriLankaCalculator();
+  private final com.routeshare.pricing.facade.PricingFacade pricing;
 
   public RouteServiceImpl(
       CurrentUserProvider current,
@@ -89,6 +89,7 @@ public class RouteServiceImpl implements RouteService {
         new RouteMatchScorer(),
         new RouteSchedulePolicy(clock),
         new RouteBucketCellGenerator(),
+        null,
         null,
         null,
         null,
@@ -481,16 +482,33 @@ public class RouteServiceImpl implements RouteService {
             row.getOverlapDistanceMeters(),
             row.getRequestedDistanceMeters());
     var score = routeMatchScorer.score(candidate);
-    // Matched distance is the on-route segment the passenger actually travels; fare mirrors
-    // booking.
+    // Matched distance is the on-route segment the passenger actually travels; the same figure
+    // prices the booking, so a result and its checkout can never disagree.
     long matchedMeters = Math.max(0, Math.round(row.getOverlapDistanceMeters()));
     int requestedSeats = Math.max(1, seats);
-    java.math.BigDecimal estimatedFare =
-        fareCalculator
-            .estimate(matchedMeters)
-            .totalFare()
-            .multiply(java.math.BigDecimal.valueOf(requestedSeats))
-            .setScale(2, java.math.RoundingMode.HALF_UP);
+    com.routeshare.pricing.dto.response.FareQuoteResponse fare = null;
+    java.math.BigDecimal estimatedFare = null;
+    if (row.getVehicleId() != null) {
+      try {
+        var quote =
+            pricing.quoteForMatch(
+                row.getRouteOccurrenceId(),
+                row.getVehicleId(),
+                java.math.BigDecimal.valueOf(matchedMeters),
+                java.math.BigDecimal.valueOf(score.overlapPercent()),
+                requestedSeats);
+        fare = com.routeshare.pricing.dto.response.FareQuoteResponse.forPassenger(quote);
+        estimatedFare = quote.passengerPays();
+      } catch (RuntimeException ex) {
+        // A vehicle with no live band has no legal price. Showing it unpriced is better than
+        // failing the whole search, and the publish gate should have kept it out anyway.
+        log.warn(
+            "search candidate omitted its fare: routeOccurrenceId={} vehicleId={}",
+            row.getRouteOccurrenceId(),
+            row.getVehicleId(),
+            ex);
+      }
+    }
     return new RouteSearchResponse(
         row.getRoutePlanId(),
         row.getRouteOccurrenceId(),
@@ -510,6 +528,7 @@ public class RouteServiceImpl implements RouteService {
         matchedMeters,
         estimatedFare,
         "LKR",
+        fare,
         row.getDriverName(),
         row.getVehicleMake(),
         row.getVehicleModel(),

@@ -1,6 +1,64 @@
 # RouteShareApp Development Status
 
-2026-08-01 (slice 02 code-complete — vehicles have classes and assessed rate bands)
+2026-08-01 (slice 03 code-complete — the fare engine is the prototype's, not the old calculator's)
+
+## 2026-08-01 — Slice 03: fare engine rewrite
+
+The money model is now the product's. Out: `250 base + 90/km + 5/min` with a 10% fee **added** on
+top. In: `gross = onRouteKm × that vehicle's chosen rate`, less a route-match discount, with the
+commission taken **out of** what the passenger pays. There is no base fare and no time component —
+a rider pays for the distance they actually ride on a road the driver was taking anyway, and
+charging for time would charge them for his traffic.
+
+`FareEngine` is pure and reproduces every figure in `data.jsx` exactly: 11.4 km at LKR 50/km grosses
+570; a 5.8 km seat on a 92% match is gross 290, discount 23, **passenger pays 267**, commission 27,
+**driver nets 240**.
+
+**Money is rounded to whole rupees**, not to two decimal places as the task specified. The
+prototype rounds every figure it shows, and a receipt reading "LKR 266.80" is a number nobody can
+hand over; scale-2 arithmetic misses the fixtures by 20 cents at every step. Values are still
+carried as `BigDecimal` at scale 2 and stored in `NUMERIC(12,2)`.
+
+Two invariants hold for every quote ever produced, and are **database CHECK constraints** rather
+than comments: `driverNet + commissionAmount = passengerPays`, and
+`passengerPays = grossFare − discountAmount`. `driverNet` is computed by subtraction, never by its
+own multiplication — rounding two percentages independently and hoping they add back is how a
+ledger drifts a rupee per trip. A test walks 4,000 rounding paths and both hold throughout.
+
+**Quotes are persisted, never recomputed.** Rate bands move and discount tiers are tunable, so a
+receipt read three months later must show the fare that was charged at the rate then in force.
+Every booking links its quote; the early drop-off reprices against the *original* rate and tier,
+because the passenger travelled less but the terms she booked under have not changed.
+
+**The policy surface (decision D1) exists.** `platform.policy_setting` holds 35 seeded rules —
+commission, the four discount tiers and their thresholds, penalty percentages, waiting times,
+payout floors, referral rates — with a history table, admin CRUD restricted to money roles, and a
+Caffeine cache evicted on write. `PricingArchitectureTest` fails the build if any of those figures
+is inlined as a Java constant again.
+
+**`POST /pricing/estimate` is deleted, not deprecated.** It took a distance from the request body,
+which let a client name the number its own fare was computed from — a free-money bug wearing the
+shape of an API. `estimate-by-route` now names a published trip and two fractions along the
+driver's stored line; the architecture test asserts no pricing input is declared in any request
+DTO. `FareCalculator` and `FareBreakdown` are gone, and `finance.fare_policy` keeps only `min_fare`.
+
+Payment now reads the commission from the persisted quote rather than recomputing it from a
+configured rate: otherwise the first commission change would settle old bookings under new terms.
+The driver earnings summary sums the commission rows the ledger already holds, so the headline can
+never disagree with the rows beneath it.
+
+Verification: `./mvnw spotless:check verify` → **BUILD SUCCESS, 319 tests, JaCoCo gate met**;
+`redocly lint` clean; `@routeshare/api-contracts` typecheck green. New tests: `FareEngineTest`
+(11 cases including the fixtures and the invariant sweep), `MatchDiscountTierTest`,
+`PolicySettingTest`, `PricingArchitectureTest`.
+
+**Deferred:** `scripts/simulation/verify-fare-engine.sh` is written but unrun (Blocker 013). It is
+the only check that exercises the two new CHECK constraints and the fixture reproduction through a
+live API.
+
+Next: slice 04 — charge timing and capture correctness, the product's central promise.
+
+## 2026-08-01 — Slice 02: vehicle classes and rate bands
 
 ## 2026-08-01 — Slice 02: vehicle classes and rate bands
 
@@ -244,11 +302,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_02_CODE_COMPLETE_RUNTIME_SMOKE_PENDING`
-- Current Active Task: `Slices 01 and 02 code-complete (runtime smoke pending, Blocker 013); slice 03 — fare engine rewrite — next`
+- Current Milestone: `MILESTONE_SLICE_03_CODE_COMPLETE_RUNTIME_SMOKE_PENDING`
+- Current Active Task: `Slices 01–03 code-complete (runtime smoke pending, Blocker 013); slice 04 — charge timing and capture correctness — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_02_RATE_BANDS_VERIFIED_BY_TESTS`
-- Repository Git Status: `Branch feat/comigo-unified-app-slice-01; slice 01 committed, slice 02 in progress; migrations V027 and V028 added`
+- Status: `SLICE_03_FARE_ENGINE_MATCHES_PROTOTYPE_FIXTURES`
+- Repository Git Status: `Slices 01–03 merged to main; migrations V027–V029 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

@@ -73,6 +73,24 @@ public interface FareLedgerRepository extends JpaRepository<FareLedgerEntryEntit
       nativeQuery = true)
   BigDecimal sumDriverGrossEarnings(@Param("driverAppUserId") long driverAppUserId);
 
+  /**
+   * The commission actually taken from this driver's trips. Summed from the ledger rather than
+   * recomputed from a rate, so the summary can never disagree with the rows beneath it.
+   */
+  @Query(
+      value =
+          """
+      SELECT COALESCE(SUM(f.amount), 0) AS "amount"
+      FROM payment.fare_ledger_entry f
+      JOIN booking.booking b ON b.booking_id = f.booking_id
+      JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+      WHERE d.app_user_id = :driverAppUserId
+        AND f.entry_type = 'PLATFORM_COMMISSION'
+      """,
+      nativeQuery = true)
+  BigDecimal sumDriverCommission(@Param("driverAppUserId") long driverAppUserId);
+
   @Query(
       value =
           """

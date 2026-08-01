@@ -58,17 +58,19 @@ start normally; only Postgres is blocked, which takes the API and every database
 
 Impact:
 
-- `scripts/simulation/verify-mode-gates.sh` (slice 01's named runtime verification) and
-  `scripts/simulation/verify-rate-bands.sh` (slice 02's) are written and syntax-checked but have
-  never been executed. The rate-band script is the only check that exercises slice 02's two database
-  triggers, so neither trigger has run.
+- `scripts/simulation/verify-mode-gates.sh` (slice 01), `scripts/simulation/verify-rate-bands.sh`
+  (slice 02) and `scripts/simulation/verify-fare-engine.sh` (slice 03) are written and
+  syntax-checked but have never been executed. Between them they are the only checks that exercise
+  slice 02's two database triggers and slice 03's two fare-quote CHECK constraints, so none of the
+  four has ever run.
 - The Keycloak role-state and `audit.audit_action` manual checks in
   `qa/test-cases/comigo-unified-app-backend/01-auth-unification-and-mode-gates-qa.md` depend on the
   same run.
-- `FlywayPostgisMigrationIntegrationTest` skips for the same reason, so **migrations `V027` and
-  `V028` have not been applied against a real PostGIS database** — only reviewed. `V028` adds two
-  PL/pgSQL trigger functions, which nothing has yet parsed. Apply both before trusting slice 03's
-  migrations to stack on top.
+- `FlywayPostgisMigrationIntegrationTest` skips for the same reason, so **migrations `V027`–`V029`
+  have not been applied against a real PostGIS database** — only reviewed. `V028` adds two PL/pgSQL
+  trigger functions and `V029` drops and recreates `pricing.fare_quote` and seeds 35 policy rows;
+  nothing has yet parsed any of it. Apply all three before trusting slice 04's migrations to stack
+  on top.
 
 Not blocking: the Maven gate (`spotless:check verify`, 264 tests) passes without Docker, and slice 01's
 behaviour is covered by unit tests.

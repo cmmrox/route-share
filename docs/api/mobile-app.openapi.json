@@ -7676,15 +7676,37 @@
         "tags": [
           "Pricing"
         ],
-        "summary": "Fare quote v2 from coordinates (reshaped)",
-        "x-routeshare-status": "PLANNED_SLICE_03",
+        "summary": "Fare estimate for a segment of a published trip",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RouteFareResponse"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -7692,8 +7714,25 @@
           "401": {
             "description": "Unauthenticated"
           },
-          "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+          "404": {
+            "description": "Trip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "RATE_BAND_NOT_SET — the trip's vehicle has no live rate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -7701,12 +7740,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/RouteFareEstimateRequest"
               }
             }
           }
         },
-        "operationId": "postPricingEstimateByRoute"
+        "operationId": "postPricingEstimateByRoute",
+        "description": "Prices the on-route distance between two points on the driver's stored route line, at that vehicle's assessed per-km rate, less the route-match discount. The driver's cut is withheld — this is a passenger surface."
       }
     },
     "/api/v1/driver/trips/{tripId}/start-extension": {
@@ -11840,50 +11880,6 @@
         "x-routeshare-use-instead": "/api/v1/passenger/payments/intents",
         "operationId": "postPaymentsIntents"
       }
-    },
-    "/api/v1/pricing/estimate": {
-      "post": {
-        "tags": [
-          "Pricing"
-        ],
-        "summary": "Removed — accepted a client-supplied distance",
-        "x-routeshare-status": "CUT",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthenticated"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          }
-        },
-        "description": "Slice 03 removes this endpoint. Fare inputs must be server-derived; a client-supplied distance is a free-money bug. Use POST /api/v1/pricing/estimate-by-route.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "deprecated": true,
-        "x-routeshare-cut-reason": "Accepted a client-supplied distance; replaced by estimate-by-route in slice 03.",
-        "operationId": "postPricingEstimate"
-      }
     }
   },
   "components": {
@@ -14646,6 +14642,157 @@
           "note": {
             "type": "string",
             "maxLength": 2000
+          }
+        }
+      },
+      "FareQuote": {
+        "type": "object",
+        "description": "A priced ride, with every line the fare screens draw so no client does arithmetic on money. The commission comes OUT of what the passenger pays, never on top: driverNet + commissionAmount == passengerPays always holds, and is enforced by a database constraint. commissionAmount and driverNet are omitted on passenger surfaces.",
+        "required": [
+          "currency",
+          "onRouteDistanceMeters",
+          "ratePerKm",
+          "seats",
+          "grossFare",
+          "passengerPays"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string",
+            "example": "LKR"
+          },
+          "onRouteDistanceMeters": {
+            "type": "number",
+            "format": "double",
+            "description": "Server-derived from the matched substring of the driver's route line."
+          },
+          "onRouteDistanceKm": {
+            "type": "number",
+            "format": "double"
+          },
+          "ratePerKm": {
+            "type": "number",
+            "format": "double",
+            "description": "The vehicle's own chosen rate inside its assessed band."
+          },
+          "seats": {
+            "type": "integer"
+          },
+          "grossFare": {
+            "type": "number",
+            "format": "double"
+          },
+          "matchPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "matchTier": {
+            "type": "string",
+            "enum": [
+              "HIGH",
+              "MID",
+              "LOW",
+              "BASE"
+            ]
+          },
+          "discountPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "discountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "passengerPays": {
+            "type": "number",
+            "format": "double",
+            "description": "The single headline number."
+          },
+          "commissionPercent": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Driver surfaces only."
+          },
+          "commissionAmount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Driver surfaces only."
+          },
+          "driverNet": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Driver surfaces only."
+          },
+          "minFareApplied": {
+            "type": "boolean"
+          },
+          "quotedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "policyVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Fingerprint of the pricing rules in force when this was quoted."
+          }
+        }
+      },
+      "RouteFareEstimateRequest": {
+        "type": "object",
+        "description": "Locates a rider's pickup and drop-off along a published trip's route line. No distance, rate or fare may be sent — every pricing input is server-derived.",
+        "required": [
+          "routeOccurrenceId",
+          "pickupRouteFraction",
+          "dropoffRouteFraction"
+        ],
+        "properties": {
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pickupRouteFraction": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "dropoffRouteFraction": {
+            "type": "number",
+            "format": "double",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "seats": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
+        }
+      },
+      "RouteFareResponse": {
+        "type": "object",
+        "properties": {
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "onRouteDistanceMeters": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fare": {
+            "$ref": "#/components/schemas/FareQuote"
           }
         }
       }

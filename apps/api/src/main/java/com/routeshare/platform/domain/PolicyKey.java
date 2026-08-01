@@ -1,0 +1,46 @@
+package com.routeshare.platform.domain;
+
+/**
+ * Every figure the product states as a rule.
+ *
+ * <p>Decision D1: none of these may be inlined as a Java constant. A commission rate written into
+ * two files is a commission rate that will eventually differ between them, and the one that is
+ * wrong will be the one nobody reads. {@code PricingArchitectureTest} enforces this.
+ */
+public enum PolicyKey {
+  COMMISSION_PCT,
+  MATCH_DISCOUNT_TIER_95_PCT,
+  MATCH_DISCOUNT_TIER_75_PCT,
+  MATCH_DISCOUNT_TIER_45_PCT,
+  MATCH_DISCOUNT_TIER_BASE_PCT,
+  MATCH_DISCOUNT_THRESHOLD_HIGH,
+  MATCH_DISCOUNT_THRESHOLD_MID,
+  MATCH_DISCOUNT_THRESHOLD_LOW,
+  CURRENCY,
+  EARLY_DROP_ADJUSTED_PER_MONTH,
+  DRIVER_CANCEL_FREE_HOURS,
+  LATE_CANCEL_PENALTY_PCT,
+  PAX_CANCEL_AFTER_START_PCT,
+  NO_SHOW_PENALTY_PCT,
+  DRIVER_LATE_GRACE_MIN,
+  DRIVER_LATE_PENALTY_PCT,
+  PENALTY_VICTIM_PCT,
+  PENALTY_PLATFORM_PCT,
+  PICKUP_WAIT_MIN,
+  PICKUP_WAIT_EXTEND_MIN,
+  PICKUP_WAIT_EXTEND_LIMIT,
+  START_BUFFER_MIN,
+  START_EXTEND_MIN,
+  START_EXTEND_LIMIT,
+  MISSED_START_LIMIT,
+  REVIEW_REPLY_LIMIT,
+  PAYOUT_MINIMUM,
+  PAYOUT_DAY,
+  SEARCH_RADIUS_KM,
+  REFERRAL_PAX_PCT,
+  REFERRAL_DRIVER_PCT,
+  REFERRAL_WINDOW_MONTHS,
+  REFERRAL_MAX_TRIPS,
+  REFEREE_FIRST_RIDE_DISCOUNT,
+  REWARDS_BANK_MINIMUM
+}

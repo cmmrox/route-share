@@ -120,9 +120,8 @@ public class AdminFinanceServiceImpl implements AdminFinanceService {
 
   private void applyPolicy(FarePolicyEntity p, FarePolicyRequest req) {
     p.setName(req.name());
-    p.setBaseFare(req.baseFare());
-    p.setPerKm(req.perKm());
-    p.setPerMin(req.perMin() == null ? BigDecimal.ZERO : req.perMin());
+    // Base fare, per-km and per-minute retired with the old model. The band prices the distance;
+    // the floor is all that is left to configure here.
     p.setMinFare(req.minFare() == null ? BigDecimal.ZERO : req.minFare());
     p.setCurrency(req.currency() == null || req.currency().isBlank() ? CURRENCY : req.currency());
     if (req.active() != null) {
@@ -257,15 +256,7 @@ public class AdminFinanceServiceImpl implements AdminFinanceService {
 
   private FarePolicyResponse toPolicy(FarePolicyEntity e) {
     return new FarePolicyResponse(
-        e.getId(),
-        e.getName(),
-        e.getBaseFare(),
-        e.getPerKm(),
-        e.getPerMin(),
-        e.getMinFare(),
-        e.getCurrency(),
-        e.isActive(),
-        e.getUpdatedAt());
+        e.getId(), e.getName(), e.getMinFare(), e.getCurrency(), e.isActive(), e.getUpdatedAt());
   }
 
   private FinanceAdjustmentResponse toAdjustment(FinanceAdjustmentEntity e) {

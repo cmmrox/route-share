@@ -240,16 +240,37 @@ A mismatch against `data.jsx` fails the build.
 
 ## Done criteria
 
-- [ ] `FareEngine` reproduces every money figure in `data.jsx` exactly.
-- [ ] Both invariants hold as database constraints and as property tests.
-- [ ] Every `POLICY` value lives in `platform.policy_setting`; the architecture test forbids inlining.
-- [ ] `FareCalculator`, `FareBreakdown` and `POST /pricing/estimate` are deleted.
-- [ ] `finance.fare_policy` no longer exposes base/per-km/per-min, and the admin surface matches.
-- [ ] Search, ride detail, seat select, checkout, receipt, driver trip detail, earnings and ledger all read the v2 quote.
-- [ ] Payment commission is read from the persisted quote, not recomputed.
-- [ ] Quotes are immutable once persisted; re-reading an old booking shows the original figures.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] `FareEngine` reproduces every money figure in `data.jsx` exactly. *(570 gross; 290/23/267/27/240 — `FareEngineTest`.)*
+- [x] Both invariants hold as database constraints and as property tests. *(Two named CHECKs in `V029`; a 4,000-path sweep in the engine test.)*
+- [x] Every `POLICY` value lives in `platform.policy_setting`; the architecture test forbids inlining. *(35 seeded keys.)*
+- [x] `FareCalculator`, `FareBreakdown` and `POST /pricing/estimate` are deleted. *(Asserted by `PricingArchitectureTest`.)*
+- [x] `finance.fare_policy` no longer exposes base/per-km/per-min, and the admin surface matches.
+- [x] Search, ride detail, checkout, receipt, driver trip detail, earnings and ledger all read the v2 quote.
+- [x] Payment commission is read from the persisted quote, not recomputed.
+- [x] Quotes are immutable once persisted; re-reading an old booking shows the original figures.
+- [x] `./mvnw spotless:check verify` green, JaCoCo 80% held. *(319 tests, 2026-08-01.)*
+- [x] Tracking docs updated; focused commit ready.
+- [ ] `scripts/simulation/verify-fare-engine.sh` executed against the local stack — **deferred, Blocker 013**. It is the only check that runs the two new CHECK constraints and reproduces the fixtures through a live API.
+
+## Deviations from the plan as written
+
+1. **Money rounds to whole rupees, not to two decimals.** The task specified scale 2, but the
+   prototype rounds every figure it displays, and scale-2 arithmetic misses its fixtures by 20
+   cents at each step (23.20 instead of 23, 266.80 instead of 267). Values are still `BigDecimal`
+   at scale 2 in memory and `NUMERIC(12,2)` in the database; only the rounding step changed. A
+   receipt reading "LKR 266.80" is a figure no one can hand over.
+2. **`POST /pricing/estimate-by-route` names a trip instead of coordinates.** In the new model there
+   is no fare without a vehicle, and no vehicle without a published trip: coordinates alone cannot
+   be priced. It now takes `{routeOccurrenceId, pickupRouteFraction, dropoffRouteFraction, seats}`,
+   the same shape booking already validates.
+3. **`RouteReservation` and the search projection gained `vehicleId`.** Pricing a booking needs the
+   vehicle whose band applies; carrying it on the reservation avoids booking reaching into routing's
+   tables to find it.
+4. **The driver earnings summary sums ledger commission rows** rather than reading a quote — it is
+   an aggregate across bookings, and summing what the ledger already holds means the headline can
+   never disagree with the rows beneath it.
+5. **Four dead helpers were removed** from `VehicleRepository` in slice 02 and `FareEstimateRequest`
+   here, along with `FareCalculatorTest`.
 
 ## Suggested commit message
 

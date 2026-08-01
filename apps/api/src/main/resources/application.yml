@@ -71,6 +71,9 @@ routeshare:
   # Working days ComiGo answers a driver's rate re-assessment within; shown in D39's copy.
   rate-band:
     review-sla-days: ${ROUTESHARE_RATE_BAND_REVIEW_SLA_DAYS:3}
+  # Policy reads are hot — every search result prices one — so they are cached and evicted on write.
+  policy:
+    cache-ttl-seconds: ${ROUTESHARE_POLICY_CACHE_TTL_SECONDS:60}
   google-maps:
     enabled: ${GOOGLE_MAPS_ENABLED:false}
     server-api-key: ${GOOGLE_MAPS_SERVER_API_KEY:}

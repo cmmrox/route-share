@@ -69,6 +69,7 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
           ST_Distance(r.route_line::geography, p.pickup::geography) AS "pickupDistanceMeters",
           ST_Distance(r.route_line::geography, p.dropoff::geography) AS "dropoffDistanceMeters",
           COALESCE(dp.display_name, dau.display_name, 'Driver') AS "driverName",
+          r.vehicle_id AS "vehicleId",
           v.make AS "vehicleMake",
           v.model AS "vehicleModel",
           v.registration_number AS "vehicleRegistration",
@@ -109,6 +110,7 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
         "pickupDistanceMeters",
         "dropoffDistanceMeters",
         "driverName",
+        "vehicleId",
         "vehicleMake",
         "vehicleModel",
         "vehicleRegistration",
@@ -333,6 +335,9 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
     double getRequestedDistanceMeters();
 
     String getDriverName();
+
+    /** The vehicle whose assessed rate band prices this candidate. */
+    Long getVehicleId();
 
     String getVehicleMake();
 

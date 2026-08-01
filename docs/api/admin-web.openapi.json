@@ -4849,6 +4849,139 @@
           }
         }
       }
+    },
+    "/api/v1/admin/policy-settings": {
+      "get": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "List runtime policy settings",
+        "description": "Commission, route-match discount tiers, penalty percentages, waiting times and payout floors. Every figure the product states as a rule lives here so it can be corrected without a deploy.",
+        "operationId": "FinanceListPolicySettings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AdminPolicySetting"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/policy-settings/{policyKey}": {
+      "put": {
+        "tags": [
+          "Finance"
+        ],
+        "summary": "Change a policy setting",
+        "description": "Restricted to ADMIN, SUPER_ADMIN and FINANCE_ADMIN: changing the commission changes what every driver earns on their next trip. Audited with old and new value, and kept in a history table.",
+        "operationId": "FinanceUpdatePolicySetting",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policyKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPolicySettingUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminPolicySetting"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Value is not valid for this setting's type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown policy key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5718,12 +5851,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "baseFare": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "perKm": {
-            "$ref": "#/components/schemas/Money"
-          },
           "minimumFare": {
             "$ref": "#/components/schemas/Money"
           },
@@ -6264,6 +6391,45 @@
           },
           "decisionNote": {
             "type": "string"
+          }
+        }
+      },
+      "AdminPolicySetting": {
+        "type": "object",
+        "properties": {
+          "policyKey": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "valueType": {
+            "type": "string",
+            "enum": [
+              "INT",
+              "DECIMAL",
+              "BOOLEAN",
+              "STRING"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminPolicySettingUpdate": {
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "string",
+            "maxLength": 200
           }
         }
       }
