@@ -210,15 +210,30 @@ is rejected by the database, not only the service; a second open review request 
 
 ## Done criteria
 
-- [ ] Four classes seeded with caps and default bands; seat count validated against the cap.
-- [ ] Band lifecycle `NOT_SET → PENDING_ASSESSMENT → ACTIVE → UNDER_REVIEW` implemented with DB constraints.
-- [ ] Band-inside-class enforced at database level.
-- [ ] Driver can read the band, choose a rate inside it, and request exactly one open re-assessment.
-- [ ] Admin can assess, and decide review requests, with full audit.
-- [ ] `RATE_BAND_NOT_SET` blocks publishing and appears in `/me/context`.
-- [ ] D39, D39b, D39c, D40, D06, D07 and P07 payload fields are all supplied by the contract.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] Four classes seeded with caps and default bands; seat count validated against the cap. *(Service refusal plus a `BEFORE INSERT OR UPDATE` trigger.)*
+- [x] Band lifecycle `NOT_SET → PENDING_ASSESSMENT → ACTIVE → UNDER_REVIEW` implemented with DB constraints.
+- [x] Band-inside-class enforced at database level. *(`vehicle_rate_band_within_class()` trigger — unexecuted until Blocker 013 clears.)*
+- [x] Driver can read the band, choose a rate inside it, and request exactly one open re-assessment. *(Partial unique index enforces the "one".)*
+- [x] Admin can assess, and decide review requests, with full audit. *(Before/after band values recorded on every assessment.)*
+- [x] `RATE_BAND_NOT_SET` blocks publishing and appears in `/me/context`.
+- [x] D39, D39b, D39c, D40, D06, D07 and P07 payload fields are all supplied by the contract.
+- [x] `./mvnw spotless:check verify` green, JaCoCo 80% held. *(294 tests, 2026-08-01.)*
+- [x] Tracking docs updated; focused commit ready.
+- [ ] `scripts/simulation/verify-rate-bands.sh` executed against the local stack — **deferred, Blocker 013**. It is the only check that runs the two database triggers.
+
+## Deviations from the plan as written
+
+1. **`RATE_BAND_NOT_SET` is a driver-level gate, not a per-vehicle one.** `DriverGuard.canPublish`
+   takes no vehicle id, so the gate asks whether the driver has *any* approved vehicle with a live,
+   priced band. A driver with one priced car and one unpriced car can publish — which is what D40
+   itself implies when it points the driver at their other publishable vehicle.
+2. **The band lifecycle treats `UNDER_REVIEW` as live.** D39 says asking for a re-assessment does
+   not cost the driver their current rate, so `isActive()` covers both `ACTIVE` and `UNDER_REVIEW`
+   and the publish gate stays clear throughout a review.
+3. **`driver.driver_document` seat/expiry aside, `V028` also seeds bands for existing approved
+   vehicles**, so no already-approved car is left with no row for D40 to render.
+4. **`ROUTESHARE_RATE_BAND_REVIEW_SLA_DAYS` landed as an application property now** (`routeshare.rate-band.review-sla-days`), as the task allowed, since slice 03's policy surface does not exist yet.
+5. **Two dead helper methods were removed** from `VehicleRepository` (`create`, `listByDriverProfileId`, `review`, `toResponse`) — response-building in a repository, unused since the service took over, and they would otherwise have needed the new band fields threaded through them.
 
 ## Suggested commit message
 

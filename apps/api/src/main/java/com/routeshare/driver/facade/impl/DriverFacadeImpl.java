@@ -1,6 +1,7 @@
 package com.routeshare.driver.facade.impl;
 
 import com.routeshare.driver.domain.DriverGate;
+import com.routeshare.driver.entity.DriverProfileEntity;
 import com.routeshare.driver.facade.DriverFacade;
 import com.routeshare.driver.repository.DriverProfileRepository;
 import com.routeshare.driver.service.DriverGateService;
@@ -28,6 +29,11 @@ public class DriverFacadeImpl implements DriverFacade {
   @Override
   public Optional<String> findDriverStatusByAppUserId(long appUserId) {
     return drivers.findStatusByAppUserId(appUserId);
+  }
+
+  @Override
+  public Optional<Long> findAppUserIdByDriverProfileId(long driverProfileId) {
+    return drivers.findById(driverProfileId).map(DriverProfileEntity::getAppUserId);
   }
 
   @Override

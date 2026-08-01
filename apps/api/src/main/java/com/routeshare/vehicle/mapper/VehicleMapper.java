@@ -11,6 +11,12 @@ import org.mapstruct.Mapping;
 
 @Mapper(config = RouteShareMapperConfig.class)
 public interface VehicleMapper {
+  /**
+   * Band state lives in another table, so it is supplied by the caller rather than mapped: a
+   * vehicle row alone cannot say whether the car has a price.
+   */
+  @Mapping(target = "bandStatus", ignore = true)
+  @Mapping(target = "chosenRatePerKm", ignore = true)
   VehicleResponse toResponse(VehicleEntity entity);
 
   VehicleDocumentResponse toDocumentResponse(VehicleDocumentEntity entity);
@@ -23,6 +29,7 @@ public interface VehicleMapper {
   @Mapping(target = "color", source = "request.color")
   @Mapping(target = "registrationNumber", source = "request.registrationNumber")
   @Mapping(target = "seatCount", source = "request.seatCount")
+  @Mapping(target = "classKey", source = "request.vehicleClass")
   @Mapping(target = "status", ignore = true)
   VehicleEntity toEntity(long driverProfileId, VehicleRequest request);
 }

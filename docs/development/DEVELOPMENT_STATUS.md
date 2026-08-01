@@ -1,6 +1,67 @@
 # RouteShareApp Development Status
 
-2026-08-01 (slice 01 code-complete — one token drives and rides; runtime smoke deferred)
+2026-08-01 (slice 02 code-complete — vehicles have classes and assessed rate bands)
+
+## 2026-08-01 — Slice 02: vehicle classes and rate bands
+
+The product's central pricing rule now exists in the database: **a driver never types a price.**
+ComiGo assesses a min–max per-km band per vehicle and the driver picks a point inside it, which is
+why two cars on the same road are not the same price and why search will be able to explain "why
+Priya's rate is LKR 46". Nothing here prices a trip — slice 03 owns the fare engine; this slice
+stores and governs the number.
+
+Four classes are seeded with seat caps and default ranges (`CAR` 3/38–62, `SUV` 4/46–74, `VAN`
+6/40–68, `THREE_WHEELER` 2/26–42). The band has its own lifecycle —
+`NOT_SET → PENDING_ASSESSMENT → ACTIVE → UNDER_REVIEW` — deliberately separate from vehicle
+approval, because **approved papers are not a price**: without a band there is no legal figure to
+put on a seat. That state is board D40, a first-class screen rather than an error, and it is now
+also a real publish gate: slice 01's `RATE_BAND_NOT_SET` fires from `canPublish` the moment a driver
+has an approved vehicle and no live band.
+
+Three things are enforced by the database rather than by service code, because each one is a pricing
+incident rather than a validation slip:
+
+1. **A band outside its class range** — a `BEFORE INSERT OR UPDATE` trigger, since a `CHECK` cannot
+   read another table. The service refuses it too; the trigger is what makes a bad migration or a
+   direct SQL edit fail as well.
+2. **A seat count above the class cap** — same mechanism. Selling a fourth seat in a three-seat
+   class is a capacity lie told to a rider.
+3. **One open re-assessment per vehicle** — a partial unique index, so D39's "one re-assessment"
+   is a constraint rather than a sentence in a spec.
+
+Two decisions worth recording:
+
+- **The four factor rows are displayed justification, not inputs** (decision D2). The admin types
+  the band; the factors explain it. The service checks that the deltas roughly explain the offset
+  from the class default and **warns rather than refuses** — the prose must never be able to block
+  an operational price change.
+- **Assessment defaults the chosen rate to the midpoint**, and keeps an existing rate if it still
+  fits. Otherwise a band would land and the car would still be unpublishable until the driver
+  happened to open a screen.
+
+Authority is split deliberately: a verification agent may approve a car's papers but may **not**
+price it — band assessment is restricted to `ADMIN`, `SUPER_ADMIN` and `FINANCE_ADMIN`. A driver
+setting their own band would be the most valuable escalation in the system, and it is tested
+explicitly. Rate positions (bottom/middle/top, with their ranking and demand copy) are derived
+server-side so the driver's screen and the passenger's explanation can never disagree.
+
+Verification: `./mvnw spotless:check verify` → **BUILD SUCCESS, 294 tests, JaCoCo gate met**;
+`redocly lint` on the mobile contract → zero errors; `@routeshare/api-contracts` typecheck green.
+New tests: `RateBandServiceImplTest` (19 cases), `RatePositionTest`, plus class-cap and
+band-lifecycle cases added to `VehicleServiceImplTest` and `DriverGateServiceTest`.
+
+**Deferred:** `scripts/simulation/verify-rate-bands.sh` is written but unrun — same cause as slice
+01, host port 5433 (Blocker 013). It is the only check that exercises the two database triggers, so
+neither trigger has executed yet.
+
+**Found, not fixed:** the mobile contract's `Vehicle` schema uses `year`, `passengerSeatCapacity`
+and `verificationStatus` where the API returns `manufactureYear`, `seatCount` and `status`. That
+drift predates this slice (it survived slice 00's reconciliation) and would break a generated
+client. Recorded as Blocker 014 rather than renamed mid-slice.
+
+Next: slice 03 — the fare engine rewrite, which reads the chosen rate this slice stores.
+
+## 2026-08-01 — Slice 01: auth unification and mode gates
 
 ## 2026-08-01 — Slice 01: auth unification and mode gates
 
@@ -183,11 +244,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_01_CODE_COMPLETE_RUNTIME_SMOKE_PENDING`
-- Current Active Task: `Slice 01 — auth unification and mode gates (runtime smoke pending, Blocker 013); slice 02 next`
+- Current Milestone: `MILESTONE_SLICE_02_CODE_COMPLETE_RUNTIME_SMOKE_PENDING`
+- Current Active Task: `Slices 01 and 02 code-complete (runtime smoke pending, Blocker 013); slice 03 — fare engine rewrite — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_01_ONE_TOKEN_BOTH_MODES_VERIFIED_BY_TESTS`
-- Repository Git Status: `Slice 01 changes uncommitted on main; migration V027 added, ten driver role checks replaced by the composite guard`
+- Status: `SLICE_02_RATE_BANDS_VERIFIED_BY_TESTS`
+- Repository Git Status: `Branch feat/comigo-unified-app-slice-01; slice 01 committed, slice 02 in progress; migrations V027 and V028 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

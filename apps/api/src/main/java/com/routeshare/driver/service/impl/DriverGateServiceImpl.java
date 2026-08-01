@@ -110,8 +110,16 @@ public class DriverGateServiceImpl implements DriverGateService {
               GateCodes.VEHICLE_NOT_APPROVED,
               "Add a vehicle and wait for it to be approved before publishing a route.",
               "/driver/vehicles"));
+    } else if (!vehicles.existsPublishableVehicleForDriver(driverProfileId)) {
+      // Board D40: approved papers are not a price. A driver whose car is approved but unpriced is
+      // told that plainly here, rather than discovering it when publishing fails.
+      gates.add(
+          new DriverGate(
+              GateCodes.RATE_BAND_NOT_SET,
+              "ComiGo is still setting the per-km rate for your vehicle. We'll let you know as"
+                  + " soon as it's ready.",
+              "/driver/vehicles"));
     }
-    // The rate-band blocker (D40, RATE_BAND_NOT_SET) is wired in slice 02, which owns rate bands.
     return List.copyOf(gates);
   }
 

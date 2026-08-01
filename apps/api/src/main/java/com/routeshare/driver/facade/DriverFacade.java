@@ -11,6 +11,9 @@ public interface DriverFacade {
 
   Optional<String> findDriverStatusByAppUserId(long appUserId);
 
+  /** The account behind a driver profile — for notifying the driver from another module. */
+  Optional<Long> findAppUserIdByDriverProfileId(long driverProfileId);
+
   /**
    * Why this account cannot use driver endpoints — empty when it can. The single seam other modules
    * use, so no one reaches into driver repositories to ask.

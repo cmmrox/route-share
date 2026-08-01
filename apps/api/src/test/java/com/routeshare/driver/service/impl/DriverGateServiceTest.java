@@ -119,6 +119,7 @@ class DriverGateServiceTest {
     profile("APPROVED");
     documents(document(1L, "IDENTITY", DriverDocumentEntity.STATUS_APPROVED, null));
     when(vehicles.existsApprovedVehicleForDriver(PROFILE_ID)).thenReturn(true);
+    when(vehicles.existsPublishableVehicleForDriver(PROFILE_ID)).thenReturn(true);
 
     List<DriverGate> gates = service.publishGates(APP_USER_ID);
     assertThat(codes(gates)).containsExactly(GateCodes.DOCUMENT_MISSING);
@@ -132,6 +133,7 @@ class DriverGateServiceTest {
         document(1L, "IDENTITY", DriverDocumentEntity.STATUS_APPROVED, null),
         document(2L, "LICENCE", DriverDocumentEntity.STATUS_REJECTED, null));
     when(vehicles.existsApprovedVehicleForDriver(PROFILE_ID)).thenReturn(true);
+    when(vehicles.existsPublishableVehicleForDriver(PROFILE_ID)).thenReturn(true);
 
     List<DriverGate> gates = service.publishGates(APP_USER_ID);
     assertThat(codes(gates)).containsExactly(GateCodes.DOCUMENT_REJECTED);
@@ -145,9 +147,25 @@ class DriverGateServiceTest {
         document(1L, "IDENTITY", DriverDocumentEntity.STATUS_APPROVED, null),
         document(2L, "LICENCE", DriverDocumentEntity.STATUS_APPROVED, NOW.minusSeconds(86_400)));
     when(vehicles.existsApprovedVehicleForDriver(PROFILE_ID)).thenReturn(true);
+    when(vehicles.existsPublishableVehicleForDriver(PROFILE_ID)).thenReturn(true);
 
     assertThat(codes(service.publishGates(APP_USER_ID)))
         .containsExactly(GateCodes.DOCUMENT_EXPIRED);
+  }
+
+  @Test
+  void anApprovedVehicleWithNoRateBandBlocksPublishing() {
+    profile("APPROVED");
+    documents(
+        document(1L, "IDENTITY", DriverDocumentEntity.STATUS_APPROVED, null),
+        document(2L, "LICENCE", DriverDocumentEntity.STATUS_APPROVED, null));
+    when(vehicles.existsApprovedVehicleForDriver(PROFILE_ID)).thenReturn(true);
+    when(vehicles.existsPublishableVehicleForDriver(PROFILE_ID)).thenReturn(false);
+
+    // Board D40: approved papers are not a price, and the driver is told so rather than left to
+    // discover it when publishing fails.
+    assertThat(codes(service.publishGates(APP_USER_ID)))
+        .containsExactly(GateCodes.RATE_BAND_NOT_SET);
   }
 
   @Test
@@ -169,6 +187,7 @@ class DriverGateServiceTest {
         document(1L, "IDENTITY", DriverDocumentEntity.STATUS_APPROVED, null),
         document(2L, "LICENCE", DriverDocumentEntity.STATUS_APPROVED, NOW.plusSeconds(86_400)));
     when(vehicles.existsApprovedVehicleForDriver(PROFILE_ID)).thenReturn(true);
+    when(vehicles.existsPublishableVehicleForDriver(PROFILE_ID)).thenReturn(true);
 
     assertThat(service.publishGates(APP_USER_ID)).isEmpty();
   }

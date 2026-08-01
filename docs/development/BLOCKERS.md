@@ -17,6 +17,33 @@ Blocker Status Values:
 
 ## Active Blockers
 
+### Blocker 014 — `Vehicle` contract field names do not match the API
+
+Status: `OPEN`
+Severity: `MEDIUM`
+
+Description:
+
+`docs/api/mobile-app.openapi.json` describes `Vehicle` with `year`, `passengerSeatCapacity` and
+`verificationStatus`. `VehicleResponse` returns `manufactureYear`, `seatCount` and `status`. A client
+generated from the contract would read three fields that never arrive.
+
+Found during slice 02 while adding `classKey`, `bandStatus` and `chosenRatePerKm` to the same schema
+(those three do match). The drift predates the slice — it survived slice 00's reconciliation because
+that pass compared paths and operations, not property names.
+
+Impact: `GET/POST /api/v1/driver/vehicles` only. No runtime failure today, since no generated client
+is in use yet.
+
+Resolution:
+
+Decide which side is authoritative — the contract reads better, the API is what exists — then change
+one and reconcile in a single commit. Worth doing before the mobile feature plan wires D06/D07, and
+worth a property-level sweep of the whole contract at the same time, since this class of drift would
+not be caught by the checks slice 00 ran.
+
+---
+
 ### Blocker 013 — Local stack will not start: host port 5433 is taken
 
 Status: `OPEN`
@@ -31,13 +58,16 @@ start normally; only Postgres is blocked, which takes the API and every database
 
 Impact:
 
-- `scripts/simulation/verify-mode-gates.sh` (slice 01's named runtime verification) is written and
-  syntax-checked but has never been executed.
+- `scripts/simulation/verify-mode-gates.sh` (slice 01's named runtime verification) and
+  `scripts/simulation/verify-rate-bands.sh` (slice 02's) are written and syntax-checked but have
+  never been executed. The rate-band script is the only check that exercises slice 02's two database
+  triggers, so neither trigger has run.
 - The Keycloak role-state and `audit.audit_action` manual checks in
   `qa/test-cases/comigo-unified-app-backend/01-auth-unification-and-mode-gates-qa.md` depend on the
   same run.
-- `FlywayPostgisMigrationIntegrationTest` skips for the same reason, so **migration `V027` has not been
-  applied against a real PostGIS database** — only reviewed. Apply it before trusting slice 02's
+- `FlywayPostgisMigrationIntegrationTest` skips for the same reason, so **migrations `V027` and
+  `V028` have not been applied against a real PostGIS database** — only reviewed. `V028` adds two
+  PL/pgSQL trigger functions, which nothing has yet parsed. Apply both before trusting slice 03's
   migrations to stack on top.
 
 Not blocking: the Maven gate (`spotless:check verify`, 264 tests) passes without Docker, and slice 01's
