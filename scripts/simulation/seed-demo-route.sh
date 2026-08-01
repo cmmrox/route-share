@@ -38,11 +38,19 @@ sim_psql "UPDATE driver.driver_profile SET verification_status='APPROVED', updat
 REGISTRATION="CAB-$(( RANDOM % 9000 + 1000 ))"
 sim_log "creating vehicle $REGISTRATION"
 VEHICLE_JSON="$(sim_api "$DRIVER_TOKEN" POST /api/v1/driver/vehicles \
-  "{\"make\":\"Toyota\",\"model\":\"Aqua\",\"manufactureYear\":2019,\"color\":\"Blue\",\"registrationNumber\":\"$REGISTRATION\",\"seatCount\":4}")"
+  "{\"make\":\"Toyota\",\"model\":\"Aqua\",\"manufactureYear\":2019,\"color\":\"Blue\",\"registrationNumber\":\"$REGISTRATION\",\"seatCount\":3,\"vehicleClass\":\"CAR\"}")"
 VEHICLE_ID="$(sim_json_get "$VEHICLE_JSON" "d['data']['id']")"
 
 sim_log "approving vehicle $VEHICLE_ID locally (SQL, local QA only)"
 sim_psql "UPDATE vehicle.vehicle SET status='APPROVED', updated_at=now() WHERE vehicle_id=$VEHICLE_ID" >/dev/null
+
+# Since slice 02 an approved car with no assessed rate band cannot publish at all (D40). The real
+# flow is an admin assessment; this is the same local-QA SQL shortcut used for the approvals above.
+sim_log "assessing the rate band for vehicle $VEHICLE_ID (SQL, local QA only)"
+sim_psql "INSERT INTO vehicle.vehicle_rate_band (vehicle_id, rate_min, rate_max, chosen_rate, status, set_at)
+          VALUES ($VEHICLE_ID, 41.00, 58.00, 50.00, 'ACTIVE', now())
+          ON CONFLICT (vehicle_id) DO UPDATE
+            SET rate_min=41.00, rate_max=58.00, chosen_rate=50.00, status='ACTIVE', set_at=now()" >/dev/null
 
 DEPARTURE="$(python3 -c "from datetime import datetime,timezone,timedelta;print((datetime.now(timezone.utc)+timedelta(minutes=$OFFSET_MINUTES)).strftime('%Y-%m-%dT%H:%M:%SZ'))")"
 sim_log "publishing Colombo Fort -> Nugegoda route departing $DEPARTURE ($SEATS seats)"

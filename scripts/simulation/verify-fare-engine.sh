@@ -76,11 +76,19 @@ ROUTE_LEN="$(sim_psql "SELECT round(r.route_length_m) FROM routing.route_occurre
 sim_psql "UPDATE vehicle.vehicle_rate_band SET rate_min = 41, rate_max = 58, chosen_rate = 50,
           status = 'ACTIVE' WHERE vehicle_id = $VEHICLE_ID" >/dev/null
 
-# 1 — the full-route fixture: 11.4 km at 50/km.
-FRACTION="$(python3 -c "print(min(1.0, 11400/max(1,$ROUTE_LEN)))")"
+# 1 — the rule itself on the whole seeded route: gross = onRouteKm × rate, rounded to whole rupees.
+# The prototype's 11.4 km → 570 fixture is asserted exactly by FareEngineTest; it cannot be
+# reproduced here, because the seeded Fort → Nugegoda corridor is only ~9.5 km and the fraction
+# would simply clamp to 1.0. What this check adds over the unit test is that the same arithmetic
+# holds against a real stored geometry and a real assessed band.
 R="$(call POST /api/v1/pricing/estimate-by-route "$TOKEN" \
-  "{\"routeOccurrenceId\":$OCCURRENCE_ID,\"pickupRouteFraction\":0,\"dropoffRouteFraction\":$FRACTION,\"seats\":1}")"
-equals "11.4 km at LKR 50/km grosses 570" "$(field "$R" fare.grossFare)" "570"
+  "{\"routeOccurrenceId\":$OCCURRENCE_ID,\"pickupRouteFraction\":0,\"dropoffRouteFraction\":1.0,\"seats\":1}")"
+EXPECTED_GROSS="$(python3 -c "
+from decimal import Decimal, ROUND_HALF_UP
+km = Decimal('$(field "$R" fare.onRouteDistanceKm)')
+rate = Decimal('$(field "$R" fare.ratePerKm)')
+print((km * rate).quantize(Decimal('1'), rounding=ROUND_HALF_UP))")"
+equals "the whole route grosses onRouteKm x rate" "$(field "$R" fare.grossFare)" "$EXPECTED_GROSS"
 
 # 2 — the seat fixture: 5.8 km at a 92% match.
 FRACTION="$(python3 -c "print(min(1.0, 5800/max(1,$ROUTE_LEN)))")"

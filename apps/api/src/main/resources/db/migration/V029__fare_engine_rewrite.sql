@@ -11,6 +11,8 @@
 -- ── the policy surface (decision D1) ─────────────────────────────────────────────────────────────
 -- Every figure the product states as a rule lives here, so a number can only be wrong in one place
 -- and can be corrected without a deploy.
+CREATE SCHEMA IF NOT EXISTS platform;
+
 CREATE TABLE platform.policy_setting (
     policy_key             TEXT PRIMARY KEY,
     value                  TEXT NOT NULL,

@@ -94,6 +94,10 @@ R="$(call GET /api/v1/driver/documents "$TOKEN")"
 check "approved -> driver endpoint 200 on the ORIGINAL token" \
   "$([ "$(status_of "$R")" = 200 ] && echo true || echo false)"
 
+# A rider creates this at signup; the phone-OTP account here has never been through that screen,
+# so seed it first. Without this the GET below returns 404 "Passenger profile not found" — which
+# says nothing about the gate, since a gate rejection is a 403 carrying a gate code.
+call PUT /api/v1/passenger/profile "$TOKEN" '{"fullName":"Sim Rider"}' >/dev/null
 R="$(call GET /api/v1/passenger/profile "$TOKEN")"
 check "the same token still reaches a passenger endpoint" \
   "$([ "$(status_of "$R")" = 200 ] && echo true || echo false)"

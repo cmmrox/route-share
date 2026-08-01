@@ -1,6 +1,75 @@
 # RouteShareApp Development Status
 
-2026-08-02 (slice 04 code-complete — the card is held at booking and charged at the start)
+2026-08-02 (Blocker 013 cleared — slices 01–04 verified against a real database for the first time)
+
+## 2026-08-02 — Blocker 013 cleared: the first real database run, and what it found
+
+Slices 00–04 were merged on the strength of unit tests and review. **No migration in the ComiGo
+series had ever been applied to a database, and none of the four smoke scripts had ever executed.**
+That is now fixed, and the honest headline is that the first real run found five defects that
+review had passed.
+
+**The blocker's own diagnosis was the first thing that was wrong.** It attributed the skipped
+Testcontainers tests to the host port conflict on 5433. Testcontainers binds ephemeral ports and
+never touches 5433. The real cause was a version floor: Docker Engine 29 rejects API `<= 1.41` with
+HTTP 400, and the docker-java shaded into Testcontainers 1.19.8 negotiates from that floor. Because
+`disabledWithoutDocker = true` converts "no Docker" into a silent *skip*, the suite stayed green for
+weeks while proving nothing. The fix is Testcontainers 1.21.3 plus `api.version` as a **surefire
+system property** — docker-java ignores the `DOCKER_API_VERSION` environment variable, which is why
+setting it looks like it does nothing. The port was a separate, much smaller problem, solved by
+`ROUTESHARE_POSTGRES_PORT=5434`; the unrelated containers were left alone.
+
+Then the defects, in descending order of how much they would have cost:
+
+- **`V029` could never have run.** It creates `platform.policy_setting`, but nothing had ever
+  created the `platform` schema — Flyway stopped at `3F000: schema "platform" does not exist`. The
+  fare engine's entire policy surface was one `CREATE SCHEMA` away from existing. Fixed in place.
+- **Every unmapped path answered HTTP 500.** `NoResourceFoundException` had no handler and fell into
+  the catch-all, so a client typo and a deliberately removed endpoint both reported "the server is
+  broken". Slice 03's removed `POST /pricing/estimate` was returning 500 rather than 404 — the smoke
+  script caught it precisely because it asserts the removal. Fixed in `GlobalExceptionHandler`,
+  which also now returns 405 rather than 500 for a wrong verb.
+- **`*IT.java` matched no surefire include**, so the new integration tests were collected by nobody
+  and the gate would have gone green without them. Now included explicitly.
+- The local dev Keycloak realm gave direct access grants to `passenger-mobile` and `driver-mobile`
+  but not `admin-web`, so **no simulation script could ever obtain an admin token** — the first run
+  of `verify-mode-gates.sh` failed 7 of 12 checks for that single reason.
+- `seed-demo-route.sh` had silently rotted against slice 02: `seatCount: 4` on a CAR now capped at
+  3, no `vehicleClass` (now required), and no rate band — which slice 02 made a precondition of
+  publishing.
+
+Two further "failures" were the scripts' fault, not the backend's, and are worth naming because
+both would have been easy to record as product bugs: `data_of` parsed money with `json.loads`, which
+turns `49.50` into the float `49.5` so no scale-2 comparison could ever pass; and the fare fixture
+asked for an 11.4 km slice of a corridor that is only 9.5 km long, so the fraction clamped to 1.0.
+The 11.4 km → 570 fixture is asserted exactly by `FareEngineTest`; the smoke now asserts the *rule*
+(`gross = onRouteKm × rate`) against real stored geometry, which is what a runtime check can add.
+
+Runtime results, first ever:
+
+| Slice | Script | Result |
+| --- | --- | --- |
+| 01 | `verify-mode-gates.sh` | **12/12** |
+| 02 | `verify-rate-bands.sh` | **18/18** — both V028 PL/pgSQL triggers fired |
+| 03 | `verify-fare-engine.sh` | **8/8**, 1 skip — both V029 CHECK constraints fired |
+| 04 | `verify-charge-timing.sh` | 2/2 cash; **card path skipped — no gateway (Blocker 015)** |
+
+`V001`–`V030` now apply cleanly against real PostGIS. `FlywayPostgisMigrationIntegrationTest` had
+been asserting the latest version was `12` — stale since V013, and invisible because it was
+skipping; it now asserts `030`.
+
+**Slice 04's missing test is written.** `CaptureOnTripStartIT` starts the same booking from 20
+threads simultaneously: exactly one capture attempt is admitted and 19 are refused by the unique
+index on `payment_attempt.idempotency_key` with SQLSTATE `23505`. That is the property the mocks
+could not prove, and the reason Blocker 013 mattered.
+
+Gate: `./mvnw spotless:check verify` → **BUILD SUCCESS, 346 tests, 0 skipped, JaCoCo met**.
+
+**Still not verified:** the card path of charge timing — authorise, capture, void — has never run
+end to end against any gateway, real or fake. Tracked as **Blocker 015**, and slice 05 inherits it,
+since the start-buffer auto-cancel calls `PaymentFacade.voidForBooking`.
+
+Next: slice 05 — trip timers and reliability.
 
 ## 2026-08-02 — Slice 04: charge timing and capture correctness
 

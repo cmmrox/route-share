@@ -68,10 +68,18 @@ transitions that must be impossible — capture before authorise, capture twice,
 booking once, a retried start capturing nothing further, a duplicate call stopped by the idempotency
 key, a declined card flagging only its own booking, void on cancel, and both early-drop-off paths.
 
-**Two gaps, both Blocker 013.** `CaptureOnTripStartIT` is **not written**: the property it would
-prove is the unique index on `payment_attempt.idempotency_key` under real concurrency, and there is
-no database here to hold it. `scripts/simulation/verify-charge-timing.sh` exists and is
-syntax-checked but has never run. Until both are done, "exactly once under concurrency" is designed
+**One gap closed, one still open (now Blocker 015).** `CaptureOnTripStartIT` is **written and
+passing**: 20 threads capture the same booking simultaneously, exactly one attempt is admitted and 19
+are refused by the unique index on `payment_attempt.idempotency_key` with SQLSTATE `23505`. "Exactly
+once under concurrency" is now observed rather than designed.
+
+`scripts/simulation/verify-charge-timing.sh` now runs but covers **only the cash path** (2/2: a cash
+booking creates no payment intent and records itself as cash). It then reports
+`SKIP: no stored card on this stack` — there is no payment gateway locally, so **the authorise →
+capture → void sequence has still never run end to end against anything**. Tracked as Blocker 015.
+Evidence: `qa/reports/20260802-015420-comigo-slices-01-04-smoke/verify-charge-timing.log`.
+
+Historic note, for the record — until both were done, "exactly once under concurrency" was designed
 for and unit-tested, not demonstrated.
 
 ## Evidence to collect
