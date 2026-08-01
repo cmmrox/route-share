@@ -33,4 +33,18 @@ public class BookingFacadeImpl implements BookingFacade {
   public Optional<Long> findPassengerAppUserIdForBooking(long bookingId) {
     return bookings.findPassengerAppUserId(bookingId);
   }
+
+  @Override
+  public java.util.List<BookingToCharge> findConfirmedBookingsForTrip(long tripId) {
+    return bookings.findConfirmedBookingsForTrip(tripId).stream()
+        .map(row -> new BookingToCharge(row.getBookingId(), row.getFareEstimate()))
+        .toList();
+  }
+
+  @Override
+  @org.springframework.transaction.annotation.Transactional
+  public void recordPaymentState(
+      long bookingId, String paymentMethod, String paymentStatus, java.time.Instant capturedAt) {
+    bookings.updatePaymentState(bookingId, paymentMethod, paymentStatus, capturedAt);
+  }
 }

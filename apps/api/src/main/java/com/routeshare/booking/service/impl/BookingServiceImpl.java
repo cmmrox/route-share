@@ -52,6 +52,7 @@ public class BookingServiceImpl implements BookingService {
   private final NotificationFacade notifications;
   private final ObjectMapper objectMapper;
   private final PricingFacade pricing;
+  private final com.routeshare.payment.facade.PaymentFacade payments;
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
       Map.of(
           "REQUESTED",
@@ -127,6 +128,9 @@ public class BookingServiceImpl implements BookingService {
         req.seats());
     statusHistory.recordInitialStatus(
         bookingId, CONFIRMED, app.appUserId(), INITIAL_CONFIRMATION_REASON);
+    // The card is held now and charged when the driver starts. Accepting does not charge; approval
+    // does not charge; a trip that never starts costs the passenger nothing.
+    payments.authorizeForBooking(bookingId, req.paymentMethodId(), fareEstimate);
     Map<String, Object> response =
         Map.of(
             "bookingId",
@@ -158,6 +162,8 @@ public class BookingServiceImpl implements BookingService {
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
     updateBookingStatus(bookingId, app.appUserId(), fromStatus, toStatus, req.reason());
     if (CANCELLED.equals(toStatus)) {
+      // Cancelled before the wheels moved: the hold is released and nothing is taken.
+      payments.voidForBooking(bookingId, "PASSENGER_CANCELLED");
       bookings
           .findDriverAppUserIdForPassengerBooking(bookingId, app.appUserId())
           .ifPresent(
@@ -241,6 +247,7 @@ public class BookingServiceImpl implements BookingService {
             .findStatusForUpdateByIdAndDriverAppUserId(bookingId, app.appUserId())
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
     updateBookingStatus(bookingId, app.appUserId(), fromStatus, REJECTED, reason);
+    payments.voidForBooking(bookingId, "DRIVER_DECLINED");
     notifyPassenger(
         bookingId,
         "BOOKING_DECLINED",
@@ -310,6 +317,13 @@ public class BookingServiceImpl implements BookingService {
         row.getPassengerTripStatus(),
         row.getFareEstimate(),
         row.getPaymentStatus(),
+        new PassengerBookingDetailResponse.Payment(
+            row.getPaymentMethod(),
+            row.getPaymentStatus(),
+            row.getAuthorizedAt(),
+            row.getCapturedAt(),
+            row.getPaymentAmount(),
+            row.getCardLast4()),
         row.getPickupLatitude(),
         row.getPickupLongitude(),
         row.getDropoffLatitude(),

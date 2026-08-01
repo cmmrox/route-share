@@ -1,6 +1,58 @@
 # RouteShareApp Development Status
 
-2026-08-01 (slice 03 code-complete — the fare engine is the prototype's, not the old calculator's)
+2026-08-02 (slice 04 code-complete — the card is held at booking and charged at the start)
+
+## 2026-08-02 — Slice 04: charge timing and capture correctness
+
+The product's central promise is now true of the backend. `POLICY.chargeAt = "TRIP_START"` is stated
+on eleven screens in the strongest terms — *"Accepting does not charge you"*, *"Your Visa is
+authorised, not charged"*, *"Decline, cancel or a no-start all cost you nothing"* — and until this
+slice **there was no capture call anywhere in the trip lifecycle.** A trip could run to completion
+without money moving, and a cancelled booking could leave a hold on someone's card for a week.
+
+The card is now authorised when the booking is made and captured when the driver starts, atomically
+with the trip transition. Cancel, decline and route cancel all release the hold. Cash bookings
+create no intent at all: there is nothing to hold, and a placeholder row would be a lie the
+reconciliation job would later have to chase.
+
+**The state machine gained the state it was missing.** `REQUIRES_CAPTURE` conflated "we have not
+asked your bank yet" with "your bank is holding this and we have not taken it" — two different facts
+about someone's money that the booking screens are at pains to distinguish. `PENDING → AUTHORIZED →
+CAPTURED → REFUNDED`, with `VOIDED` and `FAILED` as exits, and transitions go through methods that
+also stamp the timestamp: P12 shows the passenger the exact minute they were charged, and a captured
+row with no `capturedAt` cannot answer that.
+
+**Idempotency is the whole slice.** Every gateway call writes a `payment.payment_attempt` row
+*before* it is made, keyed deterministically (`capture:booking:42`) with a unique index behind it. A
+capture that times out has either happened or not, and without that row there is no way to tell —
+a blind retry charges someone twice. A duplicate start finds the row already written and never
+reaches the provider.
+
+**A refused bank does not stop the trip.** One start captures N cards; each booking reports its own
+outcome (`CAPTURED | ALREADY_CAPTURED | SKIPPED_CASH | FAILED`). The driver is at the wheel and the
+other passengers are in the car — flagging that booking is the correct failure, and stranding
+everyone is not.
+
+Also landed: early drop-off captures the lower figure if nothing has been taken and refunds the
+difference if it has; cash collection records `COMMISSION_OWED_CASH` for netting from the next
+payout; and `GET /api/v1/admin/payments/reconciliation` surfaces stuck authorisations and unfinished
+gateway calls, with a gauge to alert on. Nobody involved in a stuck hold notices on their own.
+
+Verification: `./mvnw spotless:check verify` → **BUILD SUCCESS, 344 tests, JaCoCo gate met**;
+`redocly lint` clean; contracts typecheck green. New tests: `PaymentIntentStateMachineTest` (12
+cases, including that capture-before-authorise, double capture and void-after-capture are all
+impossible) and `PaymentFacadeImplTest` (13, including the duplicate-start and declined-card paths).
+
+**Deferred:** `scripts/simulation/verify-charge-timing.sh` is written but unrun (Blocker 013), and
+the Testcontainers integration test the task asks for (`CaptureOnTripStartIT`) is **not written** —
+it needs a live database, which this machine cannot start. The unit tests cover the same paths
+against mocks, which is weaker for exactly the property that matters most here: that the unique
+index on `idempotency_key` is what makes double capture impossible under real concurrency.
+
+Next: slice 05 — trip timers and reliability, which owns the auto-cancel that calls this slice's
+void path.
+
+## 2026-08-01 — Slice 03: fare engine rewrite
 
 ## 2026-08-01 — Slice 03: fare engine rewrite
 
@@ -302,11 +354,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_03_CODE_COMPLETE_RUNTIME_SMOKE_PENDING`
-- Current Active Task: `Slices 01–03 code-complete (runtime smoke pending, Blocker 013); slice 04 — charge timing and capture correctness — next`
+- Current Milestone: `MILESTONE_SLICE_04_CODE_COMPLETE_RUNTIME_SMOKE_PENDING`
+- Current Active Task: `Slices 01–04 code-complete (runtime smoke pending, Blocker 013); slice 05 — trip timers and reliability — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_03_FARE_ENGINE_MATCHES_PROTOTYPE_FIXTURES`
-- Repository Git Status: `Slices 01–03 merged to main; migrations V027–V029 added`
+- Status: `SLICE_04_MONEY_MOVES_AT_TRIP_START_ONLY`
+- Repository Git Status: `Slices 01–03 merged to main; slice 04 on feat/comigo-unified-app-slice-04; migrations V027–V030 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

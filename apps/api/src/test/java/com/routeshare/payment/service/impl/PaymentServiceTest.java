@@ -46,6 +46,7 @@ class PaymentServiceTest {
           new CashFallbackPaymentGateway(),
           new CommissionProperties(new BigDecimal("0.10")),
           org.mockito.Mockito.mock(com.routeshare.pricing.facade.PricingFacade.class),
+          org.mockito.Mockito.mock(com.routeshare.payment.facade.PaymentFacade.class),
           paymentMethods,
           (action, key, limit, window) -> {},
           new com.routeshare.common.ratelimit.RateLimitProperties(true, null, null, null, null),

@@ -25,7 +25,7 @@ class PassengerBookingAliasControllerTest {
   @Test
   void passengerBookingCreateDelegatesWithIdempotencyKey() {
     var controller = new PassengerBookingController(bookings, payments, earlyDropOff);
-    var request = new BookingRequest(20L, 1, 6.9271, 79.8612, 6.9000, 79.9000, 0.10, 0.80);
+    var request = new BookingRequest(20L, 1, 6.9271, 79.8612, 6.9000, 79.9000, 0.10, 0.80, null);
     when(bookings.book(request, "idem-1"))
         .thenReturn(
             Map.of("bookingId", 30L, "status", "CONFIRMED", "fareEstimate", BigDecimal.TEN));

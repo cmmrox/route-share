@@ -74,6 +74,11 @@ routeshare:
   # Policy reads are hot — every search result prices one — so they are cached and evicted on write.
   policy:
     cache-ttl-seconds: ${ROUTESHARE_POLICY_CACHE_TTL_SECONDS:60}
+  payment:
+    # How long an authorisation is assumed good. Past this, an uncaptured hold is somebody's money
+    # sitting in limbo, and reconciliation surfaces it to operations.
+    auth-validity-hours: ${ROUTESHARE_PAYMENT_AUTH_VALIDITY_HOURS:168}
+    capture-max-attempts: ${ROUTESHARE_PAYMENT_CAPTURE_MAX_ATTEMPTS:3}
   google-maps:
     enabled: ${GOOGLE_MAPS_ENABLED:false}
     server-api-key: ${GOOGLE_MAPS_SERVER_API_KEY:}

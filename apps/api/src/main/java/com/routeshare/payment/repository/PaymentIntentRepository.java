@@ -12,6 +12,16 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntentEnti
   Optional<PaymentIntentEntity> findFirstByBookingIdAndStatusInOrderByIdDesc(
       long bookingId, java.util.Collection<String> statuses);
 
+  /** The current state of a booking's money, whatever that state is. */
+  Optional<PaymentIntentEntity> findFirstByBookingIdOrderByIdDesc(long bookingId);
+
+  java.util.List<PaymentIntentEntity> findByStatusInAndCreatedAtBefore(
+      java.util.Collection<String> statuses, java.time.Instant before);
+
+  default Optional<PaymentIntentEntity> findLatestForBooking(long bookingId) {
+    return findFirstByBookingIdOrderByIdDesc(bookingId);
+  }
+
   @Modifying
   @Query(
       value =
@@ -55,12 +65,16 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntentEnti
         .map(this::toView);
   }
 
+  /**
+   * Creates an already-authorised intent for the legacy {@code POST /payments/intents} path. New
+   * bookings go through {@code PaymentFacade.authorizeForBooking}, which records an attempt row
+   * before it calls the gateway.
+   */
   default PaymentIntentView create(
       long bookingId, String providerReference, BigDecimal amount, String currency) {
-    return toView(
-        save(
-            new PaymentIntentEntity(
-                null, bookingId, null, providerReference, amount, currency, null)));
+    var entity = PaymentIntentEntity.pending(bookingId, amount, currency, null);
+    entity.authorize(providerReference, java.time.Instant.now());
+    return toView(save(entity));
   }
 
   private PaymentIntentView toView(PaymentIntentEntity entity) {

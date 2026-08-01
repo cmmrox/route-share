@@ -244,6 +244,7 @@ class AppContextServiceTest {
                     null,
                     null,
                     null,
+                    null,
                     NOW)));
 
     AppContextResponse ctx = service.current();

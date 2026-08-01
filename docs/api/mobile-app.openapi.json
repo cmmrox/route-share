@@ -4895,7 +4895,30 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DriverTrip"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "tripId": {
+                          "type": "integer",
+                          "format": "int64"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "captures": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TripStartCapture"
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -4947,7 +4970,8 @@
             "description": "Required for retry-safe mutations."
           }
         ],
-        "x-routeshare-status": "IMPLEMENTED"
+        "x-routeshare-status": "IMPLEMENTED",
+        "description": "Starts the trip and captures every confirmed booking, once each. This is the moment the product promises money moves — not on acceptance, not on approval. A repeated call captures nothing further, and a declined card flags that booking without stopping the trip."
       }
     },
     "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/board": {
@@ -12459,7 +12483,8 @@
               "integer",
               "null"
             ],
-            "format": "int64"
+            "format": "int64",
+            "description": "The card to hold the fare on. Omit for cash: nothing is authorised and the driver collects in the car."
           }
         }
       },
@@ -12498,6 +12523,9 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/BookingPayment"
           }
         }
       },
@@ -13461,6 +13489,14 @@
           },
           "estimatedFare": {
             "$ref": "#/components/schemas/Money"
+          },
+          "paymentMethodId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The card to hold the fare on. Omit for cash: nothing is authorised and the driver collects in the car."
           }
         }
       },
@@ -14793,6 +14829,103 @@
           },
           "fare": {
             "$ref": "#/components/schemas/FareQuote"
+          }
+        }
+      },
+      "BookingPayment": {
+        "type": "object",
+        "description": "What has actually happened to this booking's money. P11 says authorised-not-charged, P12 states the exact capture time, P22 and P24 say never charged — all three read this block.",
+        "properties": {
+          "method": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "CARD",
+              "CASH",
+              null
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "PENDING",
+              "AUTHORIZED",
+              "CAPTURED",
+              "VOIDED",
+              "REFUNDED",
+              "FAILED",
+              null
+            ]
+          },
+          "authorizedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "capturedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The minute the card was actually charged. Null until the trip starts."
+          },
+          "amount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "last4": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TripStartCapture": {
+        "type": "object",
+        "description": "One booking's outcome when the trip started. A declined card does not stop the trip: the driver is at the wheel and the other passengers are in the car.",
+        "required": [
+          "bookingId",
+          "status"
+        ],
+        "properties": {
+          "bookingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CAPTURED",
+              "ALREADY_CAPTURED",
+              "SKIPPED_CASH",
+              "FAILED"
+            ]
+          },
+          "amount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "failureCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A safe code only; the provider's own wording never leaves the server."
           }
         }
       }

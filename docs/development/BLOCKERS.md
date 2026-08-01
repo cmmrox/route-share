@@ -59,8 +59,9 @@ start normally; only Postgres is blocked, which takes the API and every database
 Impact:
 
 - `scripts/simulation/verify-mode-gates.sh` (slice 01), `scripts/simulation/verify-rate-bands.sh`
-  (slice 02) and `scripts/simulation/verify-fare-engine.sh` (slice 03) are written and
-  syntax-checked but have never been executed. Between them they are the only checks that exercise
+  (slice 02), `scripts/simulation/verify-fare-engine.sh` (slice 03) and
+  `scripts/simulation/verify-charge-timing.sh` (slice 04) are written and syntax-checked but have
+  never been executed. Between them they are the only checks that exercise
   slice 02's two database triggers and slice 03's two fare-quote CHECK constraints, so none of the
   four has ever run.
 - The Keycloak role-state and `audit.audit_action` manual checks in
@@ -69,8 +70,13 @@ Impact:
 - `FlywayPostgisMigrationIntegrationTest` skips for the same reason, so **migrations `V027`–`V029`
   have not been applied against a real PostGIS database** — only reviewed. `V028` adds two PL/pgSQL
   trigger functions and `V029` drops and recreates `pricing.fare_quote` and seeds 35 policy rows;
-  nothing has yet parsed any of it. Apply all three before trusting slice 04's migrations to stack
-  on top.
+  nothing has yet parsed any of it. `V030` then rewrites the payment status vocabulary in place.
+  Apply all four before trusting slice 05's migrations to stack on top.
+
+- Slice 04's `CaptureOnTripStartIT` — the Testcontainers test that would prove double capture is
+  impossible under real concurrency — **could not be written**, because the property it tests is the
+  unique index on `payment_attempt.idempotency_key` and there is no database to hold it. The unit
+  tests cover the same paths against mocks, which cannot prove the same thing.
 
 Not blocking: the Maven gate (`spotless:check verify`, 264 tests) passes without Docker, and slice 01's
 behaviour is covered by unit tests.

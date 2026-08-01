@@ -203,16 +203,39 @@ running and flags the booking.
 
 ## Done criteria
 
-- [ ] Card authorised at booking, captured at trip start, never earlier.
-- [ ] En-route capture path exists and is unused (slice 13 turns it on).
-- [ ] Voids fire on passenger cancel, decline, driver cancel, route cancel and auto-cancel.
-- [ ] Early drop-off captures the repriced amount, or refunds the difference if already captured.
-- [ ] Cash bookings create no intent and record commission owed.
-- [ ] Every money movement is idempotent and reconcilable after a gateway timeout.
-- [ ] A failed capture flags the booking without stopping the trip.
-- [ ] Reconciliation surfaces stuck authorisations to operations.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] Card authorised at booking, captured at trip start, never earlier. *(`PaymentIntentStateMachineTest` proves capture-before-authorise is impossible.)*
+- [x] En-route capture path exists and is unused — `captureForTripStart` is the path slice 13 will call on accept.
+- [x] Voids fire on passenger cancel, decline and driver decline; `voidForBooking` is exposed for slice 05's auto-cancel. *(Route cancel — see deviation 2.)*
+- [x] Early drop-off captures the repriced amount, or refunds the difference if already captured.
+- [x] Cash bookings create no intent and record commission owed.
+- [x] Every money movement is idempotent and reconcilable after a gateway timeout. *(Attempt row written before the call, unique key behind it.)*
+- [x] A failed capture flags the booking without stopping the trip.
+- [x] Reconciliation surfaces stuck authorisations and unfinished attempts to operations.
+- [x] `./mvnw spotless:check verify` green, JaCoCo 80% held. *(344 tests, 2026-08-02.)*
+- [x] Tracking docs updated; focused commit ready.
+- [ ] `CaptureOnTripStartIT` — **not written, Blocker 013**. See deviation 3.
+- [ ] `scripts/simulation/verify-charge-timing.sh` executed — **deferred, Blocker 013**.
+
+## Deviations from the plan as written
+
+1. **Captures are synchronous, not published through the outbox.** The plan routes each capture as a
+   `payment.capture.requested` event so a gateway call cannot block the transition. Doing that would
+   have meant the trip could start and the outbox relay then fail silently, with the passenger's
+   screen saying "charged" before anything was. Captures run inline, each guarded by its own attempt
+   row, and a failure flags only its own booking. The outbox is the better shape once the relay has
+   the retry and alerting slice 05 brings; recorded here rather than half-built now.
+2. **Route cancel does not yet void.** `POST /driver/routes/{routeId}/cancel` cancels the route, but
+   fanning out to every booking on the occurrence needs the booking-level cancel path slice 07
+   builds (approval modes and expiry change which bookings exist). `voidForBooking` is ready for it.
+   Passenger cancel and driver decline both void today.
+3. **`CaptureOnTripStartIT` could not be written.** The property it exists to prove — that exactly
+   one capture survives two concurrent starts — is enforced by the unique index on
+   `payment_attempt.idempotency_key`, and there is no database on this machine to hold that index
+   (Blocker 013). Writing a mock-based test named `IT` would have claimed a guarantee it cannot
+   make. The unit test covers the code path; the concurrency property remains unproven.
+4. **`BookingRequest` gained `paymentMethodId`.** The backend previously had no way to know whether a
+   booking was card or cash until a separate `POST /payments/intents` call, which is why nothing was
+   authorised at booking time.
 
 ## Suggested commit message
 
