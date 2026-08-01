@@ -17,6 +17,40 @@ Blocker Status Values:
 
 ## Active Blockers
 
+### Blocker 015 — The card path of charge timing has never been exercised at runtime
+
+Status: `OPEN`
+Severity: `MEDIUM`
+
+Description:
+
+With Blocker 013 cleared, `scripts/simulation/verify-charge-timing.sh` now runs — but it verifies
+only the cash path (2/2 checks) and then reports
+`SKIP: no stored card on this stack; card-path checks not run`. There is no payment gateway on the
+local stack, so no stored card exists to authorise against.
+
+This means slice 04's headline behaviour — authorise at booking, capture at trip start, void on
+cancel — is proven by unit tests and by `CaptureOnTripStartIT` (which proves the database cannot
+admit a double capture), but **the authorise → capture → void sequence has never run end to end
+against anything**, not even a fake gateway.
+
+Impact:
+
+- The eight card-path checks in
+  `qa/test-cases/comigo-unified-app-backend/04-charge-timing-and-capture-qa.md` are unverified.
+- Slice 05's start-buffer auto-cancel calls `PaymentFacade.voidForBooking`, so it inherits the same
+  gap: the void will be asserted against a mock, not observed.
+
+Resolution:
+
+Either stand up a local fake gateway adapter behind the existing provider port (enough to let the
+scripted flow store a card and move an authorisation through its states), or complete the
+Cybersource sandbox credentials tracked under Blocker 011 and point the local stack at it. The
+former is cheaper and does not depend on a third party; it must be clearly gated so a fake can never
+be selected outside local profiles.
+
+---
+
 ### Blocker 014 — `Vehicle` contract field names do not match the API
 
 Status: `OPEN`
@@ -46,46 +80,71 @@ not be caught by the checks slice 00 ran.
 
 ### Blocker 013 — Local stack will not start: host port 5433 is taken
 
-Status: `OPEN`
+Status: `RESOLVED` 2026-08-02
 Severity: `LOW`
 
-Description:
+Description (as originally recorded):
 
 `scripts/dev-up.sh` fails at `routeshare-postgres` with *Bind for 0.0.0.0:5433 failed: port is already
 allocated*. The port is published by an unrelated project's container on this machine
-(`cryptopilot-db-postgres-1`, running since well before this work). Redis, Keycloak, MinIO and Redpanda
-start normally; only Postgres is blocked, which takes the API and every database-backed check with it.
+(`cryptopilot-db-postgres-1`, running since well before this work).
 
-Impact:
+**The original diagnosis was wrong on the point that mattered.** The port conflict was real, but it
+was never what stopped the Testcontainers tests: Testcontainers binds ephemeral ports and never
+touches 5433. Those tests were failing for an unrelated reason that the port story masked, and
+because `@Testcontainers(disabledWithoutDocker = true)` turns "cannot reach Docker" into a silent
+*skip*, the suite stayed green and nobody was told.
 
-- `scripts/simulation/verify-mode-gates.sh` (slice 01), `scripts/simulation/verify-rate-bands.sh`
-  (slice 02), `scripts/simulation/verify-fare-engine.sh` (slice 03) and
-  `scripts/simulation/verify-charge-timing.sh` (slice 04) are written and syntax-checked but have
-  never been executed. Between them they are the only checks that exercise
-  slice 02's two database triggers and slice 03's two fare-quote CHECK constraints, so none of the
-  four has ever run.
-- The Keycloak role-state and `audit.audit_action` manual checks in
-  `qa/test-cases/comigo-unified-app-backend/01-auth-unification-and-mode-gates-qa.md` depend on the
-  same run.
-- `FlywayPostgisMigrationIntegrationTest` skips for the same reason, so **migrations `V027`–`V029`
-  have not been applied against a real PostGIS database** — only reviewed. `V028` adds two PL/pgSQL
-  trigger functions and `V029` drops and recreates `pricing.fare_quote` and seeds 35 policy rows;
-  nothing has yet parsed any of it. `V030` then rewrites the payment status vocabulary in place.
-  Apply all four before trusting slice 05's migrations to stack on top.
+Two independent causes, both now fixed:
 
-- Slice 04's `CaptureOnTripStartIT` — the Testcontainers test that would prove double capture is
-  impossible under real concurrency — **could not be written**, because the property it tests is the
-  unique index on `payment_attempt.idempotency_key` and there is no database to hold it. The unit
-  tests cover the same paths against mocks, which cannot prove the same thing.
+1. **Docker API version floor.** Docker Engine 29.1.3 rejects API `<= 1.41` with HTTP 400 (verified
+   directly against the socket: `v1.32` → 400, `v1.41` → 400, `v1.44` → 200). The docker-java
+   shaded into Testcontainers `1.19.8` negotiates from that floor, so every Testcontainers test had
+   been skipping. Fixed by `testcontainers.version` → `1.21.3` **and** by passing `api.version` as a
+   surefire system property — docker-java reads the system property, *not* the `DOCKER_API_VERSION`
+   environment variable, which is why setting the env var appears to do nothing.
+2. **The host port**, which was always only a `dev-up.sh` problem. `ROUTESHARE_POSTGRES_PORT` was
+   already parameterised in `infra/docker-compose/docker-compose.yml`; local `.env` now uses `5434`
+   (5432 is taken by `odoo-db`, 5433 by `cryptopilot-db-postgres-1`). The unrelated containers were
+   left running.
 
-Not blocking: the Maven gate (`spotless:check verify`, 264 tests) passes without Docker, and slice 01's
-behaviour is covered by unit tests.
+What the first real run then found — none of which was visible under review:
 
-Resolution:
+- **`V029` could never have run.** It creates `platform.policy_setting` but no migration ever
+  created the `platform` schema; Flyway failed at `SQL State 3F000, schema "platform" does not
+  exist`. Fixed in place (Decision 015; the migration had never been applied anywhere).
+- `V001`–`V030` now apply cleanly against real PostGIS, including slice 02's two PL/pgSQL triggers
+  and slice 03's two fare-quote CHECK constraints — all four fired correctly in the smoke runs.
+- `FlywayPostgisMigrationIntegrationTest` asserted the latest version was `12`; it had been
+  silently skipping since V013 and now asserts `030`.
+- **Unmapped paths returned HTTP 500, not 404.** `NoResourceFoundException` had no handler and fell
+  through to the catch-all. Every client typo — and every endpoint deliberately removed, such as
+  slice 03's `POST /pricing/estimate` — answered "the server is broken". Fixed in
+  `GlobalExceptionHandler`.
+- The local dev Keycloak realm gave `passenger-mobile` and `driver-mobile` direct access grants but
+  omitted them for `admin-web`, so no simulation script could ever obtain an admin token. Aligned.
+- `seed-demo-route.sh` predated slice 02: it sent `seatCount: 4` for a CAR whose class cap is now 3,
+  omitted the now-required `vehicleClass`, and never assessed a rate band — which slice 02 made a
+  precondition of publishing.
+- Two smoke-script assertions were unreachable by construction rather than wrong about the backend:
+  `data_of` ran money through `json.loads`, turning `49.50` into the float `49.5`; and the fare
+  fixture asked for an 11.4 km slice of a corridor that is only ~9.5 km long.
 
-Free the port (stop the other container, or republish RouteShare's Postgres on another host port and
-point `.env` at it), then run `scripts/dev-up.sh` followed by
-`scripts/simulation/verify-mode-gates.sh`. Record the output under `qa/reports/`.
+Slice 04's `CaptureOnTripStartIT` is now written and passing: 20 threads capture the same booking
+simultaneously, exactly one is admitted and 19 are refused by the unique index on
+`payment_attempt.idempotency_key` with SQLSTATE `23505`. That is the property the mocks could not
+prove.
+
+Resolution / current state:
+
+```bash
+bash scripts/dev-up.sh                      # Postgres on 5434
+cd apps/api && ./mvnw spotless:check verify # Testcontainers now runs rather than skipping
+```
+
+Runtime smoke results are recorded in `qa/reports/` and summarised per slice in
+`DEVELOPMENT_STATUS.md`. **One gap remains and is tracked as Blocker 015**: the card path in
+`verify-charge-timing.sh` still skips, because there is no payment gateway on the local stack.
 
 ---
 

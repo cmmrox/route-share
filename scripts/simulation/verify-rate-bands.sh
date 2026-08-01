@@ -48,10 +48,13 @@ try:
 except Exception:
     print('')
 " "$(body_of "$1")" "$2"; }
+# parse_float=Decimal keeps money at the scale the API sent it: json.loads would turn 49.50 into
+# the float 49.5, and every scale-2 comparison below would fail against a correct response.
 data_of() { python3 -c "
 import json,sys
+from decimal import Decimal
 try:
-    d=json.loads(sys.argv[1])['data']
+    d=json.loads(sys.argv[1], parse_float=Decimal)['data']
     for key in sys.argv[2].split('.'):
         d = d[key]
     print(d)

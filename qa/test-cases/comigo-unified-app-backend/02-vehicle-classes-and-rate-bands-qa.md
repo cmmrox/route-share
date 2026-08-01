@@ -64,10 +64,17 @@ one-open-review rule and both review decisions; `RatePositionTest` pins the posi
 `VehicleServiceImplTest` covers the class cap and band creation on approval; `DriverGateServiceTest`
 covers `RATE_BAND_NOT_SET` in the publish gate.
 
-**Not yet collected — Blocker 013.** `scripts/simulation/verify-rate-bands.sh` exists and is
-syntax-checked, but the local Postgres will not start (host port 5433 held by an unrelated
-container). It is the only check that exercises the `vehicle_seats_within_class` and
-`vehicle_rate_band_within_class` triggers, so **neither trigger has ever run**. Run it and file the
+**Collected 2026-08-02 — Blocker 013 cleared.** `scripts/simulation/verify-rate-bands.sh` ran against
+the live local stack: **18 passed, 0 failed**. Both PL/pgSQL triggers fired for the first time —
+`vehicle_seats_within_class` refused six seats in a CAR, and `vehicle_rate_band_within_class` refused
+a band outside its class when applied by raw SQL, not only through the service. Evidence:
+`qa/reports/20260802-015420-comigo-slices-01-04-smoke/verify-rate-bands.log`.
+
+One first-run failure was the script's, not the backend's: `data_of` parsed the response with
+`json.loads`, which turns `49.50` into the float `49.5`, so the midpoint assertion could never match
+a correct response. It now parses money with `parse_float=Decimal`. The old note below is kept for
+history; the triggers have now run. Original note: it is the only check that exercises the
+`vehicle_seats_within_class` and `vehicle_rate_band_within_class` triggers. Run it and file the
 output under `qa/reports/` once the port is free.
 
 ## Evidence to collect

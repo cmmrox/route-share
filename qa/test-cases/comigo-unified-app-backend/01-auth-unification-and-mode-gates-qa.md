@@ -63,9 +63,17 @@ owned by the mobile feature plan and must link back to this QA file.
 
 ## Evidence to collect
 
-**Not yet collected — Blocker 013.** The script exists and is syntax-checked; the local Postgres will
-not start because host port 5433 is held by an unrelated container, so nothing below has been captured.
-Run all three together once the port is free and file the output under `qa/reports/`.
+**Collected 2026-08-02 — Blocker 013 cleared.** `scripts/simulation/verify-mode-gates.sh` ran against
+the live local stack: **12 passed, 0 failed**, including both namespaces on one unchanged token, the
+deactivated driver still reaching payout details, and a token minted before a suspension being refused
+in both namespaces. Evidence: `qa/reports/20260802-015420-comigo-slices-01-04-smoke/verify-mode-gates.log`.
+
+The first run failed 7 of 12 — every one of them because the local dev Keycloak realm did not grant
+`admin-web` direct access grants, so no admin token could be minted and no state transition happened.
+The realm import now matches `passenger-mobile` and `driver-mobile`. One further check was the
+script's own fault: it read a 404 "Passenger profile not found" as a gate rejection, when a gate
+rejection is a 403 carrying a gate code; it now seeds the profile a rider would have created at
+signup.
 
 - `scripts/simulation/verify-mode-gates.sh` output.
 - Keycloak role state before and after approval and deactivation.

@@ -548,10 +548,10 @@ rule, and 18 have foundations but no product behaviour. Full register in
 | Slice | Title | Size | Status |
 | --- | --- | --- | --- |
 | 00 | Repo reset and contract rewrite | M | `COMPLETED` 2026-08-01 |
-| 01 | Auth unification and mode gates | M | `PARTIALLY_COMPLETED` 2026-08-01 — code and automated verification complete; runtime smoke deferred (Blocker 013) |
-| 02 | Vehicle classes and rate bands | M | `PARTIALLY_COMPLETED` 2026-08-01 — code and automated verification complete; runtime smoke deferred (Blocker 013) |
-| 03 | Fare engine rewrite | XL | `PARTIALLY_COMPLETED` 2026-08-01 — code and automated verification complete; runtime smoke deferred (Blocker 013) |
-| 04 | Charge timing and capture correctness | L | `PARTIALLY_COMPLETED` 2026-08-02 — code and unit verification complete; the Testcontainers capture test and the runtime smoke both need a live database (Blocker 013) |
+| 01 | Auth unification and mode gates | M | `COMPLETED` 2026-08-02 — runtime smoke 12/12 |
+| 02 | Vehicle classes and rate bands | M | `COMPLETED` 2026-08-02 — runtime smoke 18/18; both V028 triggers fired |
+| 03 | Fare engine rewrite | XL | `COMPLETED` 2026-08-02 — runtime smoke 8/8; both V029 CHECK constraints fired; V029 needed a missing `CREATE SCHEMA platform` |
+| 04 | Charge timing and capture correctness | L | `PARTIALLY_COMPLETED` 2026-08-02 — `CaptureOnTripStartIT` now written and passing; cash smoke 2/2, but the card path has never run against any gateway (Blocker 015) |
 | 05 | Trip timers and reliability | XL | `NOT_STARTED` |
 | 06 | Penalties, dues and compensation | L | `NOT_STARTED` |
 | 07 | Booking depth: seats, approval modes, expiry | L | `NOT_STARTED` |

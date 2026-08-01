@@ -11,9 +11,12 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -70,6 +73,26 @@ public class GlobalExceptionHandler {
                 "BAD_REQUEST",
                 "Request body is invalid or contains unsupported enum values",
                 correlation(req)));
+  }
+
+  /**
+   * An unmapped path is the client's mistake, not ours. Without this these fall through to the
+   * catch-all below and every typo — and every endpoint we have deliberately removed, such as the
+   * old {@code POST /pricing/estimate} — answers 500, which reads as "the server is broken" and
+   * pages somebody.
+   */
+  @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+  ResponseEntity<ApiError> noSuchEndpoint(Exception ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(ApiError.of("NOT_FOUND", "No such endpoint", correlation(req)));
+  }
+
+  /** The path exists but not for this verb — 405, for the same reason as above. */
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  ResponseEntity<ApiError> methodNotAllowed(
+      HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+        .body(ApiError.of("METHOD_NOT_ALLOWED", "Method not supported", correlation(req)));
   }
 
   @ExceptionHandler(ResponseStatusException.class)

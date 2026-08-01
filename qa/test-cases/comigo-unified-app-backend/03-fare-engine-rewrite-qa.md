@@ -66,10 +66,21 @@ pins the band edges; `PolicySettingTest` covers typed reads, cache eviction on w
 type validation; `PricingArchitectureTest` fails the build on an inlined policy figure, on a
 surviving `FareCalculator`/`FareBreakdown`, or on any pricing input declared in a request DTO.
 
-**Not yet collected — Blocker 013.** `scripts/simulation/verify-fare-engine.sh` exists and is
-syntax-checked, but the local Postgres will not start (host port 5433 held by an unrelated
-container). It is the only check that exercises the two `pricing.fare_quote` CHECK constraints and
-reproduces the fixtures through a live API. Run it and file the output under `qa/reports/`.
+**Collected 2026-08-02 — Blocker 013 cleared.** `scripts/simulation/verify-fare-engine.sh` ran
+against the live local stack: **8 passed, 0 failed, 1 skipped** (quote immutability — no booking on
+the seeded stack). Both `pricing.fare_quote` CHECK constraints fired: the database refused a quote
+whose commission does not split the fare. Evidence: `qa/reports/20260802-015420-comigo-slices-01-04-smoke/verify-fare-engine.log`.
+
+Two things the first run found. **`V029` could never have run at all** — it creates
+`platform.policy_setting` but nothing had ever created the `platform` schema, so Flyway stopped at
+`3F000`; fixed in place. And `POST /pricing/estimate`, which this slice removed, was answering **500
+rather than 404**, because `NoResourceFoundException` had no handler in `GlobalExceptionHandler` and
+fell through to the catch-all — a defect affecting every unmapped path in the API, not just this one.
+
+The 11.4 km → 570 fixture cannot be reproduced here: the seeded Fort → Nugegoda corridor is ~9.5 km,
+so the requested fraction clamps to 1.0. That fixture is asserted exactly by `FareEngineTest`; the
+smoke now asserts the rule `gross = onRouteKm x rate` against real stored geometry and a real
+assessed band, which is what a runtime check adds over the unit test.
 
 ## Evidence to collect
 
