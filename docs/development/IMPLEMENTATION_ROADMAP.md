@@ -551,7 +551,7 @@ rule, and 18 have foundations but no product behaviour. Full register in
 | 01 | Auth unification and mode gates | M | `PARTIALLY_COMPLETED` 2026-08-01 — code and automated verification complete; runtime smoke deferred (Blocker 013) |
 | 02 | Vehicle classes and rate bands | M | `PARTIALLY_COMPLETED` 2026-08-01 — code and automated verification complete; runtime smoke deferred (Blocker 013) |
 | 03 | Fare engine rewrite | XL | `PARTIALLY_COMPLETED` 2026-08-01 — code and automated verification complete; runtime smoke deferred (Blocker 013) |
-| 04 | Charge timing and capture correctness | L | `NOT_STARTED` |
+| 04 | Charge timing and capture correctness | L | `PARTIALLY_COMPLETED` 2026-08-02 — code and unit verification complete; the Testcontainers capture test and the runtime smoke both need a live database (Blocker 013) |
 | 05 | Trip timers and reliability | XL | `NOT_STARTED` |
 | 06 | Penalties, dues and compensation | L | `NOT_STARTED` |
 | 07 | Booking depth: seats, approval modes, expiry | L | `NOT_STARTED` |

@@ -30,8 +30,10 @@ class TripServiceImplTest {
       org.mockito.Mockito.mock(PassengerTripStateRepository.class);
   private final com.routeshare.notification.facade.NotificationFacade notifications =
       org.mockito.Mockito.mock(com.routeshare.notification.facade.NotificationFacade.class);
+  private final com.routeshare.payment.facade.PaymentFacade payments =
+      org.mockito.Mockito.mock(com.routeshare.payment.facade.PaymentFacade.class);
   private final TripServiceImpl service =
-      new TripServiceImpl(current, identityFacade, trips, passengerStates, notifications);
+      new TripServiceImpl(current, identityFacade, trips, passengerStates, notifications, payments);
 
   @BeforeEach
   void setUp() {

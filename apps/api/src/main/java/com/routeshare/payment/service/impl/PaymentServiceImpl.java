@@ -49,6 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
   private final PaymentGatewayPort gateway;
   private final CommissionProperties commission;
   private final com.routeshare.pricing.facade.PricingFacade pricing;
+  private final com.routeshare.payment.facade.PaymentFacade paymentFacade;
   private final PaymentMethodRepository paymentMethods;
   private final RateLimiter rateLimiter;
   private final RateLimitProperties rateLimits;
@@ -206,6 +207,9 @@ public class PaymentServiceImpl implements PaymentService {
     fareLedger.recordPaymentLifecycleIfAbsent(
         bookingId, CASH_COLLECTED, req.amount(), DEFAULT_CURRENCY);
     recordSettlement(bookingId, req.amount(), DEFAULT_CURRENCY);
+    // The driver has the cash, so the platform's cut is owed rather than taken; it nets from the
+    // next payout (boards D23 and D27).
+    paymentFacade.recordCashCommissionOwed(bookingId, req.amount());
     return Map.of(
         "bookingId",
         bookingId,

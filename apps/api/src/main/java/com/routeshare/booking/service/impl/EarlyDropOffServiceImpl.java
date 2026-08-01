@@ -24,6 +24,7 @@ public class EarlyDropOffServiceImpl implements EarlyDropOffService {
   private final BookingRepository bookings;
   private final PaymentService payments;
   private final PricingFacade pricing;
+  private final com.routeshare.payment.facade.PaymentFacade paymentFacade;
 
   @Override
   @Transactional
@@ -56,6 +57,8 @@ public class EarlyDropOffServiceImpl implements EarlyDropOffService {
             .passengerPays();
 
     bookings.updateDropoffFraction(bookingId, BigDecimal.valueOf(exit));
+    // Captures the lower figure if nothing has been taken yet, refunds the difference if it has.
+    paymentFacade.settleRepricedFare(bookingId, finalFare);
     var result = payments.finalizeBookingFare(bookingId, finalFare);
     boolean captured = Boolean.TRUE.equals(result.get("captured"));
 

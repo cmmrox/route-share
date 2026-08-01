@@ -29,6 +29,7 @@ public class TripServiceImpl implements TripService {
   private final TripRepository trips;
   private final PassengerTripStateRepository passengerStates;
   private final NotificationFacade notifications;
+  private final com.routeshare.payment.facade.PaymentFacade payments;
   private final TripStateMachine stateMachine = new TripStateMachine();
   private final PassengerTripStateMachine passengerStateMachine = new PassengerTripStateMachine();
 
@@ -42,8 +43,23 @@ public class TripServiceImpl implements TripService {
     var currentStatus = trips.findStatusForUpdate(tripId);
     stateMachine.assertTransition(currentStatus, req.status());
     trips.updateStatus(tripId, req.status());
+
+    // Starting the trip is what charges the cards — the promise on eleven screens. The transition
+    // and the intent to capture commit together: a start that is recorded but never charged, or a
+    // charge with no trip behind it, are both worse than failing outright.
+    //
+    // A refused bank does not roll this back. The driver is at the wheel and the other passengers
+    // are in the car; that booking is flagged and the trip runs.
+    List<com.routeshare.payment.domain.CaptureOutcome> captures =
+        req.status() == com.routeshare.trip.domain.TripStatus.STARTED
+            ? payments.captureForTripStart(tripId)
+            : List.of();
+
     notifyTripStatus(tripId, req.status());
-    return Map.of("tripId", tripId, "status", req.status().name());
+    return Map.of(
+        "tripId", tripId,
+        "status", req.status().name(),
+        "captures", captures);
   }
 
   @Override

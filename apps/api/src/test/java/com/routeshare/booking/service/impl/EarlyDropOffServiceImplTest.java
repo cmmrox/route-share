@@ -33,7 +33,13 @@ class EarlyDropOffServiceImplTest {
   private final com.routeshare.pricing.facade.PricingFacade pricing =
       mock(com.routeshare.pricing.facade.PricingFacade.class);
   private final EarlyDropOffServiceImpl service =
-      new EarlyDropOffServiceImpl(current, identityFacade, bookings, payments, pricing);
+      new EarlyDropOffServiceImpl(
+          current,
+          identityFacade,
+          bookings,
+          payments,
+          pricing,
+          mock(com.routeshare.payment.facade.PaymentFacade.class));
 
   @BeforeEach
   void setUp() {

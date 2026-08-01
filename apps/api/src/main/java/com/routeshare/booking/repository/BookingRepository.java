@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
   @Query(
@@ -209,6 +210,48 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
   List<PassengerBookingRow> findPassengerTripHistory(
       @Param("passengerAppUserId") long passengerAppUserId);
 
+  /**
+   * The bookings one trip start must charge. CONFIRMED only: a request the driver has not accepted
+   * has no agreed fare to take.
+   */
+  @Query(
+      value =
+          """
+      SELECT b.booking_id AS "bookingId", b.fare_estimate AS "fareEstimate"
+      FROM booking.booking b
+      JOIN trip.trip t ON t.route_plan_id = b.route_plan_id
+        AND (t.route_occurrence_id = b.route_occurrence_id OR t.route_occurrence_id IS NULL)
+      WHERE t.trip_id = :tripId
+        AND b.status = 'CONFIRMED'
+      ORDER BY b.booking_id ASC
+      """,
+      nativeQuery = true)
+  List<BookingToChargeRow> findConfirmedBookingsForTrip(@Param("tripId") long tripId);
+
+  interface BookingToChargeRow {
+    long getBookingId();
+
+    java.math.BigDecimal getFareEstimate();
+  }
+
+  @Transactional
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE booking.booking
+      SET payment_method = COALESCE(:paymentMethod, payment_method),
+          payment_status = :paymentStatus,
+          captured_at = COALESCE(:capturedAt, captured_at)
+      WHERE booking_id = :bookingId
+      """,
+      nativeQuery = true)
+  void updatePaymentState(
+      @Param("bookingId") long bookingId,
+      @Param("paymentMethod") String paymentMethod,
+      @Param("paymentStatus") String paymentStatus,
+      @Param("capturedAt") java.time.Instant capturedAt);
+
   @Query(
       value =
           """
@@ -280,6 +323,11 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
         pts.status AS "passengerTripStatus",
         b.fare_estimate AS "fareEstimate",
         pi.status AS "paymentStatus",
+        b.payment_method AS "paymentMethod",
+        pi.authorized_at AS "authorizedAt",
+        pi.captured_at AS "capturedAt",
+        pi.amount AS "paymentAmount",
+        pm.last4 AS "cardLast4",
         ST_Y(b.pickup) AS "pickupLatitude",
         ST_X(b.pickup) AS "pickupLongitude",
         ST_Y(b.dropoff) AS "dropoffLatitude",
@@ -295,6 +343,7 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
       LEFT JOIN trip.passenger_trip_state pts ON pts.booking_id = b.booking_id
         AND pts.trip_id = t.trip_id
       LEFT JOIN payment.payment_intent pi ON pi.booking_id = b.booking_id
+      LEFT JOIN payment.payment_method pm ON pm.payment_method_id = pi.payment_method_id
       """;
 
   interface PassengerBookingRow {
@@ -323,6 +372,16 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     BigDecimal getFareEstimate();
 
     String getPaymentStatus();
+
+    String getPaymentMethod();
+
+    Instant getAuthorizedAt();
+
+    Instant getCapturedAt();
+
+    BigDecimal getPaymentAmount();
+
+    String getCardLast4();
 
     Double getPickupLatitude();
 

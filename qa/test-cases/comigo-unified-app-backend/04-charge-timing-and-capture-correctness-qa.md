@@ -60,6 +60,20 @@ owned by the mobile feature plan and must link back to this QA file.
 - Confirm `payment.payment_attempt` rows are written **before** the gateway call, not after.
 - Confirm the reconciliation alert fires with a deliberately stranded authorisation.
 
+## Automated test coverage status (2026-08-02)
+
+Green under `./mvnw spotless:check verify` (344 tests). `PaymentIntentStateMachineTest` pins the
+transitions that must be impossible — capture before authorise, capture twice, void after capture.
+`PaymentFacadeImplTest` covers authorise-on-booking, cash creating no intent, start capturing every
+booking once, a retried start capturing nothing further, a duplicate call stopped by the idempotency
+key, a declined card flagging only its own booking, void on cancel, and both early-drop-off paths.
+
+**Two gaps, both Blocker 013.** `CaptureOnTripStartIT` is **not written**: the property it would
+prove is the unique index on `payment_attempt.idempotency_key` under real concurrency, and there is
+no database here to hold it. `scripts/simulation/verify-charge-timing.sh` exists and is
+syntax-checked but has never run. Until both are done, "exactly once under concurrency" is designed
+for and unit-tested, not demonstrated.
+
 ## Evidence to collect
 
 - `scripts/simulation/verify-charge-timing.sh` output.

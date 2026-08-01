@@ -44,6 +44,8 @@ class BookingServiceTest {
       org.mockito.Mockito.mock(com.routeshare.notification.facade.NotificationFacade.class);
   private final com.routeshare.pricing.facade.PricingFacade pricing =
       org.mockito.Mockito.mock(com.routeshare.pricing.facade.PricingFacade.class);
+  private final com.routeshare.payment.facade.PaymentFacade payments =
+      org.mockito.Mockito.mock(com.routeshare.payment.facade.PaymentFacade.class);
   private final BookingServiceImpl service =
       new BookingServiceImpl(
           current,
@@ -54,7 +56,8 @@ class BookingServiceTest {
           idempotencyKeys,
           notifications,
           objectMapper,
-          pricing);
+          pricing,
+          payments);
 
   private static com.routeshare.pricing.domain.FareQuote quote(String passengerPays) {
     var amount = new java.math.BigDecimal(passengerPays);
@@ -106,7 +109,7 @@ class BookingServiceTest {
 
   @Test
   void booksAgainstOccurrenceAndStoresMatchedFractions() {
-    var request = new BookingRequest(44L, 2, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75);
+    var request = new BookingRequest(44L, 2, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null);
     when(idempotencyKeys.reserveNew(anyString(), anyString(), anyString(), anyString()))
         .thenReturn("key-1");
     when(routingFacade.reserveSeatsAndReturnRouteLength(44L, 2))
@@ -124,7 +127,7 @@ class BookingServiceTest {
 
   @Test
   void recordsInitialBookingStatusHistoryWhenBookingIsCreated() {
-    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75);
+    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null);
     when(idempotencyKeys.reserveNew(anyString(), anyString(), anyString(), anyString()))
         .thenReturn("key-2");
     when(routingFacade.reserveSeatsAndReturnRouteLength(44L, 1))
@@ -140,7 +143,7 @@ class BookingServiceTest {
 
   @Test
   void returnsStoredBookingResponseForDuplicateIdempotencyKeyWithoutCreatingAnotherBooking() {
-    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75);
+    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null);
     when(idempotencyKeys.findActive("key-duplicate", "subject", "booking:create"))
         .thenReturn(
             java.util.Optional.of(
@@ -161,7 +164,7 @@ class BookingServiceTest {
 
   @Test
   void storesSuccessfulBookingResponseAgainstIdempotencyKey() {
-    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75);
+    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null);
     when(idempotencyKeys.reserveNew("key-store", "subject", "booking:create", requestHash(request)))
         .thenReturn("key-store");
     when(routingFacade.reserveSeatsAndReturnRouteLength(44L, 1))
