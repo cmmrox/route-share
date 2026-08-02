@@ -3,10 +3,8 @@ package com.routeshare.routing.controller;
 import com.routeshare.common.web.ApiResponse;
 import com.routeshare.routing.dto.request.RoutePublishRequest;
 import com.routeshare.routing.dto.request.RouteSearchRequest;
-import com.routeshare.routing.dto.response.RouteSearchResponse;
 import com.routeshare.routing.service.RouteService;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +31,8 @@ public class RouteController {
 
   @PostMapping("/search")
   @PreAuthorize("isAuthenticated()")
-  ApiResponse<List<RouteSearchResponse>> search(@Valid @RequestBody RouteSearchRequest req) {
+  ApiResponse<com.routeshare.routing.dto.response.RideSearchPageResponse> search(
+      @Valid @RequestBody RouteSearchRequest req) {
     return ApiResponse.ok(routes.search(req));
   }
 }

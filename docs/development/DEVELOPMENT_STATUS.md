@@ -1,6 +1,79 @@
 # RouteShareApp Development Status
 
-2026-08-02 (slice 08 complete — the server decides who may ride with whom)
+2026-08-03 (slice 09 complete — the radius is about where a driver *starts*)
+
+## 2026-08-03 — Slice 09 complete: a different predicate, and a landmark to stand at
+
+`matching_settings` filtered on how close a driver's *route line* passed the rider, at 1 km. The
+product asks for 5, 10 or 20 km measured from where his **trip begins**, with 20 km as a ceiling and
+a reason attached: past that he is making a trip for her rather than sharing one. That is a
+twentyfold change in magnitude on a different geometry, and the two rules disagree about exactly the
+driver who matters — the one whose route happens to pass her corner but who set off from 40 km away.
+
+**An unoffered radius is refused, not clamped.** P03 shows three chips; a rider asking for 7 km is
+asking for something no screen can render, and clamping would answer a question she did not ask
+while labelling the answer with the number she did.
+
+**The filtered-out count rides on the same statement as the results.** P04 prints both, so a rider
+can subtract them herself — two round trips against a table that has moved on eventually disagree,
+and the one that is wrong is the one nobody checks.
+
+**The tier is read off the discount that was actually applied.** `MatchTier` derives from
+`MatchDiscountTier` rather than owning thresholds of its own, and the three policy keys this slice
+specified were deliberately not added. A second copy of 95/75/45 is exactly how a rider comes to see
+"Full route" beside an 8% discount — nothing would throw, and she would be right while the app was
+wrong.
+
+**The radius had three candidate homes and now has one.** `routing.matching_settings` has the admin
+screen and the validation, so it wins; V036 deletes the `SEARCH_RADIUS_KM` row V029 seeded, which
+described this slice's rule exactly and then sat unread for six migrations.
+
+**Pickup points are the substantive new subsystem, and their ordering *is* the feature.** A
+coordinate is not an instruction: in Colombo a 50 m GPS error puts the pin on the wrong side of
+Galle Road, and no amount of matching accuracy helps because the error is in the pin. Resolved
+naively this is the plan's largest new Google line item — about $150 a month at launch volumes,
+enough alone to break the credit. The chain is curated → persisted → route label → Places → raw,
+each step existing to stop the next being reached, and every Places answer is written down so the
+same corner is never bought twice. Forty curated Colombo landmarks are seeded.
+
+**One honest limitation, recorded rather than worked around:** a *derived* point is labelled by its
+address, not by a landmark name. The name lives in `displayName`, a Pro-tier Places field, and one
+Pro field re-prices the whole request. So real names come from the curated tier — which makes
+curation both the cheapest option and the best-quality one, and is why the seed script exists.
+
+**A revoked share code answers 404, not 410.** 410 confirms the code once existed, which is the one
+bit a scanner walking the code space is trying to learn.
+
+**One defect in the migration, found only by asserting the query plan:** `idx_route_plan_origin` was
+specified on the geometry column, but a radius in metres means `ST_DWithin` over *geography*, and a
+geometry index is silently ineligible for that. Nothing failed — the planner just scanned every
+published route, and would have gone on doing so, more slowly each month. `TripStartRadiusIT` now
+asserts the plan against 5,000 rows so it cannot regress quietly.
+
+**Three defects in the new scripts**, each of which would have made a *passing* run meaningless:
+
+- The seed loop read landmarks from stdin while `sim_psql` shells out to `docker exec -i`, which
+  consumes stdin. It seeded one of forty and stopped without complaining.
+- The smoke's fixture copied a bucket cell from an existing row rather than computing it, attaching
+  every seeded trip to somebody else's corridor. Search returned nothing, which reads as a radius
+  refusal rather than a fixture that was never reachable.
+- `09-6`'s original form asserted "exactly one more trip filtered out", which is really a count of
+  how many times the script has been run. Replaced with the invariants that hold regardless: the
+  totals reconcile at every radius, and tightening the radius never removes fewer trips.
+
+Gate: `./mvnw spotless:check verify` → **BUILD SUCCESS, 576 tests, 0 skipped, JaCoCo met**.
+`redocly lint` valid; `pnpm run typecheck` in `packages/api-contracts` clean.
+Runtime: `scripts/simulation/verify-search-v2.sh` → **41 passed, 0 failed, 0 skipped**, on
+PostgreSQL 5434 / API 8088 against `routeshare_comigo`, with `V036` applied cleanly to the live
+database; `seed-pickup-points.sh` loads 40 landmarks and is idempotent on a second run.
+
+New dependency: ZXing (`core` + `javase`) for server-rendered QR. A hosted QR service would put a
+third party between a driver and the code on his phone and would leak every trip id he shares.
+
+**Blocker 015 still stands.** Nothing in this slice touches a gateway, so it has no skips of its own.
+
+Next: slice 10 — chat, notifications, safety and support. Slice 12 (real-time location) and 13 (live
+en-route booking) are both unblocked by this one.
 
 ## 2026-08-02 (later still) — Slice 08 complete: eligibility is a server predicate, and verification is not a gate
 
@@ -732,11 +805,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_08_THE_SERVER_DECIDES_WHO_MAY_RIDE`
-- Current Active Task: `Slices 00–08 complete and runtime-verified; slice 09 — search and discovery v2 — next`
+- Current Milestone: `MILESTONE_SLICE_09_SEARCH_ON_WHERE_THE_TRIP_STARTS`
+- Current Active Task: `Slices 00–09 complete and runtime-verified; slice 10 — chat, notifications, safety and support — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_08_ELIGIBILITY_IS_A_SERVER_PREDICATE`
-- Repository Git Status: `Slices 00–08 merged to main; migrations V027–V035 added`
+- Status: `SLICE_09_THE_RADIUS_IS_ABOUT_WHERE_A_DRIVER_STARTS`
+- Repository Git Status: `Slices 00–09 merged to main; migrations V027–V036 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

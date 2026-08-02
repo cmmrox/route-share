@@ -65,6 +65,8 @@ class VerificationNeverBlocksBookingTest {
   private final SeatHoldService seatHolds = mock(SeatHoldService.class);
   private final PenaltyFacade penalties = mock(PenaltyFacade.class);
   private final EligibilityService eligibility = mock(EligibilityService.class);
+  private final com.routeshare.routing.service.PickupPointService pickupPoints =
+      mock(com.routeshare.routing.service.PickupPointService.class);
   private final PolicySettingService policy = mock(PolicySettingService.class);
 
   private final BookingServiceImpl service =
@@ -83,6 +85,7 @@ class VerificationNeverBlocksBookingTest {
           penalties,
           seatHolds,
           eligibility,
+          pickupPoints,
           policy,
           java.time.Clock.systemUTC());
 

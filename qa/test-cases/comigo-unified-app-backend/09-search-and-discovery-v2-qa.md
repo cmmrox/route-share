@@ -12,18 +12,27 @@ tiers, the enriched result payload, server-side sorts, the commuter dashboard, a
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V035`.
+- Migration series applied through `V036` (slice 08 took `V035`; this slice is `V036`).
 - A seeded corridor with drivers starting at 2, 6, 14 and 25 km from the test pickup point.
 
 ## Automated test coverage
 
-- `TripStartRadiusIT` — the predicate is trip-start distance, not pickup proximity.
-- `FilteredOutCountTest` — the count equals the difference, computed in one query.
-- `MatchTierTest` — thresholds shared with the discount selector.
-- `SearchSortStabilityTest` — stable ordering across pages for all three sorts.
-- `SearchEligibilityIT` — slice 08's predicate applied inside the query so paging counts are right.
-- `SearchQueryPlanIT` — the GIST index is used.
-- `PickupPointResolutionTest` — curated beats derived; derived persists and is reused; fallback labels a raw coordinate.
+Five of the seven classes the plan named are folded into `TripStartRadiusIT`. They all need the
+same seeded corridor and the same live PostGIS, and splitting them would have meant standing four
+more containers up to assert four facts about one query.
+
+- `TripStartRadiusIT` (10) — the predicate is trip-start distance, not pickup proximity (`09-1`–`09-3`);
+  the filtered-out count is exact and reconciles (`09-6`); `startsKmAway` is projected (`09-7`);
+  eligibility is applied inside the query (`09-13`); paging is stable (`09-10`/`09-11`); the GIST
+  index is used against 5,000 rows (`09-19`); and the origin-point trigger holds.
+  Covers what the plan called `FilteredOutCountTest`, `SearchSortStabilityTest`, `SearchEligibilityIT`
+  and `SearchQueryPlanIT`.
+- `MatchTierTest` (6) — thresholds shared with the discount selector, boundaries agreeing at every
+  band, and a mapping with no default arm so a new band cannot be silently absorbed.
+- `PickupPointResolutionTest` (6) — curated beats persisted beats route label beats Places; a
+  persisted corner writes nothing new; the raw fallback always yields a usable point.
+- `MatchingSettingsServiceImplTest` (6) — the 20 km product ceiling, a default that must be one of
+  the offered chips, and an offered radius above the maximum.
 
 ## Maestro automation
 
@@ -66,6 +75,37 @@ owned by the mobile feature plan and must link back to this QA file.
 | 09-29 | Place Details field mask | Essentials only; a Pro-tier field **fails the build** |
 | 09-30 | 100 bookings across 20 distinct corners | ≤20 Places calls; the remaining 80 served from persisted rows |
 | 09-31 | Curated seed loaded | Launch-corridor pickups resolve with zero Places calls |
+
+## Run of record — 2026-08-03
+
+`scripts/simulation/verify-search-v2.sh` → **41 passed, 0 failed, 0 skipped**, on PostgreSQL 5434 /
+API 8088 against `routeshare_comigo`, with `V036` applied cleanly to the live database.
+`scripts/simulation/seed-pickup-points.sh` → 40 curated landmarks, idempotent on a second run.
+
+Defects the run found, all fixed:
+
+- **In the migration, not the script**: `idx_route_plan_origin` was specified on the geometry, but
+  the search filters over geography. The index was silently ineligible and the planner fell back to
+  a sequential scan. Nothing failed — the query would simply have decayed as the route table grew.
+- The seed loop read landmarks from stdin while `sim_psql` shells out to `docker exec -i`, which
+  consumes stdin: it seeded exactly one of forty and stopped without complaining.
+- The smoke's fixture copied a bucket cell from an existing row instead of computing it, attaching
+  the trips to somebody else's corridor. Every search returned nothing, which read as a radius
+  failure rather than a fixture that was never reachable.
+- The original `09-6` assertion ("exactly one more") was really asserting how many times the script
+  had been run, since the count is corridor-wide and earlier runs leave their trips behind. Replaced
+  with the two invariants that do hold: the totals reconcile at every radius, and tightening the
+  radius never removes fewer trips.
+
+## Deviations from the task file
+
+- **No new policy settings.** The radius lives in `routing.matching_settings` alone; V036 deletes
+  the orphaned `SEARCH_RADIUS_KM` row V029 seeded and nothing read. Match-tier thresholds are the
+  discount thresholds — `MatchTier` derives from `MatchDiscountTier` rather than duplicating 95/75/45.
+- **`V036`, not `V035`** — slice 08 took that number.
+- **A derived pickup point is labelled by its address, not a landmark name.** `displayName` is a
+  Pro-tier Places field and one Pro field re-prices the entire request. Real landmark names come
+  from the curated tier, which is what `seed-pickup-points.sh` exists for.
 
 ## Manual checks
 

@@ -23,16 +23,23 @@ class AppFacingRouteAliasControllerTest {
 
   @Test
   void passengerRideSearchDelegatesToRouteSearchService() {
-    var controller = new PassengerRideSearchController(routes);
+    var controller =
+        new PassengerRideSearchController(
+            routes,
+            org.mockito.Mockito.mock(com.routeshare.common.ratelimit.RateLimiter.class),
+            new com.routeshare.common.ratelimit.RateLimitProperties(
+                false, null, null, null, null, null, null, null, null),
+            currentUser());
     var request =
         new RouteSearchRequest(
             new CoordinateRequest(6.9271, 79.8612),
             new CoordinateRequest(6.9000, 79.9000),
             Instant.parse("2026-06-02T04:30:00Z"),
             1,
+            20,
             null,
-            null,
-            null,
+            "BEST_MATCH",
+            0,
             10);
     var result =
         new RouteSearchResponse(
@@ -59,14 +66,39 @@ class AppFacingRouteAliasControllerTest {
             "Toyota",
             "Aqua",
             "CAB-1234",
-            4);
-    when(routes.search(request)).thenReturn(List.of(result));
+            4,
+            2.4,
+            "MOST_OF_ROUTE",
+            "Most of route",
+            "8 km of your trip is on this driver's route (70%)",
+            "Silver",
+            "CAR",
+            new java.math.BigDecimal("50.00"),
+            new java.math.BigDecimal("38.00"),
+            new java.math.BigDecimal("62.00"),
+            "INSTANT",
+            false,
+            false);
+    var page =
+        new com.routeshare.routing.dto.response.RideSearchPageResponse(
+            List.of(result), 1, 0, 20, 20, List.of(5, 10, 20), "BEST_MATCH", 0, 10, false);
+    when(routes.search(request)).thenReturn(page);
 
     var response = controller.create(request);
 
     assertThat(response.success()).isTrue();
-    assertThat(response.data()).containsExactly(result);
+    assertThat(response.data().results()).containsExactly(result);
     verify(routes).search(request);
+  }
+
+  private static com.routeshare.common.security.CurrentUserProvider currentUser() {
+    var provider =
+        org.mockito.Mockito.mock(com.routeshare.common.security.CurrentUserProvider.class);
+    when(provider.requireCurrentUser())
+        .thenReturn(
+            new com.routeshare.common.security.CurrentUser(
+                "subject", "rider@example.test", null, "Rider", java.util.Set.of()));
+    return provider;
   }
 
   @Test
