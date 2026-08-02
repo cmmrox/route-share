@@ -27,6 +27,12 @@ public class RoutingFacadeImpl implements RoutingFacade {
   }
 
   @Override
+  @org.springframework.transaction.annotation.Transactional
+  public void releaseSeats(long routeOccurrenceId, int seats) {
+    occurrences.releaseSeats(routeOccurrenceId, seats);
+  }
+
+  @Override
   public Optional<PriceableTrip> findPriceableTrip(long routeOccurrenceId) {
     return occurrences
         .findPriceableTrip(routeOccurrenceId)

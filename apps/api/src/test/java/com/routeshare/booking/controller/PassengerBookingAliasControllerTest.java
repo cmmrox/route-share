@@ -24,7 +24,12 @@ class PassengerBookingAliasControllerTest {
 
   @Test
   void passengerBookingCreateDelegatesWithIdempotencyKey() {
-    var controller = new PassengerBookingController(bookings, payments, earlyDropOff);
+    var controller =
+        new PassengerBookingController(
+            bookings,
+            payments,
+            earlyDropOff,
+            org.mockito.Mockito.mock(com.routeshare.trip.facade.TripTimerFacade.class));
     var request = new BookingRequest(20L, 1, 6.9271, 79.8612, 6.9000, 79.9000, 0.10, 0.80, null);
     when(bookings.book(request, "idem-1"))
         .thenReturn(
@@ -41,7 +46,12 @@ class PassengerBookingAliasControllerTest {
 
   @Test
   void passengerCancelDelegatesToBookingStatusTransition() {
-    var controller = new PassengerBookingController(bookings, payments, earlyDropOff);
+    var controller =
+        new PassengerBookingController(
+            bookings,
+            payments,
+            earlyDropOff,
+            org.mockito.Mockito.mock(com.routeshare.trip.facade.TripTimerFacade.class));
     when(bookings.transition(
             30L,
             new com.routeshare.booking.dto.request.BookingStatusTransitionRequest(

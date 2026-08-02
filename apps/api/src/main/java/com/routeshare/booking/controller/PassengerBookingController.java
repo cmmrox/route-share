@@ -31,12 +31,17 @@ public class PassengerBookingController {
   private final BookingService bookings;
   private final PaymentService payments;
   private final EarlyDropOffService earlyDropOff;
+  private final com.routeshare.trip.facade.TripTimerFacade tripTimers;
 
   public PassengerBookingController(
-      BookingService bookings, PaymentService payments, EarlyDropOffService earlyDropOff) {
+      BookingService bookings,
+      PaymentService payments,
+      EarlyDropOffService earlyDropOff,
+      com.routeshare.trip.facade.TripTimerFacade tripTimers) {
     this.bookings = bookings;
     this.payments = payments;
     this.earlyDropOff = earlyDropOff;
+    this.tripTimers = tripTimers;
   }
 
   @PostMapping
@@ -67,6 +72,16 @@ public class PassengerBookingController {
     return ApiResponse.ok(
         bookings.transition(
             bookingId, new BookingStatusTransitionRequest(CANCELLED, req.reason())));
+  }
+
+  /**
+   * P38 / P38b: her side of the pickup wait — the same clock the driver sees, the fee it ends in,
+   * and how many no-shows she has this month. She reads no policy figure to render it.
+   */
+  @GetMapping("/{bookingId}/pickup-window")
+  ApiResponse<com.routeshare.trip.dto.response.PickupWaitResponse> pickupWindow(
+      @PathVariable long bookingId) {
+    return ApiResponse.ok(tripTimers.pickupWindowForBooking(bookingId));
   }
 
   @PostMapping("/{bookingId}/early-drop-off")

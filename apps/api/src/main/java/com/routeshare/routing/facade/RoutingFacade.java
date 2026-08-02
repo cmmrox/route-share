@@ -10,5 +10,11 @@ public interface RoutingFacade {
    */
   Optional<PriceableTrip> findPriceableTrip(long routeOccurrenceId);
 
+  /**
+   * Returns seats to an occurrence's inventory. Called when a seat stops being held — a no-show
+   * release — so the car is not driven with a seat nobody can book.
+   */
+  void releaseSeats(long routeOccurrenceId, int seats);
+
   record PriceableTrip(long routeOccurrenceId, long vehicleId, double routeLengthMeters) {}
 }

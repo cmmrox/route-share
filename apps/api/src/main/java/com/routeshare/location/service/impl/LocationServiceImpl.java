@@ -40,6 +40,7 @@ public class LocationServiceImpl implements LocationService {
   private final LocationRealtimePublisher realtimePublisher;
   private final ObjectMapper objectMapper;
   private final Clock clock;
+  private final com.routeshare.trip.facade.TripArrivalFacade arrivals;
 
   public LocationServiceImpl(
       CurrentUserProvider current,
@@ -47,7 +48,8 @@ public class LocationServiceImpl implements LocationService {
       LocationSampleRepository locations,
       LatestLocationCache latestLocationCache,
       LocationRealtimePublisher realtimePublisher,
-      Clock clock) {
+      Clock clock,
+      com.routeshare.trip.facade.TripArrivalFacade arrivals) {
     this(
         current,
         identityFacade,
@@ -55,7 +57,8 @@ public class LocationServiceImpl implements LocationService {
         latestLocationCache,
         realtimePublisher,
         new ObjectMapper().findAndRegisterModules(),
-        clock);
+        clock,
+        arrivals);
   }
 
   @Override
@@ -173,6 +176,10 @@ public class LocationServiceImpl implements LocationService {
     locations.insertLocationEvent(
         tripId, driverProfileId, "DRIVER_LOCATION_ACCEPTED", toJson(response));
     realtimePublisher.publishTripLocation(response);
+
+    // The sample is committed before arrival is judged, so the detector reads the trail this
+    // update is part of. Location reports movement; trip decides whether it amounts to an arrival.
+    arrivals.onDriverLocation(tripId);
     return response;
   }
 

@@ -5,6 +5,7 @@ import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.notification.facade.NotificationFacade;
 import com.routeshare.trip.domain.PassengerTripStateMachine;
+import com.routeshare.trip.domain.PassengerTripStatus;
 import com.routeshare.trip.domain.TripStateMachine;
 import com.routeshare.trip.dto.request.PassengerTripStateTransitionRequest;
 import com.routeshare.trip.dto.request.PreTripChecklistRequest;
@@ -32,6 +33,7 @@ public class TripServiceImpl implements TripService {
   private final NotificationFacade notifications;
   private final com.routeshare.payment.facade.PaymentFacade payments;
   private final TripStartWindowService startWindows;
+  private final com.routeshare.trip.service.PickupWaitService pickupWaits;
   private final java.time.Clock clock;
   private final TripStateMachine stateMachine = new TripStateMachine();
   private final PassengerTripStateMachine passengerStateMachine = new PassengerTripStateMachine();
@@ -91,6 +93,11 @@ public class TripServiceImpl implements TripService {
     int updated = passengerStates.updateStatus(tripId, bookingId, req.status());
     if (updated != 1) {
       throw new IllegalStateException("Passenger trip state update failed");
+    }
+    // She is in the car, so the wait is over. Left running it would expire behind her and record a
+    // no-show against a passenger the driver has already picked up.
+    if (req.status() == PassengerTripStatus.BOARDED) {
+      pickupWaits.resolveBoarded(tripId, bookingId);
     }
     return Map.of("tripId", tripId, "bookingId", bookingId, "status", req.status().name());
   }
