@@ -9,7 +9,9 @@ import com.routeshare.trip.dto.request.PassengerTripStateTransitionRequest;
 import com.routeshare.trip.dto.request.PreTripChecklistRequest;
 import com.routeshare.trip.dto.request.TripTransitionRequest;
 import com.routeshare.trip.dto.response.DriverTripResponse;
+import com.routeshare.trip.dto.response.StartWindowResponse;
 import com.routeshare.trip.service.TripService;
+import com.routeshare.trip.service.TripStartWindowService;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,10 +28,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class DriverTripController {
   private final TripService trips;
   private final BookingService bookings;
+  private final TripStartWindowService startWindows;
 
-  public DriverTripController(TripService trips, BookingService bookings) {
+  public DriverTripController(
+      TripService trips, BookingService bookings, TripStartWindowService startWindows) {
     this.trips = trips;
     this.bookings = bookings;
+    this.startWindows = startWindows;
+  }
+
+  /** D32 / D32b: the countdown, whether the extension is left, and what happens at zero. */
+  @GetMapping("/{tripId}/start-window")
+  public ApiResponse<StartWindowResponse> startWindow(@PathVariable long tripId) {
+    return ApiResponse.ok(startWindows.window(tripId));
+  }
+
+  /** D32c: the single 10-minute extension. */
+  @PostMapping("/{tripId}/start-extension")
+  public ApiResponse<StartWindowResponse> startExtension(@PathVariable long tripId) {
+    return ApiResponse.ok(startWindows.extend(tripId));
   }
 
   @GetMapping

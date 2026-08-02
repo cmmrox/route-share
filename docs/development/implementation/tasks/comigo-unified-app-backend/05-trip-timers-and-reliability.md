@@ -246,3 +246,72 @@ the driver and leaves riding intact.
 ```bash
 git commit -m "feat(api): add trip timers, reliability counters, and a leader-elected scheduler"
 ```
+
+## Progress
+
+### 2026-08-02 — steps 1–4 landed: scheduler, the start-buffer clock, and the reliability log
+
+Merged to `main`. The slice is **not complete** — three of the four clocks remain — but what is
+merged is coherent and running: the scheduler sweeps, and the first clock it sweeps is real.
+
+Done:
+
+- `V031__trip_timers_and_reliability.sql` — **all** tables for all four clocks plus reliability, so
+  later steps add behaviour rather than schema: `scheduling.shedlock`, `scheduling.job_run`,
+  `trip.trip_start_window`, `trip.pickup_wait`, `trip.driver_late_grace`,
+  `reliability.reliability_event`, `reliability.monthly_counter`, and
+  `booking.promised_pickup_at`. Applied against real PostGIS; the API boots on it.
+- `scheduling` module: ShedLock on Postgres, `ScheduledJob`, `JobRegistry` (discovers every job
+  bean, one lock for the tick), `JobRunner` (records a `job_run` row and emits the three per-job
+  metrics whatever the outcome), and `SchedulerHealthIndicator` (DOWN when any job has not
+  succeeded within three ticks).
+- `SchedulerLeaderElectionIT` — 8 simulated instances, each with its own `LockProvider` over the
+  same database: exactly one executes. Plus `JobRunnerImplTest` (5 cases, including that a throwing
+  job is recorded and does not propagate — otherwise one wedged sweep stops every other clock).
+- Runtime: ShedLock acquires `routeshare-scheduler-tick` and writes the row on a live stack.
+
+- **The start-buffer clock (steps 2–4)** — `trip.trip_start_window` opened from departure,
+  `TripStartWindowService` with a single spendable extension, `StartBufferExpiryJob` registered
+  against the scheduler, and `GET /api/v1/driver/trips/{tripId}/start-window` +
+  `POST /api/v1/driver/trips/{tripId}/start-extension`. Auto-cancel voids every hold **before**
+  marking the trip cancelled, so a part-way failure leaves holds released rather than a cancelled
+  trip with live authorisations. It records a `MISSED_START` and increments
+  `routeshare_autocancels_total`.
+- **The reliability log (part of step 11)** — `reliability.reliability_event` (append-only) and
+  `reliability.monthly_counter` as its projection, with `rebuild()` so the projection can be treated
+  as the cache it is. The event→column mapping lives in the entity so the live path and a rebuild
+  cannot disagree.
+- `TripStartWindowTest` — 9 cases on explicit instants, no sleeping. Includes that the extension is
+  measured from the buffer and not from the moment it was tapped: extending from "now" would let a
+  driver who waits until 9:59 buy nearly twenty extra minutes.
+- Runtime: the job registers, ticks under the leader lock and records `SUCCEEDED` runs.
+
+Still to do — steps 5 to 13:
+
+- Arrival detection from `location.location_sample` with geofence + dwell (step 5), and the pickup
+  wait and its extension (steps 6–7). `trip.pickup_wait` exists and is unused.
+- The driver-late grace seeded from `booking.promised_pickup_at` (step 8) and `cancellation-terms`
+  (step 9). `trip.driver_late_grace` exists and is unused.
+- The early-drop allowance (step 10), the monthly reset job and both reliability panels (step 11).
+- The deactivation trigger at three missed starts (step 12) — `MISSED_START` events are being
+  recorded, but nothing yet counts them and calls `DriverDeactivationService.deactivate`.
+- The prepay flag on `/me/context` (step 13).
+- `TripStartWindowService.open` is **not yet called from route publication**, so windows are only
+  created by a direct call. Wiring it into the publish/generate path is the first thing step 5
+  should do — without it the sweeper has nothing to find.
+- The remaining endpoints, `docs/api/mobile-app.openapi.json`, `packages/api-contracts`, and
+  `scripts/simulation/verify-trip-timers.sh`.
+
+## Deviations from the plan as written
+
+- **`shedlock-provider-jdbc`, not `shedlock-provider-jdbc-template`.** The task names the
+  JdbcTemplate provider, but `PersistenceArchitectureTest` bans the `JdbcTemplate` type from main
+  sources, and a library integration is not a good reason to weaken a standing architecture rule.
+  The plain-JDBC provider takes a `DataSource` and behaves identically for our use.
+- **One lock for the whole tick, not one per job.** The task's table implies a lock per job. The
+  jobs are short and share a database, so per-job locks would multiply lock churn without allowing
+  any useful overlap. Correctness does not rest on this: each row transition must refuse to apply
+  twice regardless, because a lock can lapse under a long GC pause.
+- **`PAX_PREPAY_NO_SHOW_THRESHOLD` added to `platform.policy_setting`.** The task refers to a
+  `prepayThreshold` policy value; it was the only figure this slice needs that slice 03 had not
+  already seeded.

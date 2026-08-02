@@ -68,6 +68,16 @@ sentry:
 
 
 routeshare:
+  # Leader-elected sweeps for every clock in the product. Durations and limits are NOT here — they
+  # are product rules and live in platform.policy_setting so they can be corrected without a deploy.
+  # Only the cadence and the arrival-detection tuning are properties.
+  scheduler:
+    enabled: ${ROUTESHARE_SCHEDULER_ENABLED:true}
+    tick-seconds: ${ROUTESHARE_SCHEDULER_TICK_SECONDS:60}
+  pickup-arrival:
+    # A geofence alone lets a drive-past manufacture a no-show, so arrival also requires a dwell.
+    geofence-meters: ${ROUTESHARE_PICKUP_ARRIVAL_GEOFENCE_METERS:120}
+    dwell-seconds: ${ROUTESHARE_PICKUP_ARRIVAL_DWELL_SECONDS:30}
   # Working days ComiGo answers a driver's rate re-assessment within; shown in D39's copy.
   rate-band:
     review-sla-days: ${ROUTESHARE_RATE_BAND_REVIEW_SLA_DAYS:3}

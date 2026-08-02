@@ -11,6 +11,7 @@ import com.routeshare.trip.domain.TripStatus;
 import com.routeshare.trip.dto.request.PassengerTripStateTransitionRequest;
 import com.routeshare.trip.dto.request.TripTransitionRequest;
 import com.routeshare.trip.service.TripService;
+import com.routeshare.trip.service.TripStartWindowService;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,10 +22,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DriverTripAliasControllerTest {
   @Mock private TripService trips;
   @Mock private BookingService bookings;
+  @Mock private TripStartWindowService startWindows;
 
   @Test
   void driverStartDelegatesToStartedTripTransition() {
-    var controller = new DriverTripController(trips, bookings);
+    var controller = new DriverTripController(trips, bookings, startWindows);
     when(trips.transition(40L, new TripTransitionRequest(TripStatus.STARTED)))
         .thenReturn(Map.of("tripId", 40L, "status", "STARTED"));
 
@@ -37,7 +39,7 @@ class DriverTripAliasControllerTest {
 
   @Test
   void driverPassengerBoardDelegatesToBoardedPassengerState() {
-    var controller = new DriverTripController(trips, bookings);
+    var controller = new DriverTripController(trips, bookings, startWindows);
     when(trips.transitionPassengerState(
             40L,
             30L,
