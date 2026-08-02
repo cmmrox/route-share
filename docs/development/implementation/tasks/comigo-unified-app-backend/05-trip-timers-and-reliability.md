@@ -246,3 +246,46 @@ the driver and leaves riding intact.
 ```bash
 git commit -m "feat(api): add trip timers, reliability counters, and a leader-elected scheduler"
 ```
+
+## Progress
+
+### 2026-08-02 — step 1 of 13 landed: scheduler infrastructure and the full migration
+
+Branch `feat/comigo-unified-app-slice-05`, not yet merged — the slice is incomplete and merging it
+would imply the clocks exist.
+
+Done:
+
+- `V031__trip_timers_and_reliability.sql` — **all** tables for all four clocks plus reliability, so
+  later steps add behaviour rather than schema: `scheduling.shedlock`, `scheduling.job_run`,
+  `trip.trip_start_window`, `trip.pickup_wait`, `trip.driver_late_grace`,
+  `reliability.reliability_event`, `reliability.monthly_counter`, and
+  `booking.promised_pickup_at`. Applied against real PostGIS; the API boots on it.
+- `scheduling` module: ShedLock on Postgres, `ScheduledJob`, `JobRegistry` (discovers every job
+  bean, one lock for the tick), `JobRunner` (records a `job_run` row and emits the three per-job
+  metrics whatever the outcome), and `SchedulerHealthIndicator` (DOWN when any job has not
+  succeeded within three ticks).
+- `SchedulerLeaderElectionIT` — 8 simulated instances, each with its own `LockProvider` over the
+  same database: exactly one executes. Plus `JobRunnerImplTest` (5 cases, including that a throwing
+  job is recorded and does not propagate — otherwise one wedged sweep stops every other clock).
+- Runtime: ShedLock acquires `routeshare-scheduler-tick` and writes the row on a live stack.
+
+Still to do — steps 2 to 13: the start buffer and its extension, arrival detection, the pickup wait
+and its extension, the driver-late grace, `cancellation-terms`, the early-drop allowance, the
+reliability event log and counter projection with monthly reset, the deactivation trigger at three
+missed starts, the prepay flag at two no-shows, all ten endpoints, and the contract plus
+`verify-trip-timers.sh`.
+
+## Deviations from the plan as written
+
+- **`shedlock-provider-jdbc`, not `shedlock-provider-jdbc-template`.** The task names the
+  JdbcTemplate provider, but `PersistenceArchitectureTest` bans the `JdbcTemplate` type from main
+  sources, and a library integration is not a good reason to weaken a standing architecture rule.
+  The plain-JDBC provider takes a `DataSource` and behaves identically for our use.
+- **One lock for the whole tick, not one per job.** The task's table implies a lock per job. The
+  jobs are short and share a database, so per-job locks would multiply lock churn without allowing
+  any useful overlap. Correctness does not rest on this: each row transition must refuse to apply
+  twice regardless, because a lock can lapse under a long GC pause.
+- **`PAX_PREPAY_NO_SHOW_THRESHOLD` added to `platform.policy_setting`.** The task refers to a
+  `prepayThreshold` policy value; it was the only figure this slice needs that slice 03 had not
+  already seeded.
