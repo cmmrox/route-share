@@ -500,7 +500,13 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
         ST_X(b.pickup) AS "pickupLongitude",
         ST_Y(b.dropoff) AS "dropoffLatitude",
         ST_X(b.dropoff) AS "dropoffLongitude",
-        b.created_at AS "createdAt"
+        b.created_at AS "createdAt",
+        COALESCE(pp.verification_level, 'NONE') AS "passengerVerificationLevel",
+        CASE
+          WHEN pp.photo_visibility = 'PUBLIC' THEN pp.photo_url
+          WHEN pp.photo_visibility = 'MATCHED' AND b.status = 'CONFIRMED' THEN pp.photo_url
+          ELSE NULL
+        END AS "passengerPhotoUrl"
       FROM booking.booking b
       JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id
       JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
@@ -511,7 +517,9 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
       WHERE d.app_user_id = :driverAppUserId
         AND (:tripId IS NULL OR t.trip_id = :tripId)
         AND b.status IN ('REQUESTED','CONFIRMED')
-      ORDER BY b.created_at ASC
+      -- Slice 08: verified riders first. A sort key, never a filter — an unverified rider is still
+      -- in this list, she is simply not at the top of it, which is the whole of what P28 promises.
+      ORDER BY (COALESCE(pp.verification_level, 'NONE') = 'VERIFIED') DESC, b.created_at ASC
       """,
       nativeQuery = true)
   List<DriverBookingRequestRow> findDriverBookingRequests(
@@ -657,5 +665,14 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     Double getDropoffLongitude();
 
     Instant getCreatedAt();
+
+    /** P28's ranking signal, and the badge D14 shows beside the name. */
+    String getPassengerVerificationLevel();
+
+    /**
+     * Already resolved against P30 in the query, so a HIDDEN photo is never selected at all — not
+     * fetched and then dropped in Java, where the next person to add a field would carry it out.
+     */
+    String getPassengerPhotoUrl();
   }
 }

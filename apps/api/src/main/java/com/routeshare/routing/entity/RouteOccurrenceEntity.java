@@ -33,4 +33,15 @@ public class RouteOccurrenceEntity {
   private Integer availableSeats;
 
   private String status;
+
+  /**
+   * D35, copied from the driver's preferences when this occurrence was generated and overridable
+   * until the trip freezes. Stored here rather than read through to the driver's account, because
+   * changing a preference must not change the terms of a trip somebody has already booked.
+   */
+  @Column(name = "gender_policy", nullable = false)
+  private String genderPolicy = "ANYONE";
+
+  @Column(name = "verified_riders_only", nullable = false)
+  private boolean verifiedRidersOnly;
 }

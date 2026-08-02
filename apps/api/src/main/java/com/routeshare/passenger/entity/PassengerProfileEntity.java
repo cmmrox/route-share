@@ -30,4 +30,20 @@ public class PassengerProfileEntity {
 
   @Column(name = "photo_url")
   private String photoUrl;
+
+  @Column(name = "verification_level", nullable = false)
+  private String verificationLevel = "NONE";
+
+  @Column(name = "verified_at")
+  private java.time.Instant verifiedAt;
+
+  /**
+   * Written by the verification decision, never by the rider. An eligibility input and nothing else
+   * — it is emitted by no endpoint.
+   */
+  @Column(name = "gender", nullable = false)
+  private String gender = "UNSPECIFIED";
+
+  @Column(name = "photo_visibility", nullable = false)
+  private String photoVisibility = "MATCHED";
 }

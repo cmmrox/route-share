@@ -56,6 +56,7 @@ public class BookingServiceImpl implements BookingService {
   private final com.routeshare.trip.facade.TripLifecycleFacade tripLifecycle;
   private final com.routeshare.penalty.facade.PenaltyFacade penalties;
   private final com.routeshare.booking.service.SeatHoldService seatHolds;
+  private final com.routeshare.routing.service.EligibilityService eligibility;
   private final com.routeshare.platform.service.PolicySettingService policy;
   private final java.time.Clock clock;
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
@@ -98,6 +99,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     var app = identityFacade.upsertFromToken(user);
+    // Slice 08. The same rule the search query filters on, so a trip that was hidden cannot be
+    // booked by naming its id — and so the two can never disagree about who may ride. Checked
+    // before any inventory is touched: refusing after a seat has been reserved would leave the
+    // rollback holding the only copy of the truth.
+    eligibility.requireEligible(app.appUserId(), req.routeOccurrenceId());
     // P11: two unanswered requests at once. The third is refused rather than queued — a rider
     // holding five seats across five cars has taken inventory nobody else can book while deciding.
     int openRequests = bookings.countOpenRequests(app.appUserId());
@@ -468,7 +474,9 @@ public class BookingServiceImpl implements BookingService {
         row.getPickupLongitude(),
         row.getDropoffLatitude(),
         row.getDropoffLongitude(),
-        row.getCreatedAt());
+        row.getCreatedAt(),
+        row.getPassengerVerificationLevel(),
+        row.getPassengerPhotoUrl());
   }
 
   private String normalizeStatus(String status) {

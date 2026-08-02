@@ -1,6 +1,92 @@
 # RouteShareApp Development Status
 
-2026-08-02 (slice 07 complete — seats are named, requests expire, and numbers are disclosed by rule)
+2026-08-02 (slice 08 complete — the server decides who may ride with whom)
+
+## 2026-08-02 (later still) — Slice 08 complete: eligibility is a server predicate, and verification is not a gate
+
+Two of the driving preferences narrow who may book, and both are safety features rather than
+filters. The prototype is emphatic that they are enforced server-side — *"Riders see this on your
+trip before they book, so nobody wastes a request"* — and that promise only holds if the thing that
+hides a trip and the thing that refuses it are **the same rule**. They are: one `EligibilityService`,
+called from the search query and from the booking guard, and nowhere else.
+
+**The two surfaces answer differently on purpose.** Booking states the reason, because she named
+that trip and "no" without a reason is a rider who tries three more times. Search says nothing at
+all — a rider learning from a trip's absence that it was women-only is fine; being able to enumerate
+a driver's policy by asking is not. `NOT_ELIGIBLE_*` appears in no search response, and the smoke
+asserts that.
+
+**Women-only is gated twice, and one gate alone would be a hole.** A driver may only set it if her
+own NIC verifies her as female; a rider may only book it if hers does. The first without the second
+lets anyone ride in a women-only car; the second without the first lets anyone advertise one. The
+per-trip override (D13) checks the same gate as the account-level preference, because otherwise it
+would simply be the way round it.
+
+**Eligibility is copied onto the trip, not read through to the driver's account.** A preference
+changed on Tuesday must not change the terms of a trip somebody booked on Monday. `route_occurrence`
+carries `gender_policy` and `verified_riders_only`, inherited at generation and overridable until
+slice 07's freeze.
+
+**Verification is provably not a booking gate** (P31a: *"Book, pay and ride as normal"*). Every path
+in the slice writes a level and none of them is ever read as one — `VerificationNeverBlocksBookingTest`
+drives an unverified rider through a complete booking including the card hold, and asserts the only
+thing that can refuse her is a driver who asked for verification on that trip.
+
+**The photo asymmetry is deliberate.** A rider may hide her face from everyone including her driver;
+a driver may not, because she is getting into his car and has to know it is him (D35). The role is
+passed in as a `ViewContext` rather than inferred from whether the subject happens to have a driver
+profile — in a unified app most drivers also ride, and inferring it would show a hidden photo to the
+driver of any rider who drives too. A `HIDDEN` URL is never emitted, not even for a client to ignore:
+a URL in a payload is a URL in a log, a cache and a proxy, and none of those was part of her choice.
+`EligibilityPrivacyTest` asserts structurally that no response DTO anywhere declares a gender or an
+NIC field, because checking a handful of endpoints proves nothing about the next one somebody writes.
+
+**Camera-only is stated in three places and proved in none of them.** The schema admits only
+`CAMERA`, the service returns `CAPTURE_SOURCE_NOT_ALLOWED` with a reason the client can render, and
+the attestation — source and capture time, bound to a server-issued session — is **recorded for the
+reviewer** rather than merely checked. A determined client can lie about all of it, which is exactly
+why the review step stays human and why the value a rider claimed is what a reviewer sees.
+
+**D35's cost line needed a table that did not exist.** "Verified riders only cost you 3 requests
+last week" cannot be derived from anything: a rider filtered out of search never makes a request, so
+the omission is the whole event and leaves no other trace. `routing.eligibility_denial` records both
+surfaces, which is also what makes `eligibility-impact` a real count rather than a placeholder.
+
+**One deliberate deviation from the task file:** `ROUTESHARE_VERIFICATION_SESSION_TTL_MINUTES` was
+specified as an environment variable and is a **policy setting** instead, alongside
+`VERIFY_CAMERA_ONLY`. D1 forbids a rule the product states from existing as a second value in a
+file, and support needs to change both without a deploy. Only the review-SLA alerting threshold
+stayed an env var, since it is an operational figure rather than a product rule.
+
+**Three defects the runtime run found, all in the new smoke script rather than the backend** — worth
+naming because each would have made a *passing* run meaningless:
+
+- `psql` prints the command tag after a `RETURNING` row, so every occurrence id read back as
+  `"85\nINSERT 0 1"` and every booking was refused as an invalid body. Twelve checks failed loudly,
+  which is the good case.
+- The fixture occurrences carried **no bucket cells**, so search omitted all three — including the
+  ordinary one. Every negative check passed while proving nothing. The "the ordinary trip is there,
+  so the absences above are the rule" assertion exists precisely to catch that, and it did. The
+  fixture now clones one real seeded occurrence and derives its search coordinates from that plan's
+  own stored line, so the corridor predicates hold by construction.
+- An `app_user` row is created lazily on the first authenticated call, so seeding a rider's
+  verification level before that updated nothing at all.
+
+Gate: `./mvnw spotless:check verify` → **BUILD SUCCESS, 551 tests, 0 skipped, JaCoCo met**.
+`redocly lint docs/api/mobile-app.openapi.json` → zero errors; `pnpm run typecheck` in
+`packages/api-contracts` clean.
+Runtime: `scripts/simulation/verify-eligibility.sh` → **50 passed, 0 failed, 0 skipped**, on
+PostgreSQL 5434 / API 8088 against `routeshare_comigo`, with `V035` applied cleanly to the live
+database and object storage enabled so the camera-capture accept path ran rather than skipping.
+
+**`apiContractCounts` was stale and is now correct.** It still read 120 implemented / 91 planned from
+slice 00; the real figures across slices 01–08 are **163 / 61**. Nothing consumed the numbers, but a
+count that nobody updates is a count nobody should trust.
+
+**Blocker 015 still stands** and slice 08 inherits nothing from it — no path in this slice touches a
+gateway, so it has no skips of its own.
+
+Next: slice 09 — search and discovery v2, which consumes the eligibility predicate built here.
 
 ## 2026-08-02 (later still) — Slice 07 complete: booking depth, and a privacy surface built once
 
@@ -646,11 +732,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_07_BOOKINGS_ARE_FIRST_CLASS`
-- Current Active Task: `Slices 00–07 complete and runtime-verified; slice 08 — preferences, verification and eligibility — next`
+- Current Milestone: `MILESTONE_SLICE_08_THE_SERVER_DECIDES_WHO_MAY_RIDE`
+- Current Active Task: `Slices 00–08 complete and runtime-verified; slice 09 — search and discovery v2 — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_07_A_BOOKING_HOLDS_A_NAMED_SEAT`
-- Repository Git Status: `Slices 00–06 merged to main; slice 07 in progress; migrations V027–V034 added`
+- Status: `SLICE_08_ELIGIBILITY_IS_A_SERVER_PREDICATE`
+- Repository Git Status: `Slices 00–08 merged to main; migrations V027–V035 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

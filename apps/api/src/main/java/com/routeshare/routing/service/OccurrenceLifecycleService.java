@@ -22,6 +22,18 @@ public interface OccurrenceLifecycleService {
   /** D13. Refused once the trip is frozen: who may book is part of the deal already struck. */
   Map<String, Object> setApprovalMode(long routeOccurrenceId, ApprovalModeRequest request);
 
+  /**
+   * D13's per-trip who-can-ride, overriding the account-level answer from D35.
+   *
+   * <p>Gated by the same rule as the preference — a driver whose NIC does not verify her as female
+   * cannot set women-only here either, or the per-trip path would be a way round the account one —
+   * and frozen with everything else, because who may book is part of the deal the first rider
+   * already accepted.
+   */
+  Map<String, Object> setEligibility(
+      long routeOccurrenceId,
+      com.routeshare.routing.dto.request.OccurrenceEligibilityRequest request);
+
   /** D09's banner, and the predicate every edit path checks. */
   OccurrenceEditabilityResponse editability(long routeOccurrenceId);
 

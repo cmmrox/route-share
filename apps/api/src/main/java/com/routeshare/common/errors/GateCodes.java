@@ -40,4 +40,28 @@ public final class GateCodes {
 
   /** D40 — approved vehicle with no rate band. Wired in slice 02. */
   public static final String RATE_BAND_NOT_SET = "RATE_BAND_NOT_SET";
+
+  /** D35 — women-only was set by a driver whose NIC does not verify her as female. */
+  public static final String WOMEN_ONLY_NOT_AVAILABLE = "WOMEN_ONLY_NOT_AVAILABLE";
+
+  /**
+   * P07 — this trip carries women only, and the caller is not eligible.
+   *
+   * <p>Returned at booking, never in search: search simply omits the trip. A rider learning a trip
+   * is women-only from its absence is fine; being able to enumerate a driver's policy by asking is
+   * not.
+   */
+  public static final String NOT_ELIGIBLE_WOMEN_ONLY = "NOT_ELIGIBLE_WOMEN_ONLY";
+
+  /** P07 — this trip carries verified riders only, and the caller is not verified. */
+  public static final String NOT_ELIGIBLE_VERIFIED_ONLY = "NOT_ELIGIBLE_VERIFIED_ONLY";
+
+  /** P29 — an identity capture arrived from anywhere but the in-app camera. */
+  public static final String CAPTURE_SOURCE_NOT_ALLOWED = "CAPTURE_SOURCE_NOT_ALLOWED";
+
+  /** P29 — the capture session lapsed before the four steps were finished. */
+  public static final String VERIFICATION_SESSION_EXPIRED = "VERIFICATION_SESSION_EXPIRED";
+
+  /** P31b — a second submission while a reviewer still has the first. */
+  public static final String VERIFICATION_ALREADY_PENDING = "VERIFICATION_ALREADY_PENDING";
 }
