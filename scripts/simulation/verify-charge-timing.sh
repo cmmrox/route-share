@@ -122,8 +122,10 @@ R="$(call GET "/api/v1/passenger/bookings/$CARD_BOOKING" "$TOKEN")"
 equals "the app is told authorised, not charged" "$(data "$R" payment.status)" "AUTHORIZED"
 
 # 2 — approval must not charge.
+# Keyed on the occurrence, not the plan: since V032 a trip belongs to one occurrence, and a
+# recurring plan has many. Joining on route_plan_id could pick a sibling occurrence's trip.
 TRIP_ID="$(sim_psql "SELECT t.trip_id FROM trip.trip t
-  JOIN booking.booking b ON b.route_plan_id = t.route_plan_id
+  JOIN booking.booking b ON b.route_occurrence_id = t.route_occurrence_id
   WHERE b.booking_id = $CARD_BOOKING LIMIT 1")"
 equals "approval does not capture" \
   "$(sim_psql "SELECT status FROM payment.payment_intent WHERE booking_id = $CARD_BOOKING")" \
@@ -131,18 +133,18 @@ equals "approval does not capture" \
 
 # 3 + 4 — start captures once; a repeat captures nothing further.
 if [ -n "$TRIP_ID" ]; then
-  call POST "/api/v1/driver/trips/$TRIP_ID/transitions" "$ADMIN_TOKEN" '{"status":"STARTED"}' >/dev/null
+  call POST "/api/v1/driver/trips/$TRIP_ID/start" "$ADMIN_TOKEN" '{}' >/dev/null
   equals "starting the trip captures the card" \
     "$(sim_psql "SELECT status FROM payment.payment_intent WHERE booking_id = $CARD_BOOKING")" \
     "CAPTURED"
   CAPTURES_BEFORE="$(sim_psql "SELECT count(*) FROM payment.payment_attempt
     WHERE booking_id = $CARD_BOOKING AND operation = 'CAPTURE'")"
-  call POST "/api/v1/driver/trips/$TRIP_ID/transitions" "$ADMIN_TOKEN" '{"status":"STARTED"}' >/dev/null
+  call POST "/api/v1/driver/trips/$TRIP_ID/start" "$ADMIN_TOKEN" '{}' >/dev/null
   equals "a repeated start captures nothing further" \
     "$(sim_psql "SELECT count(*) FROM payment.payment_attempt
        WHERE booking_id = $CARD_BOOKING AND operation = 'CAPTURE'")" "$CAPTURES_BEFORE"
 else
-  sim_log "SKIP: no trip row for the booked route; capture checks not run"
+  sim_fail "no trip row for the booked route; capture checks could not run"
 fi
 
 # 5 — cancelling before the start charges nothing.

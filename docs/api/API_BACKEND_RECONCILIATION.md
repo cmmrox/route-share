@@ -1,6 +1,7 @@
 # API Backend Reconciliation — ComiGo Mobile Contract
 
 Generated: 2026-08-01 (slice 00 — repo reset and contract rewrite)
+Last regenerated: 2026-08-02 (slice 06 — penalties, dues and compensation)
 
 Source of truth: `docs/api/mobile-app.openapi.json`. This document is derived from its
 `x-routeshare-status` extension — regenerate it rather than editing by hand.
@@ -19,12 +20,7 @@ resource ownership and gate state.
 
 | Status | Operations | Meaning |
 | --- | --- | --- |
-| `IMPLEMENTED` | 120 | Live in `apps/api` today |
-| `PLANNED_SLICE_01` | 3 | Specified; built in slice 01 |
-| `PLANNED_SLICE_02` | 5 | Specified; built in slice 02 |
-| `PLANNED_SLICE_03` | 1 | Specified; built in slice 03 |
-| `PLANNED_SLICE_05` | 10 | Specified; built in slice 05 |
-| `PLANNED_SLICE_06` | 5 | Specified; built in slice 06 |
+| `IMPLEMENTED` | 144 | Live in `apps/api` today |
 | `PLANNED_SLICE_07` | 7 | Specified; built in slice 07 |
 | `PLANNED_SLICE_08` | 8 | Specified; built in slice 08 |
 | `PLANNED_SLICE_09` | 4 | Specified; built in slice 09 |
@@ -35,8 +31,8 @@ resource ownership and gate state.
 | `PLANNED_SLICE_14` | 8 | Specified; built in slice 14 |
 | `PLANNED_SLICE_15` | 6 | Specified; built in slice 15 |
 | `INTERNAL_NOT_FOR_CLIENTS` | 7 | Implemented, outside the mobile surface |
-| `CUT` | 3 | Deliberately removed from the product |
-| **Total** | **221** | across 186 paths, 85 schemas |
+| `CUT` | 2 | Deliberately removed from the product |
+| **Total** | **220** | across 185 paths, 119 schemas |
 
 ## 3. Screen coverage
 
@@ -100,6 +96,37 @@ its argument names from the contract. Left as-is; the contract names are the bet
 
 ## 5. New in this slice
 
+**Slice 06 — penalties, dues and compensation.** The five operations planned for this slice are now
+`IMPLEMENTED` and carry real schemas in place of the `{"type": "object"}` placeholders they were
+stamped with in slice 00:
+
+- `GET /api/v1/passenger/dues` → `Dues` (P25, and P25b's empty state as an explicit `settled` flag)
+- `GET /api/v1/passenger/penalties`, `GET /api/v1/driver/penalties` → `Penalty[]`
+- `POST /api/v1/passenger/penalties/{penaltyId}/dispute`,
+  `POST /api/v1/driver/penalties/{penaltyId}/dispute` → `Penalty`, with `409` carrying
+  `PENALTY_ALREADY_DISPUTED` or `DISPUTE_WINDOW_CLOSED`
+
+`Penalty` states every figure P26, P27, D21, D30, D31 and D41 name — base, percentage, fee and both
+halves — so no screen has to derive one and risk deriving it differently from the ledger.
+`amountForViewer` is negative when the penalty charged the caller and positive when it paid them,
+which is how D26 renders both directions from one list. `beneficiaries[]` carries a **first name and
+an amount and nothing else**; a surname, phone or email on a fee notice would be a disclosure.
+
+Changed rather than added:
+
+- `CancellationTerms` (slice 05) gains `fareBase`, `penaltyAmount`, `penaltyVictimShare` and
+  `penaltyPlatformShare`, so P26 states a figure instead of a percentage.
+- `Booking` gains `appliedDues`, `appliedDuesAmount` and `totalDue` for P09d's carried-over fees.
+
+`admin-web.openapi.json` gains `GET /api/v1/admin/penalties`, `GET /api/v1/admin/penalty-disputes`
+and `POST /api/v1/admin/penalty-disputes/{disputeId}/decide`.
+
+**Correction carried from slice 05:** eleven of its operations were added to the contract without an
+`x-routeshare-status` stamp, so they counted as neither implemented nor planned. They are stamped
+`IMPLEMENTED` and the tables above are regenerated from the document.
+
+## 5.1 New in slice 00
+
 `GET /api/v1/me/context` — the app shell's single read. Serves screens S07–S14 in one request:
 available modes, driver status with gate reasons, verification level, suspension detail with reason
 and case reference, the active-trip pointer for the resume bar, outstanding dues, rewards balance and
@@ -116,11 +143,6 @@ Two behaviours worth knowing:
 
 | Slice | Ops | Area |
 | --- | --- | --- |
-| 01 | 3 | Auth unification and mode gates |
-| 02 | 5 | Vehicle classes and rate bands |
-| 03 | 1 | Fare engine rewrite |
-| 05 | 10 | Trip timers and reliability |
-| 06 | 5 | Penalties, dues and compensation |
 | 07 | 7 | Booking depth |
 | 08 | 8 | Preferences, verification, eligibility |
 | 09 | 4 | Search v2 and pickup points |

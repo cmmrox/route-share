@@ -1,6 +1,74 @@
 # RouteShareApp Development Status
 
-2026-08-02 (slice 05 complete — all four clocks run, and the first runtime pass found three defects)
+2026-08-02 (slice 06 complete — every penalty is split 50/50, and both halves move)
+
+## 2026-08-02 (later still) — Slice 06 complete: penalties, dues and the 50/50 split
+
+`POLICY.penaltyRecipient = "SPLIT"` is now true of the backend. **There was no penalty concept
+anywhere in the codebase before this slice** — slice 05 fired the triggers and nothing priced them,
+so a released no-show cost the passenger nothing and paid the driver nothing.
+
+**A penalty is never a fee the platform pockets.** Every one produces a negative line for the person
+who caused it and a positive one for the person it cost, which is what makes D26 coherent: the same
+driver ledger carries `-86` for a late cancellation and `+37` as his share of somebody's no-show.
+
+Three decisions worth recording, because in each the obvious implementation is wrong:
+
+1. **The platform's half is a subtraction, never a second rounding.** `round(49 × 50/100)` is 25 and
+   the platform takes 24 — round both and you get 25 and 25, inventing a rupee per penalty. A
+   database `CHECK` refuses any row where the halves do not re-add, and a property test walks every
+   fee from 0 to 1,000,000 at every percentage.
+2. **A driver victim and a passenger victim are paid differently, and folding either into the other
+   would put money where its owner cannot see it.** His half is a `COMPENSATION` ledger line, because
+   his money reaches him through payouts (D26). Hers is ride credit (P22), which is the rewards
+   balance slice 11 owns — declared here as a port with an in-module implementation, so neither
+   slice waits for the other and every credit ever made stays replayable from
+   `penalty.penalty_beneficiary`.
+3. **A reversal returns money to the payer but does not claw back the victim's half.** She was stood
+   up whether or not his appeal succeeded, and taking ride credit off somebody already let down is a
+   second injury for a mistake that was never hers. The platform absorbs it.
+
+**Dues never block.** A cash passenger has no card to take a fee from, so it rides to her next
+booking (P25, P09d) — added to the total, and *attached* rather than settled, because the money only
+moves when that booking's card is captured. A booking that never starts leaves the fee owing instead
+of quietly clearing it. Refusing a rider over an unpaid LKR 49 would turn a small fee into a lost
+customer; the only hard gate anywhere near this is slice 05's prepay flag.
+
+**A driver is never billed.** D24 and D31 both say the fee comes out of what he earns next, so it is
+a negative ledger row netted at the next completed trip — never a charge on his card. A missed start
+carries no fee at all (D32b); the assessment is still written, at zero, so "why does my month read
+like this" has one answer that support and the driver both see.
+
+Idempotency is the whole slice. `UNIQUE (kind, booking_id)` is the guard and the pre-read is only a
+courtesy — `DuesLifecycleIT` drives twenty simultaneous triggers at one released seat and exactly one
+is admitted, the other nineteen refused by the index with SQLSTATE 23505. A deferred constraint
+trigger asserts that beneficiary amounts total the victim half exactly, because a dropped remainder
+is money destroyed and an added one is money created.
+
+**One defect only the runtime run could find**, fixed: a phone-OTP account carries its *phone number*
+as its display name, so `beneficiaries[].firstName` — the field that exists precisely to avoid
+disclosing an identity — was printing a rider's phone number on a driver's fee notice. Anything that
+is not plainly a name now falls back to the generic label.
+
+Gate: `./mvnw spotless:check verify` → **BUILD SUCCESS, 462 tests, 0 skipped, JaCoCo met**.
+`redocly lint docs/api/mobile-app.openapi.json` → zero errors; `pnpm run typecheck` in
+`packages/api-contracts` clean.
+Runtime: `scripts/simulation/verify-penalties.sh` → **44 passed, 0 failed, 3 skipped**, on
+PostgreSQL 5434 / API 8088 against `routeshare_comigo`, reproducing every prototype figure against a
+live stack: 25% of LKR 197 is 49 split 25/24; 20% of LKR 429 expected net is 86, with 43 shared
+across two riders as 22 and 21 and 43 to ComiGo.
+
+**Blocker 016 is partly wrong and stays OPEN.** Its two script defects are fixed — the endpoint was
+`/transitions` where the real one is `/start`, and the trip lookup joined on `route_plan_id` where
+V032 keys trips on the occurrence — but re-running slice 04's script still exercises nothing new.
+The capture checks are gated on a *stored card*, and `POST /passenger/payment-methods` answers
+"Card payments are not enabled" without Cybersource credentials. The blocker's stated resolution
+("re-run it now that bookings materialise trips") is therefore insufficient: those checks are
+blocked on **Blocker 015**, not on the trip gap. Slice 06's own three skips are the same three card
+paths, named rather than silently passed over.
+
+Next: slice 07 — booking depth, seats, approval and expiry, which consumes this slice's dues at
+checkout.
 
 ## 2026-08-02 (later) — Slice 05 complete: steps 5 to 13, and what running it found
 
@@ -526,11 +594,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_04_CODE_COMPLETE_RUNTIME_SMOKE_PENDING`
-- Current Active Task: `Slices 01–04 code-complete (runtime smoke pending, Blocker 013); slice 05 — trip timers and reliability — next`
+- Current Milestone: `MILESTONE_SLICE_06_PENALTIES_SPLIT_AND_COLLECTED`
+- Current Active Task: `Slices 00–06 complete and runtime-verified; slice 07 — booking depth, seats, approval and expiry — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_04_MONEY_MOVES_AT_TRIP_START_ONLY`
-- Repository Git Status: `Slices 01–03 merged to main; slice 04 on feat/comigo-unified-app-slice-04; migrations V027–V030 added`
+- Status: `SLICE_06_EVERY_PENALTY_IS_SPLIT_50_50`
+- Repository Git Status: `Slices 00–05 merged to main; slice 06 in progress; migrations V027–V033 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

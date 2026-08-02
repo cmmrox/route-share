@@ -2516,7 +2516,8 @@
               }
             }
           }
-        }
+        },
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/passenger/bookings/{bookingId}/receipt": {
@@ -4970,7 +4971,7 @@
           }
         ],
         "x-routeshare-status": "IMPLEMENTED",
-        "description": "Starts the trip and captures every confirmed booking, once each. This is the moment the product promises money moves \u2014 not on acceptance, not on approval. A repeated call captures nothing further, and a declined card flags that booking without stopping the trip."
+        "description": "Starts the trip and captures every confirmed booking, once each. This is the moment the product promises money moves — not on acceptance, not on approval. A repeated call captures nothing further, and a declined card flags that booking without stopping the trip."
       }
     },
     "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/board": {
@@ -7172,7 +7173,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "description": "Serves S07-S14 in a single request: available modes, driver gates and why, verification level, suspension detail, the active-trip pointer for the resume bar, outstanding dues, rewards balance and tab badges. Returns only the caller's own data; no identifier parameter is accepted.",
@@ -7223,7 +7224,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Account suspended \u2014 body carries {code, message, actionPath}",
+            "description": "Account suspended — body carries {code, message, actionPath}",
             "content": {
               "application/json": {
                 "schema": {
@@ -7233,7 +7234,7 @@
             }
           },
           "409": {
-            "description": "Mode unavailable \u2014 body carries the blocking gate code and actionPath",
+            "description": "Mode unavailable — body carries the blocking gate code and actionPath",
             "content": {
               "application/json": {
                 "schema": {
@@ -7291,7 +7292,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Account suspended \u2014 body carries {code, message, actionPath}",
+            "description": "Account suspended — body carries {code, message, actionPath}",
             "content": {
               "application/json": {
                 "schema": {
@@ -7322,7 +7323,7 @@
           }
         },
         "operationId": "postDriverReinstatementRequests",
-        "description": "D34's primary action. Reachable while the driver gate is refusing every other driver endpoint \u2014 the caller is exactly the person that gate is written for. A second request while one is open is refused."
+        "description": "D34's primary action. Reachable while the driver gate is refusing every other driver endpoint — the caller is exactly the person that gate is written for. A second request while one is open is refused."
       },
       "get": {
         "tags": [
@@ -7360,7 +7361,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Account suspended \u2014 body carries {code, message, actionPath}",
+            "description": "Account suspended — body carries {code, message, actionPath}",
             "content": {
               "application/json": {
                 "schema": {
@@ -7524,7 +7525,7 @@
             }
           },
           "409": {
-            "description": "RATE_OUTSIDE_BAND or RATE_BAND_NOT_SET \u2014 body carries the code and actionPath",
+            "description": "RATE_OUTSIDE_BAND or RATE_BAND_NOT_SET — body carries the code and actionPath",
             "content": {
               "application/json": {
                 "schema": {
@@ -7748,7 +7749,7 @@
             }
           },
           "409": {
-            "description": "RATE_BAND_NOT_SET \u2014 the trip's vehicle has no live rate",
+            "description": "RATE_BAND_NOT_SET — the trip's vehicle has no live rate",
             "content": {
               "application/json": {
                 "schema": {
@@ -7769,7 +7770,7 @@
           }
         },
         "operationId": "postPricingEstimateByRoute",
-        "description": "Prices the on-route distance between two points on the driver's stored route line, at that vehicle's assessed per-km rate, less the route-match discount. The driver's cut is withheld \u2014 this is a passenger surface."
+        "description": "Prices the on-route distance between two points on the driver's stored route line, at that vehicle's assessed per-km rate, less the route-match discount. The driver's cut is withheld — this is a passenger surface."
       }
     },
     "/api/v1/driver/trips/{tripId}/start-extension": {
@@ -7793,7 +7794,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -7821,7 +7822,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/driver/trips/{tripId}/start-window": {
@@ -7845,7 +7847,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -7863,7 +7865,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/wait-extension": {
@@ -7887,7 +7890,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -7923,7 +7926,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/wait-window": {
@@ -7947,7 +7951,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -7973,7 +7977,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/release-seat": {
@@ -7997,7 +8002,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8033,7 +8038,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/driver/reliability": {
@@ -8057,7 +8063,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverReliability",
@@ -8065,7 +8071,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/passenger/reliability": {
@@ -8089,7 +8096,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerReliability",
@@ -8097,7 +8104,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/passenger/bookings/{bookingId}/pickup-window": {
@@ -8121,7 +8129,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8139,7 +8147,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/passenger/bookings/{bookingId}/cancellation-terms": {
@@ -8163,7 +8172,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8181,7 +8190,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/passenger/early-drop-allowance": {
@@ -8205,7 +8215,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerEarlyDropAllowance",
@@ -8213,7 +8223,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "x-routeshare-status": "IMPLEMENTED"
       }
     },
     "/api/v1/passenger/dues": {
@@ -8222,14 +8233,14 @@
           "Penalties"
         ],
         "summary": "Outstanding amounts (P25)",
-        "x-routeshare-status": "PLANNED_SLICE_06",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/Dues"
                 }
               }
             }
@@ -8238,10 +8249,15 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
-        "operationId": "getPassengerDues"
+        "operationId": "getPassengerDues",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/penalties": {
@@ -8250,14 +8266,17 @@
           "Penalties"
         ],
         "summary": "My penalties and compensation",
-        "x-routeshare-status": "PLANNED_SLICE_06",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Penalty"
+                  }
                 }
               }
             }
@@ -8266,10 +8285,15 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
-        "operationId": "getPassengerPenalties"
+        "operationId": "getPassengerPenalties",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/penalties/{penaltyId}/dispute": {
@@ -8278,14 +8302,14 @@
           "Penalties"
         ],
         "summary": "Dispute within 48 hours",
-        "x-routeshare-status": "PLANNED_SLICE_06",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/Penalty"
                 }
               }
             }
@@ -8294,7 +8318,10 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
+          },
+          "409": {
+            "description": "PENALTY_ALREADY_DISPUTED or DISPUTE_WINDOW_CLOSED — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8312,12 +8339,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/PenaltyDisputeRequest"
               }
             }
           }
         },
-        "operationId": "postPassengerPenaltiesByPenaltyIdDispute"
+        "operationId": "postPassengerPenaltiesByPenaltyIdDispute",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/penalties": {
@@ -8326,14 +8358,17 @@
           "Penalties"
         ],
         "summary": "Charged and compensated, both directions",
-        "x-routeshare-status": "PLANNED_SLICE_06",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Penalty"
+                  }
                 }
               }
             }
@@ -8342,10 +8377,15 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
-        "operationId": "getDriverPenalties"
+        "operationId": "getDriverPenalties",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/penalties/{penaltyId}/dispute": {
@@ -8354,14 +8394,14 @@
           "Penalties"
         ],
         "summary": "Dispute within 48 hours",
-        "x-routeshare-status": "PLANNED_SLICE_06",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/Penalty"
                 }
               }
             }
@@ -8370,7 +8410,10 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
+          },
+          "409": {
+            "description": "PENALTY_ALREADY_DISPUTED or DISPUTE_WINDOW_CLOSED — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8388,12 +8431,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/PenaltyDisputeRequest"
               }
             }
           }
         },
-        "operationId": "postDriverPenaltiesByPenaltyIdDispute"
+        "operationId": "postDriverPenaltiesByPenaltyIdDispute",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/route-occurrences/{routeOccurrenceId}/seats": {
@@ -8418,7 +8466,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8456,7 +8504,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8494,7 +8542,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8532,7 +8580,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8570,7 +8618,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8618,7 +8666,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8666,7 +8714,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8704,7 +8752,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverPreferences"
@@ -8730,7 +8778,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8768,7 +8816,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverPreferencesEligibilityImpact"
@@ -8796,7 +8844,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerVerification"
@@ -8824,7 +8872,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8862,7 +8910,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8900,7 +8948,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerProfilePhotoVisibility"
@@ -8926,7 +8974,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8964,7 +9012,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9002,7 +9050,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerCommute"
@@ -9028,7 +9076,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9066,7 +9114,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9104,7 +9152,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9142,7 +9190,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9194,7 +9242,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9250,7 +9298,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9306,7 +9354,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9360,7 +9408,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9398,7 +9446,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getNotificationPreferences"
@@ -9424,7 +9472,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9462,7 +9510,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getBadges"
@@ -9490,7 +9538,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getMeSettings"
@@ -9516,7 +9564,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9554,7 +9602,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9592,7 +9640,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9630,7 +9678,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9668,7 +9716,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getMeReferral"
@@ -9696,7 +9744,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9734,7 +9782,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getMeRewards"
@@ -9762,7 +9810,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9798,7 +9846,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getMeRewardsWithdrawals"
@@ -9826,7 +9874,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9864,7 +9912,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9902,7 +9950,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverLocationPolicy"
@@ -9930,7 +9978,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9968,7 +10016,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10024,7 +10072,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10062,7 +10110,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getRealtimeToken"
@@ -10090,7 +10138,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -10128,7 +10176,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10176,7 +10224,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10212,7 +10260,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10250,7 +10298,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10271,7 +10319,7 @@
         "tags": [
           "Live Booking"
         ],
-        "summary": "Accept \u2014 captures immediately",
+        "summary": "Accept — captures immediately",
         "x-routeshare-status": "PLANNED_SLICE_13",
         "responses": {
           "200": {
@@ -10288,7 +10336,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10344,7 +10392,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10400,7 +10448,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10456,7 +10504,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverWallet"
@@ -10484,7 +10532,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10554,7 +10602,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverPayouts"
@@ -10582,7 +10630,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10620,7 +10668,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10676,7 +10724,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10714,7 +10762,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10752,7 +10800,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10800,7 +10848,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10854,7 +10902,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10892,7 +10940,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10940,7 +10988,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10986,7 +11034,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -11024,7 +11072,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
+            "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -11234,7 +11282,7 @@
             "description": "Not found"
           }
         },
-        "description": "Zero Google cost \u2014 ST_LineSubstring on the stored route line.",
+        "description": "Zero Google cost — ST_LineSubstring on the stored route line.",
         "parameters": [
           {
             "name": "routeOccurrenceId",
@@ -11599,7 +11647,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal \u2014 use /api/v1/passenger/bookings",
+        "summary": "Internal — use /api/v1/passenger/bookings",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11643,7 +11691,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal \u2014 use /api/v1/driver/bookings/{bookingId}/approve|decline",
+        "summary": "Internal — use /api/v1/driver/bookings/{bookingId}/approve|decline",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11698,7 +11746,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal \u2014 use /api/v1/driver/routes",
+        "summary": "Internal — use /api/v1/driver/routes",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11742,7 +11790,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal \u2014 use /api/v1/passenger/ride-searches",
+        "summary": "Internal — use /api/v1/passenger/ride-searches",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11786,7 +11834,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal \u2014 use the role-scoped trip operations under /api/v1/driver/trips",
+        "summary": "Internal — use the role-scoped trip operations under /api/v1/driver/trips",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11841,7 +11889,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal \u2014 use /api/v1/driver/trips/{tripId}/passengers/{bookingId}/*",
+        "summary": "Internal — use /api/v1/driver/trips/{tripId}/passengers/{bookingId}/*",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11905,7 +11953,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal \u2014 use /api/v1/passenger/payments/intents",
+        "summary": "Internal — use /api/v1/passenger/payments/intents",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -12447,12 +12495,23 @@
           },
           "payment": {
             "$ref": "#/components/schemas/BookingPayment"
+          },
+          "appliedDues": {
+            "$ref": "#/components/schemas/AppliedDues"
+          },
+          "totalDue": {
+            "type": "number",
+            "description": "fareEstimate plus any dues this checkout carried over (P09d)"
+          },
+          "appliedDuesAmount": {
+            "type": "number",
+            "description": "What this booking carried over, kept on the booking so a receipt read months later still shows the line"
           }
         }
       },
       "BookingPayment": {
         "type": "object",
-        "description": "What has actually happened to this booking's money. P11 says authorised-not-charged, P12 states the exact capture time, P22 and P24 say never charged \u2014 all three read this block.",
+        "description": "What has actually happened to this booking's money. P11 says authorised-not-charged, P12 states the exact capture time, P22 and P24 say never charged — all three read this block.",
         "properties": {
           "method": {
             "type": [
@@ -12565,7 +12624,7 @@
           },
           "penaltyPct": {
             "type": "number",
-            "description": "What would apply; slice 06 turns this into an amount"
+            "description": "What would apply if she cancels anyway"
           },
           "recordedAgainstPassenger": {
             "type": "boolean",
@@ -12598,6 +12657,22 @@
               "null"
             ],
             "format": "int64"
+          },
+          "fareBase": {
+            "type": "number",
+            "description": "The fare the percentage is taken of"
+          },
+          "penaltyAmount": {
+            "type": "number",
+            "description": "The rule, priced — P26 never has to work out 20% of a fare shown on another screen"
+          },
+          "penaltyVictimShare": {
+            "type": "number",
+            "description": "Her driver's half, which P26 names explicitly"
+          },
+          "penaltyPlatformShare": {
+            "type": "number",
+            "description": "ComiGo's half; the two always re-add to penaltyAmount"
           }
         },
         "required": [
@@ -13157,7 +13232,7 @@
               "number",
               "null"
             ],
-            "description": "null when there were no opportunities \u2014 not 0%"
+            "description": "null when there were no opportunities — not 0%"
           },
           "acceptancePct": {
             "type": [
@@ -14050,7 +14125,7 @@
         }
       },
       "PickupWait": {
-        "description": "D19 / D19b from the driver's side and P38 / P38b from hers \u2014 the same clock.",
+        "description": "D19 / D19b from the driver's side and P38 / P38b from hers — the same clock.",
         "type": "object",
         "properties": {
           "tripId": {
@@ -14207,7 +14282,7 @@
           },
           "vehicleLabel": {
             "type": "string",
-            "example": "Toyota \u00b7 WP CAB-4417"
+            "example": "Toyota · WP CAB-4417"
           },
           "classKey": {
             "type": "string"
@@ -14242,7 +14317,7 @@
               "string",
               "null"
             ],
-            "description": "Always \"ComiGo\" \u2014 the assessing admin is never named to the driver."
+            "description": "Always \"ComiGo\" — the assessing admin is never named to the driver."
           },
           "setAt": {
             "type": [
@@ -14310,7 +14385,7 @@
               "string",
               "null"
             ],
-            "example": "Comprehensive cover \u00b7 renews 14 Mar"
+            "example": "Comprehensive cover · renews 14 Mar"
           },
           "delta": {
             "type": "number",
@@ -14434,7 +14509,7 @@
       },
       "RatePositionOption": {
         "type": "object",
-        "description": "Where a rate sits in the band and what that costs in visibility. Copy, not a ranking multiplier \u2014 the server applies no such thing.",
+        "description": "Where a rate sits in the band and what that costs in visibility. Copy, not a ranking multiplier — the server applies no such thing.",
         "required": [
           "key",
           "label",
@@ -14674,7 +14749,7 @@
       },
       "RouteFareEstimateRequest": {
         "type": "object",
-        "description": "Locates a rider's pickup and drop-off along a published trip's route line. No distance, rate or fare may be sent \u2014 every pricing input is server-derived.",
+        "description": "Locates a rider's pickup and drop-off along a published trip's route line. No distance, rate or fare may be sent — every pricing input is server-derived.",
         "required": [
           "routeOccurrenceId",
           "pickupRouteFraction",
@@ -14971,7 +15046,7 @@
           },
           "extensionsRemaining": {
             "type": "integer",
-            "description": "0 or 1 \u2014 D32c disables the button rather than failing on tap"
+            "description": "0 or 1 — D32c disables the button rather than failing on tap"
           },
           "extensionMinutes": {
             "type": "integer"
@@ -15360,6 +15435,299 @@
             "format": "double"
           }
         }
+      },
+      "PenaltyBeneficiary": {
+        "description": "Named by first name only. D31 tells a driver his fee reached \"Dinuka and Tharindu\"; a surname or a contact detail would turn a fee notice into a disclosure.",
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "description": "This person's part of the victim half, in whole rupees"
+          }
+        },
+        "required": [
+          "firstName",
+          "amount"
+        ]
+      },
+      "PenaltyCollection": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "NETTED | CARD_CHARGE | DUES | EARNINGS_DEDUCTION | NONE"
+          },
+          "status": {
+            "type": "string",
+            "description": "ASSESSED | SETTLED | WAIVED | REVERSED"
+          },
+          "settledAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "Penalty": {
+        "description": "One broken promise, priced and split. Every figure P26, P27, D21, D30, D31 and D41 name is here, so no screen has to derive one and risk deriving it differently from the ledger.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string",
+            "description": "PASSENGER_CANCEL_AFTER_START | PASSENGER_NO_SHOW | DRIVER_LATE | DRIVER_LATE_CANCELLATION | DRIVER_MISSED_START"
+          },
+          "bookingId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "tripId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "fareBase": {
+            "type": "number",
+            "description": "The fare, or the driver's expected net, the percentage was taken of"
+          },
+          "percent": {
+            "type": "number"
+          },
+          "feeAmount": {
+            "type": "number"
+          },
+          "victimShare": {
+            "type": "number",
+            "description": "Always re-adds to feeAmount with platformShare"
+          },
+          "platformShare": {
+            "type": "number"
+          },
+          "payerRole": {
+            "type": "string",
+            "description": "PASSENGER | DRIVER"
+          },
+          "victimRole": {
+            "type": "string",
+            "description": "PASSENGER | DRIVER | NONE"
+          },
+          "amountForViewer": {
+            "type": "number",
+            "description": "Negative when this penalty charged the caller, positive when it paid them — D26 renders both from one list"
+          },
+          "collection": {
+            "$ref": "#/components/schemas/PenaltyCollection"
+          },
+          "disputeState": {
+            "type": "string",
+            "description": "NONE | OPEN | UPHELD | REVERSED"
+          },
+          "disputable": {
+            "type": "boolean",
+            "description": "False once the 48-hour window closes, or once one has been raised"
+          },
+          "assessedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "beneficiaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PenaltyBeneficiary"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "fareBase",
+          "percent",
+          "feeAmount",
+          "victimShare",
+          "platformShare",
+          "payerRole",
+          "victimRole",
+          "amountForViewer",
+          "collection",
+          "disputeState",
+          "disputable",
+          "assessedAt",
+          "explanation",
+          "beneficiaries"
+        ]
+      },
+      "DueItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "what": {
+            "type": "string",
+            "description": "P25's first column, e.g. \"No-show fee\""
+          },
+          "why": {
+            "type": "string",
+            "description": "e.g. \"25% of the fare\""
+          },
+          "when": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "trip": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Origin → destination of the trip it came from"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "method": {
+            "type": "string",
+            "description": "How the original fare was to be paid; dues only ever arise on cash"
+          },
+          "status": {
+            "type": "string",
+            "description": "OUTSTANDING | SETTLED | WAIVED"
+          },
+          "originBookingId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "settledBookingId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        },
+        "required": [
+          "id",
+          "what",
+          "why",
+          "when",
+          "amount",
+          "method",
+          "status"
+        ]
+      },
+      "Dues": {
+        "description": "P25 and P25b. `settled` carries the empty state explicitly: \"nothing owed\" and \"nothing loaded\" must not render the same.",
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DueItem"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Outstanding only"
+          },
+          "settled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "settled"
+        ]
+      },
+      "AppliedDues": {
+        "description": "What this checkout carried over from an earlier trip (P09d). Dues are added to the total; they never block a booking.",
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dueId": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "what": {
+                  "type": "string"
+                },
+                "trip": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "when": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "amount": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "dueId",
+                "what",
+                "amount"
+              ]
+            }
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ]
+      },
+      "PenaltyDisputeRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "reason"
+        ]
       }
     }
   }

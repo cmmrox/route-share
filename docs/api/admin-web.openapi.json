@@ -5030,6 +5030,230 @@
           }
         }
       }
+    },
+    "/api/v1/admin/penalties": {
+      "get": {
+        "tags": [
+          "Penalties"
+        ],
+        "summary": "List assessed penalties",
+        "operationId": "PenaltiesListPenalties",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "One of the five penalty kinds"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ASSESSED | SETTLED | WAIVED | REVERSED"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminPenalty"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/penalty-disputes": {
+      "get": {
+        "tags": [
+          "Penalties"
+        ],
+        "summary": "List penalty disputes",
+        "operationId": "PenaltiesListPenaltyDisputes",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "OPEN | UPHELD | REVERSED"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminPenaltyDispute"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/penalty-disputes/{disputeId}/decide": {
+      "post": {
+        "tags": [
+          "Penalties"
+        ],
+        "summary": "Decide a penalty dispute",
+        "operationId": "PenaltiesDecidePenaltyDispute",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "disputeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPenaltyDisputeDecision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPenaltyDispute"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already decided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6524,6 +6748,227 @@
             ]
           }
         }
+      },
+      "AdminPenaltyBeneficiary": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "firstName",
+          "amount"
+        ]
+      },
+      "AdminPenalty": {
+        "description": "An assessed penalty with the whole computation beside it — base, percentage, fee and both halves. A fee an agent cannot explain in the caller's own numbers is a refund.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "bookingId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "tripId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "fareBase": {
+            "type": "number"
+          },
+          "percent": {
+            "type": "number"
+          },
+          "feeAmount": {
+            "type": "number"
+          },
+          "victimShare": {
+            "type": "number"
+          },
+          "platformShare": {
+            "type": "number"
+          },
+          "payerRole": {
+            "type": "string"
+          },
+          "victimRole": {
+            "type": "string"
+          },
+          "amountForViewer": {
+            "type": "number"
+          },
+          "collection": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "type": "string"
+              },
+              "settledAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "disputeState": {
+            "type": "string"
+          },
+          "disputable": {
+            "type": "boolean"
+          },
+          "assessedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "beneficiaries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminPenaltyBeneficiary"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "fareBase",
+          "percent",
+          "feeAmount",
+          "victimShare",
+          "platformShare",
+          "payerRole",
+          "victimRole",
+          "assessedAt",
+          "explanation"
+        ]
+      },
+      "AdminPenaltyDispute": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "penaltyId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "feeAmount": {
+            "type": "number"
+          },
+          "raisedByAppUserId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "OPEN | UPHELD | REVERSED"
+          },
+          "raisedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reversedAmount": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "penaltyId",
+          "kind",
+          "feeAmount",
+          "raisedByAppUserId",
+          "reason",
+          "status",
+          "raisedAt"
+        ]
+      },
+      "AdminPenaltyDisputeDecision": {
+        "description": "Reversal defaults to the whole fee. A partial exists for the case where some of it was fair and some was not, which only a person can judge.",
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "UPHELD",
+              "REVERSED"
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "reverseAmount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Capped at the fee; omit to reverse all of it"
+          }
+        },
+        "required": [
+          "decision"
+        ]
       }
     }
   },

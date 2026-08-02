@@ -8,6 +8,46 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-08-02
 
+### Task: ComiGo slice 06 — penalties, dues and compensation
+
+Status: `COMPLETED` (two collection paths unrun — Blocker 015)
+
+`POLICY.penaltyRecipient = "SPLIT"` is now true of the backend. There was no penalty concept in the
+codebase before this slice: slice 05 fired the triggers and nothing priced them, so a released
+no-show cost the passenger nothing and paid the driver nothing.
+
+All five kinds are assessed at their real triggers, priced from `platform.policy_setting`, and split
+50/50 — the victim's half rounded, the platform's taken by subtraction so the two always re-add. That
+invariant is a database `CHECK`, and beneficiary amounts totalling the victim half exactly is a
+deferred constraint trigger, because a dropped remainder is money destroyed.
+
+Three decisions recorded in `DECISION_LOG.md` (019–021): the split by subtraction; a driver victim
+paid through the ledger and a passenger victim through ride credit, since their money reaches them
+by different routes; and a reversal that returns the payer's fee without clawing back the victim's
+half.
+
+Files: new `apps/api/.../penalty/**` (domain, entities, repositories, services, facade, controllers,
+rewards port), `V033__penalties_dues_and_compensation.sql`, `PaymentFacade` collection/credit/
+reversal methods, dues application in `booking`, assessment hooks in `trip`, contracts in
+`docs/api/*.openapi.json` and `packages/api-contracts`, and `scripts/simulation/verify-penalties.sh`.
+
+Verification: `./mvnw spotless:check verify` → BUILD SUCCESS, 462 tests, 0 skipped, JaCoCo met.
+`verify-penalties.sh` → 44 passed, 0 failed, 3 skipped against a live stack, reproducing 25% of
+LKR 197 as 49 split 25/24, and 20% of LKR 429 as 86 with 43 shared across two riders as 22 and 21.
+`redocly lint` clean; `api-contracts` typecheck clean.
+
+Found by the runtime run and fixed: `beneficiaries[].firstName` printed a rider's phone number,
+because a phone-OTP account carries its number as its display name — the exact disclosure that field
+exists to prevent.
+
+Not verified: netted and card-charge collection, and dues settlement on capture. All three need a
+stored card, and the gateway is unavailable (Blocker 015). Blocker 016's two script defects are
+fixed, but its checks are blocked on the same cause rather than on the trip gap it named.
+
+Next step: slice 07 — booking depth: seats, approval modes and expiry.
+
+---
+
 ### Task: ComiGo slice 05 — trip timers and reliability (steps 5–13, slice complete)
 
 Status: `COMPLETED`
