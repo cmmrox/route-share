@@ -43,4 +43,54 @@ public interface PaymentFacade {
    * Records the platform's cut on a cash fare as owed by the driver, to net from the next payout.
    */
   void recordCashCommissionOwed(long bookingId, BigDecimal fareCollected);
+
+  /**
+   * Takes a passenger's penalty fee by whichever path her booking allows, and says which one it
+   * used.
+   *
+   * <p>The order is not a preference, it is a ranking by how little it disturbs her: money already
+   * held is netted and the balance returned (P27's "the rest of the fare comes back to your Visa");
+   * a live authorisation with nothing taken is charged down to the fee; and a cash booking, where
+   * there is no instrument at all, falls to dues.
+   *
+   * <p>Only {@code payment} can tell which of those is true, so the decision lives here rather than
+   * in the penalty module guessing at intent state.
+   */
+  PenaltyCollection collectPassengerPenalty(long bookingId, BigDecimal feeAmount);
+
+  /**
+   * A driver's penalty, as a negative ledger line against the trip that caused it.
+   *
+   * <p>He is never billed. D24 and D31 both say the fee comes out of what he earns next, and
+   * charging a card for it would be a different product than the one the copy describes.
+   */
+  void recordDriverPenaltyDeduction(long bookingId, BigDecimal amount);
+
+  /**
+   * A driver's half of somebody else's penalty, as a positive line of its own kind.
+   *
+   * <p>D26 gives it a separate icon because folding it into fares would overstate what he earned
+   * from driving. A passenger victim is not paid this way — her half is ride credit (P22), which is
+   * the rewards balance, not this ledger.
+   */
+  void creditDriverCompensation(long bookingId, BigDecimal amount);
+
+  /** Records that a checkout cleared carried-over dues, for the receipt that shows the line. */
+  void recordDuesSettlement(long bookingId, BigDecimal amount);
+
+  /** A reversed passenger penalty: the fee goes back to her card, and the ledger says so. */
+  void reversePassengerPenalty(long bookingId, BigDecimal amount);
+
+  /** A reversed driver penalty: the deduction is given back against the same trip. */
+  void reverseDriverPenaltyDeduction(long bookingId, BigDecimal amount);
+
+  /** Which of the three collection paths actually took a fee. */
+  enum PenaltyCollection {
+    /** Netted out of money already captured; the remainder was refunded. */
+    NETTED,
+    /** Charged against a live authorisation that had not been captured. */
+    CARD_CHARGE,
+    /** Nothing to take from. Recorded as dues and carried to her next booking. */
+    DUES
+  }
 }
