@@ -554,7 +554,7 @@ rule, and 18 have foundations but no product behaviour. Full register in
 | 04 | Charge timing and capture correctness | L | `PARTIALLY_COMPLETED` 2026-08-02 — `CaptureOnTripStartIT` written and passing; cash smoke 2/2. The card path has never run against any gateway (Blocker 015), and its capture checks have been silently skipping because no trip rows existed until slice 05 (Blocker 016) |
 | 05 | Trip timers and reliability | XL | `COMPLETED` 2026-08-02 — all four clocks, panels, deactivation trigger and prepay flag; runtime smoke 42/42. V032 materialises trips at first confirmed booking, without which no clock could ever fire. Void on auto-cancel still mock-only (Blocker 015) |
 | 06 | Penalties, dues and compensation | L | `COMPLETED` 2026-08-02 — all five kinds assessed, the 50/50 split enforced by CHECK and by property test, three collection paths, dues carried and disputes with a 48-hour window; runtime smoke 44/44. V033 adds the `penalty` schema. The two card-collection paths (netted, card-charge) remain unrun — no gateway (Blocker 015) |
-| 07 | Booking depth: seats, approval modes, expiry | L | `NOT_STARTED` |
+| 07 | Booking depth: seats, approval modes, expiry | L | `COMPLETED` 2026-08-02 — named seats with the race settled by a partial unique index, approval modes, 30-minute request expiry, the computed freeze rule, driver cancellation windows and §6.1 phone disclosure; runtime smoke 50/50. V034. Found and fixed: 500 on a missing header, a rollback poisoning the identity cache, and admins locked out of a driver's trip |
 | 08 | Preferences, verification and eligibility | L | `NOT_STARTED` |
 | 09 | Search and discovery v2 | M | `NOT_STARTED` |
 | 10 | Chat, notifications, safety and support | L | `NOT_STARTED` |

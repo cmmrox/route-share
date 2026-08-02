@@ -8,6 +8,35 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-08-02
 
+### Task: ComiGo slice 07 — booking depth: seats, approval modes and expiry
+
+Status: `COMPLETED`
+
+`booking.seats` was an integer; the product books a seat. Named slots per occurrence, held in the
+same transaction as the booking row, with the last-seat race settled by a partial unique index
+rather than by a counter decrement — twenty riders at one seat produce one hold and nineteen 23505s.
+
+Also landed: per-occurrence approval mode with instant-book confirming immediately and approve-each
+waiting 30 minutes before it lapses; a scheduled expiry job that releases the seat and voids the
+hold; the two-open-requests rule; the freeze rule as a computed predicate rather than a stored flag;
+driver cancellation windows with reason codes, priced by slice 06; an alternatives query; and the
+§6.1 counterparty phone disclosure behind a single service method with an audit row on every read.
+
+Files: `V034__booking_depth.sql`, new `routing` seat/lifecycle services and `booking` seat-hold,
+expiry and disclosure services, the `scheduled-request-expiry` job, contracts and
+`scripts/simulation/verify-booking-depth.sh`.
+
+Verification: `./mvnw spotless:check verify` → BUILD SUCCESS, 500 tests, 0 skipped.
+`verify-booking-depth.sh` → 50 passed, 0 failed, 0 skipped.
+
+Found by the runtime run and fixed: 500 on a missing required header; a rolled-back transaction
+poisoning the identity projection cache so a rider's first failed request broke every later one; and
+admins locked out of a driver's trip.
+
+Next step: slice 08 — preferences, verification and eligibility.
+
+---
+
 ### Task: ComiGo slice 06 — penalties, dues and compensation
 
 Status: `COMPLETED` (two collection paths unrun — Blocker 015)

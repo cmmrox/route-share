@@ -105,7 +105,7 @@ New errors: `SEATS_TAKEN`, `SEAT_ALREADY_HELD`, `REQUEST_EXPIRED`, `TRIP_FROZEN`
 
 ## Database / migration changes
 
-**`V033__booking_depth.sql`**
+**`V034__booking_depth.sql`** — V033 was taken by slice 06's penalties.
 
 - New `routing.route_occurrence_seat`:
   `id`, `route_occurrence_id FK`, `slot_index INT`, `label TEXT`, `sub_label TEXT`,
@@ -162,7 +162,7 @@ Backend slice. The contract must supply:
 - `apps/api/.../booking/**` — seat holds, expiry, open-request guard, contact disclosure + audit.
 - `apps/api/.../scheduling/**` — the expiry job.
 - `apps/api/.../penalty/**` — consumed for cancellation pricing (no change expected).
-- `apps/api/src/main/resources/db/migration/V033__booking_depth.sql`.
+- `apps/api/src/main/resources/db/migration/V034__booking_depth.sql`.
 - `apps/api/src/test/java/**` — concurrent seat-race test, expiry job test, freeze predicate tests, cancellation window tests, contact disclosure authorization tests.
 - `docs/api/mobile-app.openapi.json`, `packages/api-contracts/src/index.ts`.
 
@@ -201,18 +201,18 @@ edits; cancelling at 3 h assesses a penalty and at 26 h does not.
 
 ## Done criteria
 
-- [ ] Named seat inventory generated per occurrence; bookings hold specific slots.
-- [ ] Seat race resolves to exactly one winner with a typed 409 carrying an alternative.
-- [ ] Seat choice provably does not affect fare.
-- [ ] Approval mode per occurrence; instant confirms, approve-each expires at 30 minutes.
-- [ ] Expiry voids the authorisation and releases seats.
-- [ ] Two-open-requests rule enforced.
-- [ ] Freeze on first booking blocks edits and is computed, not stored.
-- [ ] Cancellation windows, reason codes, priced penalties and rider notification all work.
-- [ ] Alternatives returned for decline, cancel and auto-cancel.
-- [ ] Contact disclosure obeys every rule in plan §6.1 and is audited.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] Named seat inventory generated per occurrence; bookings hold specific slots.
+- [x] Seat race resolves to exactly one winner with a typed 409 carrying an alternative.
+- [x] Seat choice provably does not affect fare.
+- [x] Approval mode per occurrence; instant confirms, approve-each expires at 30 minutes.
+- [x] Expiry voids the authorisation and releases seats. **The void itself is mock-only — no gateway (Blocker 015).**
+- [x] Two-open-requests rule enforced.
+- [x] Freeze on first booking blocks edits and is computed, not stored.
+- [x] Cancellation windows, reason codes, priced penalties and rider notification all work.
+- [x] Alternatives returned for decline, cancel and auto-cancel.
+- [x] Contact disclosure obeys every rule in plan §6.1 and is audited.
+- [x] `./mvnw spotless:check verify` green, JaCoCo 80% held — 500 tests, 0 skipped.
+- [x] Tracking docs updated; focused commit ready.
 
 ## Suggested commit message
 

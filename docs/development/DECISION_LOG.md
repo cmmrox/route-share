@@ -651,3 +651,79 @@ Consequence:
 - The platform's share absorbs the shortfall, so a rising reversal rate is a cost signal worth
   watching rather than a silent transfer.
 - Beneficiary rows are never deleted, so "why do I have this credit" stays answerable.
+
+## Decision 022 — Seats are named rows, and the last-seat race is a constraint
+
+Date: 2026-08-02
+Status: `ADOPTED`
+
+Decision:
+
+Inventory is one `routing.route_occurrence_seat` row per slot, and a booking holds specific slots
+through `booking.booking_seat` with a partial unique index on the live hold. No counter arbitrates
+availability.
+
+Reason:
+
+P08 offers the front seat beside the driver or the rear row, which a counter cannot express. And a
+counter settles the last-seat race by arithmetic: both riders asked for "a seat" and one is told
+there were none, with no way to say which seat the other took. A row per slot turns it into a
+constraint the database decides, and the loser can be handed the closest alternative.
+
+Consequence:
+
+- Releasing a hold sets `released_at` rather than deleting, so "who held slot 3 before it was
+  resold" stays answerable.
+- Every terminal path must release, and a reconciliation query plus an alert covers the one that
+  forgets — a leaked hold removes a seat from a car permanently and silently.
+- Seat choice must never touch the fare; asserted by test, because a seat-priced fare contradicts
+  the screen.
+
+## Decision 023 — The trip freeze is computed, never stored
+
+Date: 2026-08-02
+Status: `ADOPTED`
+
+Decision:
+
+A published occurrence is editable while it has zero live seat holds. The rule is derived on read
+from the occurrence's status and its holds; there is no `frozen` column.
+
+Reason:
+
+A stored flag has to be maintained on booking, cancellation, decline, expiry and no-show release.
+Every one of those is a path that can forget, and the failure is asymmetric: a trip left frozen with
+nobody on it is an annoyance, while a trip left editable underneath somebody who has already paid is
+a departure time changed under a passenger.
+
+Consequence:
+
+- Cancelling the only booking makes the trip editable again with nothing to reset.
+- The freeze and the "is it sold out" question read the same count, so they cannot disagree.
+
+## Decision 024 — Counterparty phone disclosure is one service method, and every read is audited
+
+Date: 2026-08-02
+Status: `ADOPTED`
+
+Decision:
+
+`ContactDisclosureService.counterpartyFor` is the only path to a phone number. It enforces all five
+§6.1 rules itself, returns one refusal code for every reason, and writes an audit row on every read
+including repeats.
+
+Reason:
+
+Calls are direct dial (D5), so a number must be handed to the app — and a number disclosed once
+cannot be recalled. Two endpoints implementing reciprocity separately will eventually implement it
+differently. A precise refusal ("not yet confirmed" versus "revoked yesterday") is a probe about
+somebody else's trip. And deduplicating the audit would destroy the only signal harassment leaves.
+
+Consequence:
+
+- The masking toggles cut from the UI can be reinstated by replacing one implementation, without
+  re-cutting a single Call button.
+- Volume per reader is monitored and alerted; number harvesting is the abuse this design invites.
+- Emergency numbers travel with the response and are outside these rules entirely — a passenger who
+  cannot reach her driver must never also be unable to reach help.
+

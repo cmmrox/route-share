@@ -8449,15 +8449,15 @@
         "tags": [
           "Bookings"
         ],
-        "summary": "Named seat map (P08)",
-        "x-routeshare-status": "PLANNED_SLICE_07",
+        "summary": "Seat map for a trip (P08)",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/SeatMap"
                 }
               }
             }
@@ -8475,11 +8475,17 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
-        "operationId": "getPassengerRouteOccurrencesByRouteOccurrenceIdSeats"
+        "operationId": "getPassengerRouteOccurrenceSeats",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/bookings/{bookingId}/alternatives": {
@@ -8525,15 +8531,15 @@
         "tags": [
           "Bookings"
         ],
-        "summary": "Counterparty phone, confirmed bookings only (plan 6.1)",
-        "x-routeshare-status": "PLANNED_SLICE_07",
+        "summary": "Driver's number for a confirmed booking (§6.1)",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/CounterpartyContact"
                 }
               }
             }
@@ -8543,6 +8549,9 @@
           },
           "403": {
             "description": "Forbidden — body carries {code, message, actionPath}"
+          },
+          "409": {
+            "description": "CONTACT_NOT_AVAILABLE — not a confirmed trip, or the window has closed"
           }
         },
         "parameters": [
@@ -8551,11 +8560,17 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
-        "operationId": "getPassengerBookingsByBookingIdContact"
+        "operationId": "getPassengerBookingContact",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/bookings/{bookingId}/contact": {
@@ -8563,15 +8578,15 @@
         "tags": [
           "Bookings"
         ],
-        "summary": "Counterparty phone, confirmed bookings only (plan 6.1)",
-        "x-routeshare-status": "PLANNED_SLICE_07",
+        "summary": "Passenger's number for a confirmed booking (§6.1)",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/CounterpartyContact"
                 }
               }
             }
@@ -8581,6 +8596,9 @@
           },
           "403": {
             "description": "Forbidden — body carries {code, message, actionPath}"
+          },
+          "409": {
+            "description": "CONTACT_NOT_AVAILABLE — not a confirmed trip, or the window has closed"
           }
         },
         "parameters": [
@@ -8589,20 +8607,26 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
-        "operationId": "getDriverBookingsByBookingIdContact"
+        "operationId": "getDriverBookingContact",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/route-occurrences/{routeOccurrenceId}/approval-mode": {
       "put": {
         "tags": [
-          "Bookings"
+          "Trip Operations"
         ],
-        "summary": "Instant book or approve each request (D13)",
-        "x-routeshare-status": "PLANNED_SLICE_07",
+        "summary": "Who can book this trip (D13)",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
@@ -8619,6 +8643,9 @@
           },
           "403": {
             "description": "Forbidden — body carries {code, message, actionPath}"
+          },
+          "409": {
+            "description": "TRIP_FROZEN — someone has already booked"
           }
         },
         "parameters": [
@@ -8627,7 +8654,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
@@ -8636,21 +8664,26 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/ApprovalModeRequest"
               }
             }
           }
         },
-        "operationId": "putDriverRouteOccurrencesByRouteOccurrenceIdApprovalMode"
+        "operationId": "putDriverRouteOccurrenceApprovalMode",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/route-occurrences/{routeOccurrenceId}/cancel": {
       "post": {
         "tags": [
-          "Bookings"
+          "Trip Operations"
         ],
-        "summary": "Cancel with a reason code (D30)",
-        "x-routeshare-status": "PLANNED_SLICE_07",
+        "summary": "Cancel a published trip (D30/D31)",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
@@ -8667,6 +8700,9 @@
           },
           "403": {
             "description": "Forbidden — body carries {code, message, actionPath}"
+          },
+          "409": {
+            "description": "OCCURRENCE_NOT_PUBLISHED"
           }
         },
         "parameters": [
@@ -8675,7 +8711,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
@@ -8684,28 +8721,33 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/OccurrenceCancellationRequest"
               }
             }
           }
         },
-        "operationId": "postDriverRouteOccurrencesByRouteOccurrenceIdCancel"
+        "operationId": "postDriverRouteOccurrenceCancel",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/route-occurrences/{routeOccurrenceId}/cancellation-terms": {
       "get": {
         "tags": [
-          "Bookings"
+          "Trip Operations"
         ],
-        "summary": "Window, penalty and affected riders",
-        "x-routeshare-status": "PLANNED_SLICE_07",
+        "summary": "What cancelling this trip would cost (D30)",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/OccurrenceCancellationTerms"
                 }
               }
             }
@@ -8723,11 +8765,17 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "integer",
+              "format": "int64"
             }
           }
         ],
-        "operationId": "getDriverRouteOccurrencesByRouteOccurrenceIdCancellationTerms"
+        "operationId": "getDriverRouteOccurrenceCancellationTerms",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/preferences": {
@@ -11991,6 +12039,97 @@
         "x-routeshare-use-instead": "/api/v1/passenger/payments/intents",
         "operationId": "postPaymentsIntents"
       }
+    },
+    "/api/v1/passenger/route-occurrences/{routeOccurrenceId}/alternatives": {
+      "get": {
+        "tags": [
+          "Bookings"
+        ],
+        "summary": "Other trips on the corridor (P13, P22, P24)",
+        "x-routeshare-status": "IMPLEMENTED",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlternativeTrip"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden — body carries {code, message, actionPath}"
+          }
+        },
+        "parameters": [
+          {
+            "name": "routeOccurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "operationId": "getPassengerRouteOccurrenceAlternatives",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/driver/route-occurrences/{routeOccurrenceId}/editability": {
+      "get": {
+        "tags": [
+          "Trip Operations"
+        ],
+        "summary": "Whether the trip can still be edited (D09)",
+        "x-routeshare-status": "IMPLEMENTED",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OccurrenceEditability"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden — body carries {code, message, actionPath}"
+          }
+        },
+        "parameters": [
+          {
+            "name": "routeOccurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "operationId": "getDriverRouteOccurrenceEditability",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -12506,6 +12645,35 @@
           "appliedDuesAmount": {
             "type": "number",
             "description": "What this booking carried over, kept on the booking so a receipt read months later still shows the line"
+          },
+          "seats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeatSlot"
+            },
+            "description": "The named slots this booking holds"
+          },
+          "approvalMode": {
+            "type": "string",
+            "enum": [
+              "INSTANT",
+              "APPROVE_EACH"
+            ]
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When an unanswered request lapses (D16); null once confirmed"
+          },
+          "secondsRemaining": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -12759,6 +12927,14 @@
             ],
             "format": "int64",
             "description": "The card to hold the fare on. Omit for cash: nothing is authorised and the driver collects in the car."
+          },
+          "seatSlotIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Chosen slots (P08). Omit to let the server take the lowest free ones."
           }
         }
       },
@@ -15727,6 +15903,268 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "SeatMap": {
+        "description": "P08's seat picker. There is no price per slot and there never will be — every seat costs the same, and a field for it here is the first step towards a screen that lies.",
+        "type": "object",
+        "properties": {
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "capacity": {
+            "type": "integer"
+          },
+          "seatsAvailable": {
+            "type": "integer"
+          },
+          "seats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeatSlot"
+            }
+          }
+        },
+        "required": [
+          "routeOccurrenceId",
+          "capacity",
+          "seatsAvailable",
+          "seats"
+        ]
+      },
+      "SeatSlot": {
+        "type": "object",
+        "properties": {
+          "seatId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "slotIndex": {
+            "type": "integer",
+            "description": "1 is always the front seat"
+          },
+          "label": {
+            "type": "string",
+            "description": "Front seat | Back seat"
+          },
+          "subLabel": {
+            "type": "string",
+            "description": "Beside the driver | Rear row"
+          },
+          "taken": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "seatId",
+          "slotIndex",
+          "label",
+          "subLabel",
+          "taken"
+        ]
+      },
+      "AlternativeTrip": {
+        "description": "P13, P22, P24. An empty list is a real answer — offering nothing beats offering a trip nine hours away dressed as an alternative.",
+        "type": "object",
+        "properties": {
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "driverFirstName": {
+            "type": "string"
+          },
+          "originLabel": {
+            "type": "string"
+          },
+          "destinationLabel": {
+            "type": "string"
+          },
+          "departsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seatsAvailable": {
+            "type": "integer"
+          },
+          "ratePerKm": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "matchPercent": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "routeOccurrenceId",
+          "driverFirstName",
+          "departsAt",
+          "seatsAvailable"
+        ]
+      },
+      "OccurrenceEditability": {
+        "description": "D09. Computed from the occurrence's status and its live seat holds, never stored.",
+        "type": "object",
+        "properties": {
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "bookedSeats": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "routeOccurrenceId",
+          "editable",
+          "bookedSeats",
+          "reason"
+        ]
+      },
+      "OccurrenceCancellationTerms": {
+        "description": "D30, before he commits. The window is routing's rule; the money is the penalty engine's arithmetic.",
+        "type": "object",
+        "properties": {
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "hoursBeforeDeparture": {
+            "type": "number"
+          },
+          "withinFreeWindow": {
+            "type": "boolean"
+          },
+          "freeWindowHours": {
+            "type": "integer"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "penaltyPct": {
+            "type": "number"
+          },
+          "expectedNet": {
+            "type": "number"
+          },
+          "penaltyAmount": {
+            "type": "number"
+          },
+          "riderShare": {
+            "type": "number"
+          },
+          "platformShare": {
+            "type": "number"
+          },
+          "affectedRiderFirstNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "First names only — D31 names them without disclosing anything else"
+          },
+          "affectedBookings": {
+            "type": "integer"
+          },
+          "reasonCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "routeOccurrenceId",
+          "hoursBeforeDeparture",
+          "withinFreeWindow",
+          "freeWindowHours",
+          "reasonCodes"
+        ]
+      },
+      "OccurrenceCancellationRequest": {
+        "type": "object",
+        "properties": {
+          "reasonCode": {
+            "type": "string",
+            "enum": [
+              "VEHICLE_PROBLEM",
+              "UNWELL",
+              "PLANS_CHANGED",
+              "WRONG_DETAILS",
+              "OTHER"
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "reasonCode"
+        ]
+      },
+      "ApprovalModeRequest": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "INSTANT",
+              "APPROVE_EACH"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "CounterpartyContact": {
+        "description": "Plan §6.1. Disclosed only on a confirmed booking, reciprocally, withdrawn 24 h after drop-off and immediately on any terminal state. Every read is audited. The emergency numbers are static and never subject to these rules.",
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "role": {
+            "type": "string",
+            "description": "Whose number this is: DRIVER | PASSENGER"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "emergencyNumber": {
+            "type": "string"
+          },
+          "safetyLineNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bookingId",
+          "role",
+          "firstName",
+          "phoneNumber",
+          "emergencyNumber",
+          "safetyLineNumber"
         ]
       }
     }

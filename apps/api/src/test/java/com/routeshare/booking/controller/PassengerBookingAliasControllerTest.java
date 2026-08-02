@@ -30,7 +30,8 @@ class PassengerBookingAliasControllerTest {
             payments,
             earlyDropOff,
             org.mockito.Mockito.mock(com.routeshare.trip.facade.TripTimerFacade.class));
-    var request = new BookingRequest(20L, 1, 6.9271, 79.8612, 6.9000, 79.9000, 0.10, 0.80, null);
+    var request =
+        new BookingRequest(20L, 1, 6.9271, 79.8612, 6.9000, 79.9000, 0.10, 0.80, null, null);
     when(bookings.book(request, "idem-1"))
         .thenReturn(
             Map.of("bookingId", 30L, "status", "CONFIRMED", "fareEstimate", BigDecimal.TEN));
