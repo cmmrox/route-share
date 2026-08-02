@@ -62,6 +62,7 @@ public class RouteServiceImpl implements RouteService {
   private final RouteBucketCellRepository bucketCells;
   private final MatchingSettingsRepository matchingSettings;
   private final com.routeshare.pricing.facade.PricingFacade pricing;
+  private final com.routeshare.routing.service.SeatInventoryService seatInventory;
 
   public RouteServiceImpl(
       CurrentUserProvider current,
@@ -89,6 +90,7 @@ public class RouteServiceImpl implements RouteService {
         new RouteMatchScorer(),
         new RouteSchedulePolicy(clock),
         new RouteBucketCellGenerator(),
+        null,
         null,
         null,
         null,
@@ -122,6 +124,9 @@ public class RouteServiceImpl implements RouteService {
     long routeOccurrenceId =
         occurrences.insertOccurrence(
             routePlanId, generatedOccurrences.getFirst(), req.availableSeats());
+    // The seats exist from the moment the trip does. Generating them lazily at first booking would
+    // make the seat picker empty on a trip nobody has booked yet — which is every new trip.
+    seatInventory.generateFor(routeOccurrenceId);
     routeBucketCellGenerator
         .cellsFor(req.coordinates(), ROUTE_BUCKET_RESOLUTION)
         .forEach(
@@ -272,7 +277,8 @@ public class RouteServiceImpl implements RouteService {
     List<Long> occurrenceIds = new ArrayList<>();
     for (Instant departure : departures) {
       long occurrenceId =
-          occurrences.insertOccurrence(routePlanId, departure, req.availableSeats());
+          seatInventory.generateFor(
+              occurrences.insertOccurrence(routePlanId, departure, req.availableSeats()));
       occurrenceIds.add(occurrenceId);
       cells.forEach(
           cell -> bucketCells.insertCell(routePlanId, occurrenceId, ROUTE_BUCKET_RESOLUTION, cell));
@@ -349,6 +355,7 @@ public class RouteServiceImpl implements RouteService {
       long occurrenceId =
           occurrences.insertOccurrence(
               rule.getRoutePlanId(), departure, latest.getAvailableSeats());
+      seatInventory.generateFor(occurrenceId);
       bucketCells.copyCellsToOccurrence(latest.getOccurrenceId(), occurrenceId);
       generated++;
     }
