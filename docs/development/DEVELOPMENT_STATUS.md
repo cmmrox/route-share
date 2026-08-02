@@ -1,6 +1,64 @@
 # RouteShareApp Development Status
 
-2026-08-02 (slice 05 in progress — the scheduler runs and the first of four clocks is real)
+2026-08-02 (slice 05 complete — all four clocks run, and the first runtime pass found three defects)
+
+## 2026-08-02 (later) — Slice 05 complete: steps 5 to 13, and what running it found
+
+Sixteen screens count down. They all count down against something real now.
+
+**The headline is not a feature.** It is that no clock in this slice could ever have fired, because
+nothing in the application created a `trip.trip` row at all. Publication produced a route plan and a
+run of occurrences and stopped there; the start window opened for nobody and the sweeper swept an
+empty table. The same gap explains a quiet `SKIP: no trip row for the booked route` in slice 04's
+smoke script — **slice 04's card-capture checks have never run either**, and nothing recorded that
+until now.
+
+A trip is materialised at an occurrence's **first confirmed booking**, which is when the clock first
+has stakes. One per generated occurrence — the literal reading — would put every unbooked occurrence
+under the sweeper and deactivate any driver whose recurring route went unbooked for three days.
+`V032` adds the partial unique index that arbitrates two passengers taking the last two seats at
+once; `TripMaterialisationIT` proves it under twenty threads.
+
+Two live bugs came with it. `resolveStarted`/`resolveCancelled` were **dead code**, so a trip started
+at +5 would still have been auto-cancelled at +11, voiding holds captured minutes earlier on a car
+already moving. And `updateStatus` stamped its timestamps from `Instant.now()` rather than the
+injected `Clock`, against this slice's own rule.
+
+The clocks themselves: **arrival detection** is geofence *and* dwell, kept pure so the rule a
+disputed no-show turns on is readable without a database — a drive-past clips a geofence, and the
+wait it would start ends in a fee charged to somebody whose driver never stopped. Dwell cannot
+accumulate across two passes, arrival is dated from entering the fence, and the triggering samples
+are stored. **The pickup wait** refuses an early release and checks ownership rather than merely the
+DRIVER role. **The driver-late grace** runs from her promised pickup, not the trip's departure — P35
+in one table — and a driver already detected at her pickup does not unlock a free cancel however
+late the clock reads. **`cancellation-terms`** is the single source both P26 and P34 read. **The
+early-drop allowance** returns exhaustion as data on a 200: the third drop still releases the seat.
+
+**Three defects only a runtime run could find**, all fixed:
+
+- `ReliabilityService.counter()` created the month's row on read, so the **first read by any user was
+  a 500** — every countdown renders "no-shows this month" inside a read-only transaction. The unit
+  tests were green throughout; none of them used a real transaction.
+- Two `jsonb` columns mapped as `String`. The one on `reliability_event.metadata` has been in the
+  merged code since the column was added, and never fired only because every caller passed `null`.
+- A **bean cycle** through `DriverFacade` → deactivation → identity → `DriverFacade`. The whole suite
+  stayed green because every unit test builds its own collaborators and nothing ever asked Spring to
+  wire the graph. `ApplicationContextLoadsIT` now closes that hole.
+
+Gate: `./mvnw spotless:check verify` → **BUILD SUCCESS, 423 tests, 0 skipped, JaCoCo met**.
+`redocly lint` valid; `pnpm run typecheck` in `packages/api-contracts` clean.
+Runtime: `scripts/simulation/verify-trip-timers.sh` → **42 passed, 0 failed, 0 skipped**, on
+PostgreSQL 5434 / API 8088 against `routeshare_comigo`, including the deactivation trigger driven to
+three real auto-cancels rather than asserted from a seeded counter.
+
+**Still not verified, and not ticked:** the card path — authorise → capture → void — has never run
+against any gateway, so the auto-cancel's void is asserted against mocks only. **Blocker 015 stays
+OPEN**: the Cybersource sandbox was unavailable during this slice and the owner will supply
+credentials when it returns. Blocker 016 is opened for slice 04's silently-skipped capture checks,
+which are now runnable and should be re-run.
+
+Next: slice 06 — penalties and the 50/50 split, which consumes `booking.noshow` and
+`booking.driver_late` from this slice.
 
 ## 2026-08-02 — Slice 05, steps 1–4: the scheduler and the start-buffer clock
 

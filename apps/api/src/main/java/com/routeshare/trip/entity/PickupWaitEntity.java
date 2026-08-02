@@ -5,6 +5,8 @@ import java.time.Duration;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * The pickup-wait clock (D19, D19b, P38, P38b, D21, P27).
@@ -54,6 +56,7 @@ public class PickupWaitEntity {
    * The samples that triggered arrival. A no-show is a penalty, and a penalty whose trigger cannot
    * be re-examined is one support has to take on faith when the passenger disputes it.
    */
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "triggered_by_samples", columnDefinition = "jsonb")
   private String triggeredBySamples;
 

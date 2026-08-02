@@ -61,12 +61,18 @@ public class ReliabilityServiceImpl implements ReliabilityService {
     return saved;
   }
 
+  /**
+   * Reading a month that has no events yet must not write one into existence. Every countdown in
+   * this slice renders "no-shows this month" from here inside a read-only transaction, so an {@code
+   * orElseGet(save)} turned the first read by any user into a 500 — and a rider whose driver has
+   * just arrived is not the person to discover that.
+   */
   @Override
-  @Transactional
+  @Transactional(readOnly = true)
   public MonthlyCounterEntity counter(long appUserId, ReliabilityRole role, LocalDate periodMonth) {
     return counters
         .findByAppUserIdAndRoleAndPeriodMonth(appUserId, role, periodMonth)
-        .orElseGet(() -> counters.save(MonthlyCounterEntity.opened(appUserId, role, periodMonth)));
+        .orElseGet(() -> MonthlyCounterEntity.opened(appUserId, role, periodMonth));
   }
 
   @Override

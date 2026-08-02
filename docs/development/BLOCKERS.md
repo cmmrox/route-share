@@ -17,6 +17,39 @@ Blocker Status Values:
 
 ## Active Blockers
 
+### Blocker 016 — Slice 04's card-capture checks have been skipping since they were written
+
+Status: `OPEN`
+Severity: `MEDIUM`
+
+Description:
+
+`scripts/simulation/verify-charge-timing.sh` guards its capture checks with
+`if [ -n "$TRIP_ID" ]` and otherwise logs `SKIP: no trip row for the booked route`. Nothing in the
+application created a `trip.trip` row until slice 05's `V032` work, so that branch was taken on
+every run the script has ever had — including the run recorded under Blocker 013 as slice 04's
+evidence. The skip was logged but never promoted into the tracking docs, so slice 04 reads as
+verified when three of its checks never executed.
+
+A second defect in the same script was found while writing slice 05's: it posts to
+`/api/v1/driver/trips/{tripId}/transitions`, which does not exist. The real endpoint is
+`/api/v1/driver/trips/{tripId}/start`. That would have failed loudly had the checks ever run.
+
+Impact:
+
+- "Trip start captures every card, exactly once" and "a repeated start captures nothing further"
+  are unverified at runtime, despite `CaptureOnTripStartIT` proving the database cannot admit a
+  double capture.
+- The recorded 2/2 result for slice 04 overstates what was actually exercised.
+
+Resolution:
+
+Fix the endpoint path in `verify-charge-timing.sh` and re-run it now that bookings materialise
+trips. Both defects are the script's, not the backend's; no product change is expected. Worth doing
+before slice 06 prices anything against those paths.
+
+---
+
 ### Blocker 015 — The card path of charge timing has never been exercised at runtime
 
 Status: `OPEN`
@@ -39,7 +72,14 @@ Impact:
 - The eight card-path checks in
   `qa/test-cases/comigo-unified-app-backend/04-charge-timing-and-capture-qa.md` are unverified.
 - Slice 05's start-buffer auto-cancel calls `PaymentFacade.voidForBooking`, so it inherits the same
-  gap: the void will be asserted against a mock, not observed.
+  gap: the void will be asserted against a mock, not observed. Confirmed on 2026-08-02 when slice 05
+  closed — `verify-trip-timers.sh` asserts that auto-cancel *captures* nothing, which it can check
+  against real rows, but the void itself is still only proven by unit tests.
+
+Update 2026-08-02: the project owner reports the Cybersource sandbox is temporarily unavailable and
+will supply sandbox credentials (merchant ID, key ID, REST shared secret) when it returns. The
+gated local fake adapter was considered for slice 05 and deliberately left out of scope to keep that
+slice to the timers; it remains the cheaper of the two resolutions.
 
 Resolution:
 

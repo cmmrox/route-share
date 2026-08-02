@@ -8,7 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.routeshare.driver.facade.DriverFacade;
+import com.routeshare.driver.facade.DriverDeactivationFacade;
 import com.routeshare.notification.facade.NotificationFacade;
 import com.routeshare.platform.domain.PolicyKey;
 import com.routeshare.platform.service.PolicySettingService;
@@ -31,7 +31,7 @@ class ReliabilityGateServiceImplTest {
   private static final LocalDate AUGUST = LocalDate.of(2026, 8, 1);
   private static final long DRIVER = 9L;
 
-  private final DriverFacade drivers = mock(DriverFacade.class);
+  private final DriverDeactivationFacade drivers = mock(DriverDeactivationFacade.class);
   private final PolicySettingService policy = mock(PolicySettingService.class);
   private final NotificationFacade notifications = mock(NotificationFacade.class);
   private final ReliabilityGateServiceImpl service =

@@ -33,6 +33,12 @@ public class RoutingFacadeImpl implements RoutingFacade {
   }
 
   @Override
+  @org.springframework.transaction.annotation.Transactional
+  public int cancelFutureOccurrencesForDriver(long driverProfileId) {
+    return occurrences.cancelFutureForDriver(driverProfileId);
+  }
+
+  @Override
   public Optional<PriceableTrip> findPriceableTrip(long routeOccurrenceId) {
     return occurrences
         .findPriceableTrip(routeOccurrenceId)

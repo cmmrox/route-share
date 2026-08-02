@@ -52,6 +52,21 @@ public interface RouteOccurrenceRepository extends JpaRepository<RouteOccurrence
       value =
           """
       UPDATE routing.route_occurrence occurrence
+      SET status = 'CANCELLED'
+      FROM routing.route_plan route
+      WHERE occurrence.route_plan_id = route.route_plan_id
+        AND route.driver_profile_id = :driverProfileId
+        AND occurrence.status = 'PUBLISHED'
+        AND occurrence.scheduled_departure_at > now()
+      """,
+      nativeQuery = true)
+  int cancelFutureForDriver(@Param("driverProfileId") long driverProfileId);
+
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE routing.route_occurrence occurrence
       SET available_seats = LEAST(occurrence.available_seats + :seats, route.available_seats)
       FROM routing.route_plan route
       WHERE occurrence.route_plan_id = route.route_plan_id

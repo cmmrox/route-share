@@ -1,6 +1,6 @@
 package com.routeshare.reliability.service.impl;
 
-import com.routeshare.driver.facade.DriverFacade;
+import com.routeshare.driver.facade.DriverDeactivationFacade;
 import com.routeshare.notification.facade.NotificationFacade;
 import com.routeshare.platform.domain.PolicyKey;
 import com.routeshare.platform.service.PolicySettingService;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 public class ReliabilityGateServiceImpl implements ReliabilityGateService {
   private static final Logger log = LoggerFactory.getLogger(ReliabilityGateServiceImpl.class);
 
-  private final DriverFacade drivers;
+  private final DriverDeactivationFacade drivers;
   private final PolicySettingService policy;
   private final NotificationFacade notifications;
   private final MeterRegistry meters;

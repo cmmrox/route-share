@@ -2464,7 +2464,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TripLiveState"
+                  "$ref": "#/components/schemas/EarlyDropOffResult"
                 }
               }
             }
@@ -2516,8 +2516,7 @@
               }
             }
           }
-        },
-        "x-routeshare-status": "IMPLEMENTED"
+        }
       }
     },
     "/api/v1/passenger/bookings/{bookingId}/receipt": {
@@ -4971,7 +4970,7 @@
           }
         ],
         "x-routeshare-status": "IMPLEMENTED",
-        "description": "Starts the trip and captures every confirmed booking, once each. This is the moment the product promises money moves — not on acceptance, not on approval. A repeated call captures nothing further, and a declined card flags that booking without stopping the trip."
+        "description": "Starts the trip and captures every confirmed booking, once each. This is the moment the product promises money moves \u2014 not on acceptance, not on approval. A repeated call captures nothing further, and a declined card flags that booking without stopping the trip."
       }
     },
     "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/board": {
@@ -7173,7 +7172,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "description": "Serves S07-S14 in a single request: available modes, driver gates and why, verification level, suspension detail, the active-trip pointer for the resume bar, outstanding dues, rewards balance and tab badges. Returns only the caller's own data; no identifier parameter is accepted.",
@@ -7224,7 +7223,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Account suspended — body carries {code, message, actionPath}",
+            "description": "Account suspended \u2014 body carries {code, message, actionPath}",
             "content": {
               "application/json": {
                 "schema": {
@@ -7234,7 +7233,7 @@
             }
           },
           "409": {
-            "description": "Mode unavailable — body carries the blocking gate code and actionPath",
+            "description": "Mode unavailable \u2014 body carries the blocking gate code and actionPath",
             "content": {
               "application/json": {
                 "schema": {
@@ -7292,7 +7291,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Account suspended — body carries {code, message, actionPath}",
+            "description": "Account suspended \u2014 body carries {code, message, actionPath}",
             "content": {
               "application/json": {
                 "schema": {
@@ -7323,7 +7322,7 @@
           }
         },
         "operationId": "postDriverReinstatementRequests",
-        "description": "D34's primary action. Reachable while the driver gate is refusing every other driver endpoint — the caller is exactly the person that gate is written for. A second request while one is open is refused."
+        "description": "D34's primary action. Reachable while the driver gate is refusing every other driver endpoint \u2014 the caller is exactly the person that gate is written for. A second request while one is open is refused."
       },
       "get": {
         "tags": [
@@ -7361,7 +7360,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Account suspended — body carries {code, message, actionPath}",
+            "description": "Account suspended \u2014 body carries {code, message, actionPath}",
             "content": {
               "application/json": {
                 "schema": {
@@ -7525,7 +7524,7 @@
             }
           },
           "409": {
-            "description": "RATE_OUTSIDE_BAND or RATE_BAND_NOT_SET — body carries the code and actionPath",
+            "description": "RATE_OUTSIDE_BAND or RATE_BAND_NOT_SET \u2014 body carries the code and actionPath",
             "content": {
               "application/json": {
                 "schema": {
@@ -7749,7 +7748,7 @@
             }
           },
           "409": {
-            "description": "RATE_BAND_NOT_SET — the trip's vehicle has no live rate",
+            "description": "RATE_BAND_NOT_SET \u2014 the trip's vehicle has no live rate",
             "content": {
               "application/json": {
                 "schema": {
@@ -7770,7 +7769,7 @@
           }
         },
         "operationId": "postPricingEstimateByRoute",
-        "description": "Prices the on-route distance between two points on the driver's stored route line, at that vehicle's assessed per-km rate, less the route-match discount. The driver's cut is withheld — this is a passenger surface."
+        "description": "Prices the on-route distance between two points on the driver's stored route line, at that vehicle's assessed per-km rate, less the route-match discount. The driver's cut is withheld \u2014 this is a passenger surface."
       }
     },
     "/api/v1/driver/trips/{tripId}/start-extension": {
@@ -7779,14 +7778,13 @@
           "Trip Operations"
         ],
         "summary": "Take the one 10-minute start extension (D32)",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/StartWindow"
                 }
               }
             }
@@ -7795,7 +7793,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -7818,7 +7816,12 @@
             }
           }
         },
-        "operationId": "postDriverTripsByTripIdStartExtension"
+        "operationId": "postDriverTripsByTripIdStartExtension",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/trips/{tripId}/start-window": {
@@ -7827,14 +7830,13 @@
           "Trip Operations"
         ],
         "summary": "Start buffer countdown and extensions left",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/StartWindow"
                 }
               }
             }
@@ -7843,7 +7845,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -7856,7 +7858,12 @@
             }
           }
         ],
-        "operationId": "getDriverTripsByTripIdStartWindow"
+        "operationId": "getDriverTripsByTripIdStartWindow",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/wait-extension": {
@@ -7865,14 +7872,13 @@
           "Trip Operations"
         ],
         "summary": "Take the one 5-minute pickup-wait extension (D19b)",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/PickupWait"
                 }
               }
             }
@@ -7881,7 +7887,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -7912,7 +7918,12 @@
             }
           }
         },
-        "operationId": "postDriverTripsByTripIdPassengersByBookingIdWaitExtension"
+        "operationId": "postDriverTripsByTripIdPassengersByBookingIdWaitExtension",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/wait-window": {
@@ -7921,14 +7932,13 @@
           "Trip Operations"
         ],
         "summary": "Pickup-wait countdown",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/PickupWait"
                 }
               }
             }
@@ -7937,7 +7947,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -7958,7 +7968,12 @@
             }
           }
         ],
-        "operationId": "getDriverTripsByTripIdPassengersByBookingIdWaitWindow"
+        "operationId": "getDriverTripsByTripIdPassengersByBookingIdWaitWindow",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/trips/{tripId}/passengers/{bookingId}/release-seat": {
@@ -7967,14 +7982,13 @@
           "Trip Operations"
         ],
         "summary": "Release a no-show's seat (D21)",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/PickupWait"
                 }
               }
             }
@@ -7983,7 +7997,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8014,7 +8028,12 @@
             }
           }
         },
-        "operationId": "postDriverTripsByTripIdPassengersByBookingIdReleaseSeat"
+        "operationId": "postDriverTripsByTripIdPassengersByBookingIdReleaseSeat",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/reliability": {
@@ -8023,14 +8042,13 @@
           "Trip Operations"
         ],
         "summary": "Driver reliability panel (D28)",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/DriverReliability"
                 }
               }
             }
@@ -8039,10 +8057,15 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
-        "operationId": "getDriverReliability"
+        "operationId": "getDriverReliability",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/reliability": {
@@ -8051,14 +8074,13 @@
           "Trip Operations"
         ],
         "summary": "Rider reliability panel (P39)",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/PassengerReliability"
                 }
               }
             }
@@ -8067,10 +8089,15 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
-        "operationId": "getPassengerReliability"
+        "operationId": "getPassengerReliability",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/bookings/{bookingId}/pickup-window": {
@@ -8079,14 +8106,13 @@
           "Trip Operations"
         ],
         "summary": "Rider's side of the wait clock (P38)",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/PickupWait"
                 }
               }
             }
@@ -8095,7 +8121,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8108,7 +8134,12 @@
             }
           }
         ],
-        "operationId": "getPassengerBookingsByBookingIdPickupWindow"
+        "operationId": "getPassengerBookingsByBookingIdPickupWindow",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/bookings/{bookingId}/cancellation-terms": {
@@ -8117,14 +8148,13 @@
           "Trip Operations"
         ],
         "summary": "Whether a free cancel is unlocked, and the priced penalty",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/CancellationTerms"
                 }
               }
             }
@@ -8133,7 +8163,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8146,7 +8176,12 @@
             }
           }
         ],
-        "operationId": "getPassengerBookingsByBookingIdCancellationTerms"
+        "operationId": "getPassengerBookingsByBookingIdCancellationTerms",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/early-drop-allowance": {
@@ -8155,14 +8190,13 @@
           "Trip Operations"
         ],
         "summary": "Early drop-offs used this month (P16)",
-        "x-routeshare-status": "PLANNED_SLICE_05",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/EarlyDropAllowance"
                 }
               }
             }
@@ -8171,10 +8205,15 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
-        "operationId": "getPassengerEarlyDropAllowance"
+        "operationId": "getPassengerEarlyDropAllowance",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/dues": {
@@ -8199,7 +8238,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerDues"
@@ -8227,7 +8266,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerPenalties"
@@ -8255,7 +8294,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8303,7 +8342,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverPenalties"
@@ -8331,7 +8370,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8379,7 +8418,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8417,7 +8456,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8455,7 +8494,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8493,7 +8532,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8531,7 +8570,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8579,7 +8618,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8627,7 +8666,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -8665,7 +8704,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverPreferences"
@@ -8691,7 +8730,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8729,7 +8768,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverPreferencesEligibilityImpact"
@@ -8757,7 +8796,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerVerification"
@@ -8785,7 +8824,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8823,7 +8862,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8861,7 +8900,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerProfilePhotoVisibility"
@@ -8887,7 +8926,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8925,7 +8964,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8963,7 +9002,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getPassengerCommute"
@@ -8989,7 +9028,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9027,7 +9066,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9065,7 +9104,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9103,7 +9142,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9155,7 +9194,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9211,7 +9250,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9267,7 +9306,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9321,7 +9360,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9359,7 +9398,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getNotificationPreferences"
@@ -9385,7 +9424,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9423,7 +9462,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getBadges"
@@ -9451,7 +9490,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getMeSettings"
@@ -9477,7 +9516,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9515,7 +9554,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9553,7 +9592,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9591,7 +9630,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9629,7 +9668,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getMeReferral"
@@ -9657,7 +9696,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9695,7 +9734,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getMeRewards"
@@ -9723,7 +9762,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9759,7 +9798,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getMeRewardsWithdrawals"
@@ -9787,7 +9826,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9825,7 +9864,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9863,7 +9902,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverLocationPolicy"
@@ -9891,7 +9930,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9929,7 +9968,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -9985,7 +10024,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10023,7 +10062,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getRealtimeToken"
@@ -10051,7 +10090,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -10089,7 +10128,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10137,7 +10176,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10173,7 +10212,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10211,7 +10250,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10232,7 +10271,7 @@
         "tags": [
           "Live Booking"
         ],
-        "summary": "Accept — captures immediately",
+        "summary": "Accept \u2014 captures immediately",
         "x-routeshare-status": "PLANNED_SLICE_13",
         "responses": {
           "200": {
@@ -10249,7 +10288,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10305,7 +10344,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10361,7 +10400,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10417,7 +10456,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverWallet"
@@ -10445,7 +10484,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10515,7 +10554,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "operationId": "getDriverPayouts"
@@ -10543,7 +10582,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10581,7 +10620,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10637,7 +10676,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10675,7 +10714,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10713,7 +10752,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10761,7 +10800,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10815,7 +10854,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10853,7 +10892,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10901,7 +10940,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10947,7 +10986,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -10985,7 +11024,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden \u2014 body carries {code, message, actionPath}"
           }
         },
         "parameters": [
@@ -11195,7 +11234,7 @@
             "description": "Not found"
           }
         },
-        "description": "Zero Google cost — ST_LineSubstring on the stored route line.",
+        "description": "Zero Google cost \u2014 ST_LineSubstring on the stored route line.",
         "parameters": [
           {
             "name": "routeOccurrenceId",
@@ -11560,7 +11599,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal — use /api/v1/passenger/bookings",
+        "summary": "Internal \u2014 use /api/v1/passenger/bookings",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11604,7 +11643,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal — use /api/v1/driver/bookings/{bookingId}/approve|decline",
+        "summary": "Internal \u2014 use /api/v1/driver/bookings/{bookingId}/approve|decline",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11659,7 +11698,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal — use /api/v1/driver/routes",
+        "summary": "Internal \u2014 use /api/v1/driver/routes",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11703,7 +11742,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal — use /api/v1/passenger/ride-searches",
+        "summary": "Internal \u2014 use /api/v1/passenger/ride-searches",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11747,7 +11786,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal — use the role-scoped trip operations under /api/v1/driver/trips",
+        "summary": "Internal \u2014 use the role-scoped trip operations under /api/v1/driver/trips",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11802,7 +11841,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal — use /api/v1/driver/trips/{tripId}/passengers/{bookingId}/*",
+        "summary": "Internal \u2014 use /api/v1/driver/trips/{tripId}/passengers/{bookingId}/*",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11866,7 +11905,7 @@
         "tags": [
           "Internal"
         ],
-        "summary": "Internal — use /api/v1/passenger/payments/intents",
+        "summary": "Internal \u2014 use /api/v1/passenger/payments/intents",
         "x-routeshare-status": "INTERNAL_NOT_FOR_CLIENTS",
         "responses": {
           "200": {
@@ -11916,82 +11955,33 @@
       }
     },
     "schemas": {
-      "ErrorResponse": {
+      "ActiveModeRequest": {
         "type": "object",
         "required": [
-          "code",
-          "message",
-          "correlationId"
+          "mode"
         ],
         "properties": {
-          "code": {
+          "mode": {
             "type": "string",
-            "example": "VALIDATION_ERROR"
-          },
-          "message": {
-            "type": "string"
-          },
-          "correlationId": {
-            "type": "string"
-          },
-          "fieldErrors": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "field": {
-                  "type": "string"
-                },
-                "message": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "actionPath": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Where the app should send the user to clear the refusal. Populated on gated 403s and 409s; null otherwise."
+            "enum": [
+              "PASSENGER",
+              "DRIVER"
+            ]
           }
         }
       },
-      "PageMeta": {
-        "type": "object",
-        "properties": {
-          "page": {
-            "type": "integer"
-          },
-          "size": {
-            "type": "integer"
-          },
-          "totalElements": {
-            "type": "integer"
-          },
-          "totalPages": {
-            "type": "integer"
-          }
-        }
-      },
-      "Coordinate": {
+      "ActiveModeResponse": {
         "type": "object",
         "required": [
-          "latitude",
-          "longitude"
+          "mode"
         ],
         "properties": {
-          "latitude": {
-            "type": "number",
-            "format": "double",
-            "minimum": -90,
-            "maximum": 90
-          },
-          "longitude": {
-            "type": "number",
-            "format": "double",
-            "minimum": -180,
-            "maximum": 180
+          "mode": {
+            "type": "string",
+            "enum": [
+              "PASSENGER",
+              "DRIVER"
+            ]
           }
         }
       },
@@ -12016,733 +12006,6 @@
           }
         }
       },
-      "Money": {
-        "type": "object",
-        "required": [
-          "amount",
-          "currency"
-        ],
-        "properties": {
-          "amount": {
-            "type": "number",
-            "multipleOf": 0.01
-          },
-          "currency": {
-            "type": "string",
-            "example": "LKR"
-          }
-        }
-      },
-      "AuthMe": {
-        "type": "object",
-        "properties": {
-          "subject": {
-            "type": "string"
-          },
-          "appUserId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "phone": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "hasPassengerProfile": {
-            "type": "boolean"
-          },
-          "hasDriverProfile": {
-            "type": "boolean"
-          },
-          "driverVerificationStatus": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "availableModes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "PASSENGER",
-                "DRIVER",
-                "ADMIN"
-              ]
-            }
-          }
-        }
-      },
-      "Notification": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "channel": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "body": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "readAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
-          }
-        }
-      },
-      "SupportTicket": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "ticketNumber": {
-            "type": "string"
-          },
-          "category": {
-            "type": "string"
-          },
-          "priority": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "subject": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "CreateSupportTicketRequest": {
-        "type": "object",
-        "required": [
-          "category",
-          "subject",
-          "description"
-        ],
-        "properties": {
-          "category": {
-            "type": "string"
-          },
-          "subject": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "tripId": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64"
-          },
-          "bookingId": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64"
-          }
-        }
-      },
-      "PassengerProfile": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "fullName": {
-            "type": "string"
-          },
-          "preferredName": {
-            "type": "string"
-          },
-          "dateOfBirth": {
-            "type": "string",
-            "format": "date"
-          },
-          "gender": {
-            "type": "string"
-          },
-          "profilePhotoUrl": {
-            "type": "string"
-          },
-          "ratingAverage": {
-            "type": "number"
-          },
-          "ratingCount": {
-            "type": "integer"
-          },
-          "status": {
-            "type": "string"
-          }
-        }
-      },
-      "UpdatePassengerProfileRequest": {
-        "type": "object",
-        "required": [
-          "fullName"
-        ],
-        "properties": {
-          "fullName": {
-            "type": "string"
-          },
-          "preferredName": {
-            "type": "string"
-          },
-          "dateOfBirth": {
-            "type": "string",
-            "format": "date"
-          },
-          "gender": {
-            "type": "string"
-          },
-          "profilePhotoObjectKey": {
-            "type": "string"
-          }
-        }
-      },
-      "SavedPlace": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "label": {
-            "type": "string"
-          },
-          "addressText": {
-            "type": "string"
-          },
-          "location": {
-            "$ref": "#/components/schemas/Coordinate"
-          },
-          "isDefault": {
-            "type": "boolean"
-          }
-        }
-      },
-      "CreateSavedPlaceRequest": {
-        "type": "object",
-        "required": [
-          "label",
-          "addressText",
-          "location"
-        ],
-        "properties": {
-          "label": {
-            "type": "string"
-          },
-          "addressText": {
-            "type": "string"
-          },
-          "location": {
-            "$ref": "#/components/schemas/Coordinate"
-          },
-          "isDefault": {
-            "type": "boolean"
-          }
-        }
-      },
-      "TrustedContact": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "name": {
-            "type": "string"
-          },
-          "phone": {
-            "type": "string"
-          },
-          "relationship": {
-            "type": "string"
-          },
-          "isPrimary": {
-            "type": "boolean"
-          }
-        }
-      },
-      "CreateTrustedContactRequest": {
-        "type": "object",
-        "required": [
-          "name",
-          "phone"
-        ],
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "phone": {
-            "type": "string"
-          },
-          "relationship": {
-            "type": "string"
-          },
-          "isPrimary": {
-            "type": "boolean"
-          }
-        }
-      },
-      "RideSearchRequest": {
-        "type": "object",
-        "required": [
-          "pickup",
-          "dropoff",
-          "requestedDepartureAt",
-          "seatsRequested"
-        ],
-        "properties": {
-          "pickup": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "dropoff": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "requestedDepartureAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "seatsRequested": {
-            "type": "integer",
-            "minimum": 1
-          }
-        }
-      },
-      "RideSearch": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pickup": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "dropoff": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "requestedDepartureAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "seatsRequested": {
-            "type": "integer"
-          },
-          "status": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "RideSearchResult": {
-        "type": "object",
-        "description": "A scored ride match. Ride search is stateless; results are returned by POST /ride-searches and carried client-side into ride detail.",
-        "properties": {
-          "routePlanId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "routeOccurrenceId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "originLabel": {
-            "type": "string"
-          },
-          "destinationLabel": {
-            "type": "string"
-          },
-          "departureTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "availableSeats": {
-            "type": "integer"
-          },
-          "routeLengthMeters": {
-            "type": "number"
-          },
-          "pickupRouteFraction": {
-            "type": "number"
-          },
-          "dropoffRouteFraction": {
-            "type": "number"
-          },
-          "pickupDistanceMeters": {
-            "type": "number"
-          },
-          "dropoffDistanceMeters": {
-            "type": "number"
-          },
-          "overlapDistanceMeters": {
-            "type": "number"
-          },
-          "overlapPercent": {
-            "type": "number"
-          },
-          "score": {
-            "type": "number"
-          },
-          "explanation": {
-            "type": "string"
-          },
-          "matchedDistanceMeters": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "estimatedFare": {
-            "type": "number"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "driverName": {
-            "type": "string"
-          },
-          "vehicleMake": {
-            "type": "string"
-          },
-          "vehicleModel": {
-            "type": "string"
-          },
-          "vehicleRegistration": {
-            "type": "string"
-          },
-          "vehicleSeatCount": {
-            "type": "integer"
-          }
-        }
-      },
-      "CreateBookingRequest": {
-        "type": "object",
-        "required": [
-          "rideSearchResultId",
-          "seatsBooked",
-          "paymentMethodType"
-        ],
-        "properties": {
-          "rideSearchResultId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "seatsBooked": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "paymentMethodType": {
-            "type": "string",
-            "enum": [
-              "CASH",
-              "CARD"
-            ]
-          },
-          "paymentMethodId": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64",
-            "description": "The card to hold the fare on. Omit for cash: nothing is authorised and the driver collects in the car."
-          }
-        }
-      },
-      "Booking": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "publicBookingRef": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "routeOccurrenceId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "seatsBooked": {
-            "type": "integer"
-          },
-          "pickup": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "dropoff": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "estimatedFare": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "paymentStatus": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "payment": {
-            "$ref": "#/components/schemas/BookingPayment"
-          }
-        }
-      },
-      "TripLiveState": {
-        "type": "object",
-        "properties": {
-          "tripId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "bookingId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "tripStatus": {
-            "type": "string"
-          },
-          "passengerStatus": {
-            "type": "string"
-          },
-          "driverLocation": {
-            "$ref": "#/components/schemas/Coordinate"
-          },
-          "etaMinutes": {
-            "type": "integer"
-          },
-          "fareSoFar": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "distanceSoFarKm": {
-            "type": "number"
-          }
-        }
-      },
-      "RatingRequest": {
-        "type": "object",
-        "required": [
-          "score"
-        ],
-        "properties": {
-          "score": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 5
-          },
-          "comment": {
-            "type": "string"
-          }
-        }
-      },
-      "SosRequest": {
-        "type": "object",
-        "required": [
-          "location"
-        ],
-        "properties": {
-          "bookingId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "tripId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "location": {
-            "$ref": "#/components/schemas/Coordinate"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      },
-      "PushRegistrationRequest": {
-        "type": "object",
-        "required": [
-          "platform",
-          "token"
-        ],
-        "properties": {
-          "platform": {
-            "type": "string",
-            "enum": [
-              "IOS",
-              "ANDROID",
-              "WEB"
-            ]
-          },
-          "token": {
-            "type": "string"
-          },
-          "deviceId": {
-            "type": "string"
-          },
-          "appVersion": {
-            "type": "string"
-          }
-        }
-      },
-      "NotificationPreferences": {
-        "type": "object",
-        "properties": {
-          "bookingUpdates": {
-            "type": "boolean"
-          },
-          "tripUpdates": {
-            "type": "boolean"
-          },
-          "payments": {
-            "type": "boolean"
-          },
-          "promotions": {
-            "type": "boolean"
-          }
-        }
-      },
-      "SignedUploadRequest": {
-        "type": "object",
-        "required": [
-          "documentType",
-          "fileName",
-          "contentType"
-        ],
-        "properties": {
-          "documentType": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "contentType": {
-            "type": "string"
-          },
-          "sizeBytes": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "SignedUploadResponse": {
-        "type": "object",
-        "required": [
-          "documentId",
-          "uploadUrl",
-          "expiresAt"
-        ],
-        "properties": {
-          "documentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "uploadUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "headers": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "SupportTicketDetail": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "subject": {
-            "type": "string"
-          },
-          "messages": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SupportTicketMessage"
-            }
-          }
-        }
-      },
-      "SupportTicketMessage": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "body": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "senderType": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateSupportTicketMessageRequest": {
-        "type": "object",
-        "required": [
-          "body"
-        ],
-        "properties": {
-          "body": {
-            "type": "string"
-          }
-        }
-      },
       "AppConfig": {
         "type": "object",
         "properties": {
@@ -12763,1220 +12026,6 @@
             "additionalProperties": {
               "type": "boolean"
             }
-          }
-        }
-      },
-      "PaymentMethod": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "CARD",
-              "CASH",
-              "WALLET"
-            ]
-          },
-          "label": {
-            "type": "string"
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "status": {
-            "type": "string"
-          }
-        }
-      },
-      "CreatePaymentMethodRequest": {
-        "type": "object",
-        "required": [
-          "type"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "CARD",
-              "CASH",
-              "WALLET"
-            ]
-          },
-          "providerToken": {
-            "type": "string"
-          },
-          "setDefault": {
-            "type": "boolean"
-          }
-        }
-      },
-      "CreatePaymentIntentRequest": {
-        "type": "object",
-        "required": [
-          "bookingId",
-          "paymentMethodId"
-        ],
-        "properties": {
-          "bookingId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "paymentMethodId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "PaymentIntent": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "bookingId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "amount": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "providerAction": {
-            "type": "object",
-            "additionalProperties": true
-          }
-        }
-      },
-      "Receipt": {
-        "type": "object",
-        "properties": {
-          "bookingId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "tripId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fare": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "distanceKm": {
-            "type": "number"
-          },
-          "commission": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "paymentStatus": {
-            "type": "string"
-          },
-          "issuedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "EarlyDropOffRequest": {
-        "type": "object",
-        "properties": {
-          "currentLocation": {
-            "$ref": "#/components/schemas/Coordinate"
-          },
-          "reason": {
-            "type": "string"
-          }
-        }
-      },
-      "TripShare": {
-        "type": "object",
-        "properties": {
-          "shareUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "UpdateSavedPlaceRequest": {
-        "type": "object",
-        "properties": {
-          "label": {
-            "type": "string"
-          },
-          "location": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          }
-        }
-      },
-      "UpdateTrustedContactRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "relationship": {
-            "type": "string"
-          }
-        }
-      },
-      "PassengerVerificationStatus": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string"
-          },
-          "requiredForAllRides": {
-            "type": "boolean"
-          },
-          "documents": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": true
-            }
-          }
-        }
-      },
-      "LocationSnapshotResponse": {
-        "type": "object",
-        "properties": {
-          "tripId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "driverProfileId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "latitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "longitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "accuracyMeters": {
-            "type": "number",
-            "format": "double"
-          },
-          "speedMps": {
-            "type": "number",
-            "format": "double"
-          },
-          "bearingDegrees": {
-            "type": "number",
-            "format": "double"
-          },
-          "deviceRecordedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "serverReceivedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "stale": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PassengerLiveTripStateResponse": {
-        "type": "object",
-        "properties": {
-          "tripId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "tripStatus": {
-            "type": "string"
-          },
-          "originLabel": {
-            "type": "string"
-          },
-          "destinationLabel": {
-            "type": "string"
-          },
-          "departureTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "latestDriverLocation": {
-            "$ref": "#/components/schemas/LocationSnapshotResponse"
-          },
-          "locationAvailable": {
-            "type": "boolean"
-          }
-        }
-      },
-      "OtpRequest": {
-        "type": "object",
-        "required": [
-          "phoneNumber"
-        ],
-        "properties": {
-          "phoneNumber": {
-            "type": "string",
-            "example": "+94712345678"
-          }
-        }
-      },
-      "OtpRequestResponse": {
-        "type": "object",
-        "required": [
-          "verificationId",
-          "phoneNumber",
-          "expiresInSeconds",
-          "resendAfterSeconds"
-        ],
-        "properties": {
-          "verificationId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "expiresInSeconds": {
-            "type": "integer"
-          },
-          "resendAfterSeconds": {
-            "type": "integer"
-          }
-        }
-      },
-      "OtpVerifyRequest": {
-        "type": "object",
-        "required": [
-          "verificationId",
-          "phoneNumber",
-          "code"
-        ],
-        "properties": {
-          "verificationId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string",
-            "minLength": 6,
-            "maxLength": 6
-          }
-        }
-      },
-      "OtpVerifyResponse": {
-        "type": "object",
-        "required": [
-          "verified",
-          "phoneNumber",
-          "accessToken",
-          "expiresInSeconds"
-        ],
-        "properties": {
-          "verified": {
-            "type": "boolean"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "accessToken": {
-            "type": "string"
-          },
-          "expiresInSeconds": {
-            "type": "integer"
-          }
-        }
-      },
-      "PublicTripStatusResponse": {
-        "type": "object",
-        "properties": {
-          "originLabel": {
-            "type": "string"
-          },
-          "destinationLabel": {
-            "type": "string"
-          },
-          "departureTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "bookingStatus": {
-            "type": "string"
-          },
-          "tripStatus": {
-            "type": "string"
-          },
-          "passengerTripStatus": {
-            "type": "string"
-          },
-          "driverName": {
-            "type": "string"
-          },
-          "vehiclePlate": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "DriverProfile": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "fullName": {
-            "type": "string"
-          },
-          "kycStatus": {
-            "type": "string"
-          },
-          "driverStatus": {
-            "type": "string"
-          },
-          "approvalStatus": {
-            "type": "string"
-          },
-          "ratingAverage": {
-            "type": "number"
-          },
-          "totalCompletedTrips": {
-            "type": "integer"
-          }
-        }
-      },
-      "DriverApplicationRequest": {
-        "type": "object",
-        "required": [
-          "fullName",
-          "dateOfBirth",
-          "addressText"
-        ],
-        "properties": {
-          "fullName": {
-            "type": "string"
-          },
-          "dateOfBirth": {
-            "type": "string",
-            "format": "date"
-          },
-          "gender": {
-            "type": "string"
-          },
-          "addressText": {
-            "type": "string"
-          }
-        }
-      },
-      "DocumentUploadRequest": {
-        "type": "object",
-        "required": [
-          "documentType",
-          "fileName",
-          "contentType"
-        ],
-        "properties": {
-          "documentType": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "contentType": {
-            "type": "string"
-          },
-          "fileSizeBytes": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "DocumentUploadResponse": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "uploadUrl": {
-            "type": "string"
-          },
-          "objectKey": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "Vehicle": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "make": {
-            "type": "string"
-          },
-          "model": {
-            "type": "string"
-          },
-          "year": {
-            "type": "integer"
-          },
-          "color": {
-            "type": "string"
-          },
-          "registrationNumber": {
-            "type": "string"
-          },
-          "passengerSeatCapacity": {
-            "type": "integer"
-          },
-          "features": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "verificationStatus": {
-            "type": "string"
-          },
-          "activeStatus": {
-            "type": "string"
-          },
-          "isPrimary": {
-            "type": "boolean"
-          },
-          "classKey": {
-            "type": "string",
-            "enum": [
-              "CAR",
-              "SUV",
-              "VAN",
-              "THREE_WHEELER"
-            ]
-          },
-          "bandStatus": {
-            "type": "string",
-            "enum": [
-              "NOT_SET",
-              "PENDING_ASSESSMENT",
-              "ACTIVE",
-              "UNDER_REVIEW"
-            ],
-            "description": "D06 shows this per vehicle: approved papers with no band still cannot carry a trip."
-          },
-          "chosenRatePerKm": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "format": "double"
-          }
-        }
-      },
-      "CreateVehicleRequest": {
-        "type": "object",
-        "required": [
-          "make",
-          "model",
-          "year",
-          "color",
-          "registrationNumber",
-          "passengerSeatCapacity",
-          "vehicleClass"
-        ],
-        "properties": {
-          "make": {
-            "type": "string"
-          },
-          "model": {
-            "type": "string"
-          },
-          "year": {
-            "type": "integer"
-          },
-          "color": {
-            "type": "string"
-          },
-          "registrationNumber": {
-            "type": "string"
-          },
-          "vehicleType": {
-            "type": "string"
-          },
-          "passengerSeatCapacity": {
-            "type": "integer"
-          },
-          "features": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "vehicleClass": {
-            "type": "string",
-            "enum": [
-              "CAR",
-              "SUV",
-              "VAN",
-              "THREE_WHEELER"
-            ],
-            "description": "Drives the seat cap (D07) and the range the band must sit inside."
-          }
-        }
-      },
-      "RouteTemplateRequest": {
-        "type": "object",
-        "required": [
-          "vehicleId",
-          "origin",
-          "destination",
-          "pricePerKm",
-          "seatsOffered",
-          "bookingMode"
-        ],
-        "properties": {
-          "vehicleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "title": {
-            "type": "string"
-          },
-          "origin": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "destination": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "waypoints": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AddressedLocation"
-            }
-          },
-          "pricePerKm": {
-            "type": "number"
-          },
-          "seatsOffered": {
-            "type": "integer"
-          },
-          "bookingMode": {
-            "type": "string",
-            "enum": [
-              "INSTANT",
-              "MANUAL_APPROVAL"
-            ]
-          },
-          "schedule": {
-            "type": "object",
-            "properties": {
-              "scheduleType": {
-                "type": "string",
-                "enum": [
-                  "ONE_TIME",
-                  "RECURRING"
-                ]
-              },
-              "departureAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "daysOfWeek": {
-                "type": "array",
-                "items": {
-                  "type": "integer"
-                }
-              },
-              "startDate": {
-                "type": "string",
-                "format": "date"
-              },
-              "endDate": {
-                "type": "string",
-                "format": "date"
-              },
-              "departureTimeLocal": {
-                "type": "string"
-              },
-              "timezone": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      },
-      "RouteTemplate": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "vehicleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "title": {
-            "type": "string"
-          },
-          "origin": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "destination": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "encodedPolyline": {
-            "type": "string"
-          },
-          "estimatedDistanceKm": {
-            "type": "number"
-          },
-          "pricePerKm": {
-            "type": "number"
-          },
-          "seatsOffered": {
-            "type": "integer"
-          },
-          "bookingMode": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        }
-      },
-      "BookingRequest": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "passengerName": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "seatsBooked": {
-            "type": "integer"
-          },
-          "pickup": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "dropoff": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "estimatedFare": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "paymentMethodId": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "int64",
-            "description": "The card to hold the fare on. Omit for cash: nothing is authorised and the driver collects in the car."
-          }
-        }
-      },
-      "DriverTrip": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "routeOccurrenceId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "status": {
-            "type": "string"
-          },
-          "scheduledDepartureAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "availableSeats": {
-            "type": "integer"
-          },
-          "bookings": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BookingRequest"
-            }
-          }
-        }
-      },
-      "LocationUpdateRequest": {
-        "type": "object",
-        "required": [
-          "tripId",
-          "location",
-          "accuracyMeters",
-          "deviceTimestamp"
-        ],
-        "properties": {
-          "tripId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "location": {
-            "$ref": "#/components/schemas/Coordinate"
-          },
-          "accuracyMeters": {
-            "type": "number"
-          },
-          "speedMps": {
-            "type": "number"
-          },
-          "bearingDegrees": {
-            "type": "number"
-          },
-          "deviceTimestamp": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "batteryLevel": {
-            "type": "number"
-          },
-          "networkType": {
-            "type": "string"
-          }
-        }
-      },
-      "EarningsSummary": {
-        "type": "object",
-        "properties": {
-          "availableBalance": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "pendingBalance": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "cashCommissionDue": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "completedTrips": {
-            "type": "integer"
-          }
-        }
-      },
-      "PayoutProfileRequest": {
-        "type": "object",
-        "required": [
-          "bankName",
-          "bankBranch",
-          "accountHolderName",
-          "accountNumber"
-        ],
-        "properties": {
-          "bankName": {
-            "type": "string"
-          },
-          "bankBranch": {
-            "type": "string"
-          },
-          "accountHolderName": {
-            "type": "string"
-          },
-          "accountNumber": {
-            "type": "string"
-          }
-        }
-      },
-      "DriverVerificationDetail": {
-        "type": "object",
-        "properties": {
-          "profileStatus": {
-            "type": "string"
-          },
-          "identityStatus": {
-            "type": "string"
-          },
-          "licenceStatus": {
-            "type": "string"
-          },
-          "vehicleStatuses": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": true
-            }
-          },
-          "canPublishRoutes": {
-            "type": "boolean"
-          }
-        }
-      },
-      "DriverKycIdentityRequest": {
-        "type": "object",
-        "properties": {
-          "fullName": {
-            "type": "string"
-          },
-          "nicOrPassportNumber": {
-            "type": "string"
-          },
-          "address": {
-            "type": "string"
-          },
-          "dateOfBirth": {
-            "type": "string",
-            "format": "date"
-          }
-        }
-      },
-      "DriverLicenceRequest": {
-        "type": "object",
-        "properties": {
-          "licenceNumber": {
-            "type": "string"
-          },
-          "expiryDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "licenceClass": {
-            "type": "string"
-          }
-        }
-      },
-      "RouteShareLink": {
-        "type": "object",
-        "properties": {
-          "shareUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "qrCodeUrl": {
-            "type": "string",
-            "format": "uri"
-          }
-        }
-      },
-      "PreTripChecklistRequest": {
-        "type": "object",
-        "properties": {
-          "vehicleChecked": {
-            "type": "boolean"
-          },
-          "documentsCarried": {
-            "type": "boolean"
-          },
-          "fuelOrBatteryOk": {
-            "type": "boolean"
-          },
-          "notes": {
-            "type": "string"
-          }
-        }
-      },
-      "CashCollectionRequest": {
-        "type": "object",
-        "required": [
-          "amountCollected"
-        ],
-        "properties": {
-          "amountCollected": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "notes": {
-            "type": "string"
-          }
-        }
-      },
-      "FareAdjustmentRequest": {
-        "type": "object",
-        "required": [
-          "reason"
-        ],
-        "properties": {
-          "adjustedFare": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "reason": {
-            "type": "string"
-          }
-        }
-      },
-      "DriverRatingSummary": {
-        "type": "object",
-        "properties": {
-          "averageRating": {
-            "type": "number"
-          },
-          "ratingCount": {
-            "type": "integer"
-          },
-          "reviews": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": true
-            }
-          }
-        }
-      },
-      "PayoutProfile": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "bankName": {
-            "type": "string"
-          },
-          "accountLast4": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        }
-      },
-      "EarningsTransaction": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "tripId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "amount": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "type": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "DriverLocationUpdateRequest": {
-        "type": "object",
-        "required": [
-          "latitude",
-          "longitude",
-          "deviceRecordedAt"
-        ],
-        "properties": {
-          "latitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "longitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "accuracyMeters": {
-            "type": "number",
-            "format": "double"
-          },
-          "speedMps": {
-            "type": "number",
-            "format": "double"
-          },
-          "bearingDegrees": {
-            "type": "number",
-            "format": "double"
-          },
-          "deviceRecordedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "devicePlatform": {
-            "type": "string"
-          },
-          "batteryPercent": {
-            "type": "number",
-            "format": "double"
-          },
-          "networkType": {
-            "type": "string"
-          }
-        }
-      },
-      "LocationUpdateResponse": {
-        "type": "object",
-        "properties": {
-          "accepted": {
-            "type": "boolean"
-          },
-          "tripId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "driverProfileId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "serverReceivedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "latestLocation": {
-            "$ref": "#/components/schemas/LocationSnapshotResponse"
-          }
-        }
-      },
-      "DriverVerificationStatusResponse": {
-        "type": "object",
-        "properties": {
-          "profileStatus": {
-            "type": "string"
-          },
-          "hasApprovedVehicle": {
-            "type": "boolean"
-          },
-          "ready": {
-            "type": "boolean"
-          },
-          "documents": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "documentType": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "string"
-                },
-                "rejectionReason": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "nextSteps": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "AppContextGate": {
-        "type": "object",
-        "description": "A reason the caller cannot do something, as data the app renders (S07-S13, D34, D40).",
-        "required": [
-          "code",
-          "message"
-        ],
-        "properties": {
-          "code": {
-            "type": "string",
-            "enum": [
-              "DRIVER_PROFILE_MISSING",
-              "DRIVER_REVIEW_PENDING",
-              "DRIVER_APPLICATION_REJECTED",
-              "DRIVER_DEACTIVATED",
-              "ACCOUNT_SUSPENDED",
-              "DOCUMENT_REJECTED",
-              "DOCUMENT_MISSING",
-              "DOCUMENT_EXPIRED",
-              "VEHICLE_NOT_APPROVED",
-              "RATE_BAND_NOT_SET"
-            ]
-          },
-          "message": {
-            "type": "string"
-          },
-          "actionPath": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "AppContextDriver": {
-        "type": "object",
-        "required": [
-          "status",
-          "gates",
-          "canPublish"
-        ],
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "NONE",
-              "DRAFT",
-              "PENDING_REVIEW",
-              "APPROVED",
-              "REJECTED",
-              "SUSPENDED",
-              "DEACTIVATED"
-            ]
-          },
-          "gates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AppContextGate"
-            }
-          },
-          "canPublish": {
-            "type": "boolean"
-          },
-          "canSetWomenOnly": {
-            "type": "boolean"
-          }
-        }
-      },
-      "AppContextPassenger": {
-        "type": "object",
-        "required": [
-          "verificationLevel"
-        ],
-        "properties": {
-          "verificationLevel": {
-            "type": "string",
-            "enum": [
-              "NONE",
-              "PENDING",
-              "VERIFIED",
-              "REJECTED"
-            ]
-          },
-          "photoVisibility": {
-            "type": "string",
-            "enum": [
-              "PUBLIC",
-              "MATCHED",
-              "HIDDEN"
-            ]
-          },
-          "prepayRequired": {
-            "type": "boolean"
           }
         }
       },
@@ -14054,28 +12103,6 @@
           }
         }
       },
-      "AppContextMoney": {
-        "type": "object",
-        "required": [
-          "currency",
-          "outstandingDues",
-          "rewardsBalance"
-        ],
-        "properties": {
-          "currency": {
-            "type": "string",
-            "default": "LKR"
-          },
-          "outstandingDues": {
-            "type": "number",
-            "format": "double"
-          },
-          "rewardsBalance": {
-            "type": "number",
-            "format": "double"
-          }
-        }
-      },
       "AppContextBadges": {
         "type": "object",
         "description": "Tab badge rules per board S14. Home and Account are dots; Trips and Inbox are counts; the action tab is never badged.",
@@ -14100,24 +12127,121 @@
           }
         }
       },
-      "AppContextSettings": {
+      "AppContextDriver": {
         "type": "object",
+        "required": [
+          "status",
+          "gates",
+          "canPublish"
+        ],
         "properties": {
-          "theme": {
+          "status": {
             "type": "string",
             "enum": [
-              "SYSTEM",
-              "LIGHT",
-              "DARK"
+              "NONE",
+              "DRAFT",
+              "PENDING_REVIEW",
+              "APPROVED",
+              "REJECTED",
+              "SUSPENDED",
+              "DEACTIVATED"
             ]
           },
-          "language": {
+          "gates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppContextGate"
+            }
+          },
+          "canPublish": {
+            "type": "boolean"
+          },
+          "canSetWomenOnly": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AppContextGate": {
+        "type": "object",
+        "description": "A reason the caller cannot do something, as data the app renders (S07-S13, D34, D40).",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
             "type": "string",
             "enum": [
-              "en",
-              "si",
-              "ta"
+              "DRIVER_PROFILE_MISSING",
+              "DRIVER_REVIEW_PENDING",
+              "DRIVER_APPLICATION_REJECTED",
+              "DRIVER_DEACTIVATED",
+              "ACCOUNT_SUSPENDED",
+              "DOCUMENT_REJECTED",
+              "DOCUMENT_MISSING",
+              "DOCUMENT_EXPIRED",
+              "VEHICLE_NOT_APPROVED",
+              "RATE_BAND_NOT_SET"
             ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "actionPath": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AppContextMoney": {
+        "type": "object",
+        "required": [
+          "currency",
+          "outstandingDues",
+          "rewardsBalance"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string",
+            "default": "LKR"
+          },
+          "outstandingDues": {
+            "type": "number",
+            "format": "double"
+          },
+          "rewardsBalance": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AppContextPassenger": {
+        "type": "object",
+        "required": [
+          "verificationLevel"
+        ],
+        "properties": {
+          "verificationLevel": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "PENDING",
+              "VERIFIED",
+              "REJECTED"
+            ]
+          },
+          "photoVisibility": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "MATCHED",
+              "HIDDEN"
+            ]
+          },
+          "prepayRequired": {
+            "type": "boolean"
           }
         }
       },
@@ -14214,14 +12338,555 @@
           }
         }
       },
-      "UploadUrlResponse": {
+      "AppContextSettings": {
+        "type": "object",
+        "properties": {
+          "theme": {
+            "type": "string",
+            "enum": [
+              "SYSTEM",
+              "LIGHT",
+              "DARK"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "si",
+              "ta"
+            ]
+          }
+        }
+      },
+      "AuthMe": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "appUserId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hasPassengerProfile": {
+            "type": "boolean"
+          },
+          "hasDriverProfile": {
+            "type": "boolean"
+          },
+          "driverVerificationStatus": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "availableModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PASSENGER",
+                "DRIVER",
+                "ADMIN"
+              ]
+            }
+          }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "publicBookingRef": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "seatsBooked": {
+            "type": "integer"
+          },
+          "pickup": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "dropoff": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "estimatedFare": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "paymentStatus": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/BookingPayment"
+          }
+        }
+      },
+      "BookingPayment": {
+        "type": "object",
+        "description": "What has actually happened to this booking's money. P11 says authorised-not-charged, P12 states the exact capture time, P22 and P24 say never charged \u2014 all three read this block.",
+        "properties": {
+          "method": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "CARD",
+              "CASH",
+              null
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "PENDING",
+              "AUTHORIZED",
+              "CAPTURED",
+              "VOIDED",
+              "REFUNDED",
+              "FAILED",
+              null
+            ]
+          },
+          "authorizedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "capturedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The minute the card was actually charged. Null until the trip starts."
+          },
+          "amount": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "last4": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "BookingRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "passengerName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "seatsBooked": {
+            "type": "integer"
+          },
+          "pickup": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "dropoff": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "estimatedFare": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "paymentMethodId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The card to hold the fare on. Omit for cash: nothing is authorised and the driver collects in the car."
+          }
+        }
+      },
+      "CancellationTerms": {
+        "description": "The single source both P26 and P34 read. The client never decides whether a cancel is free.",
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "free": {
+            "type": "boolean"
+          },
+          "reasonCode": {
+            "type": "string",
+            "description": "DRIVER_LATE | OUTSIDE_PENALTY_WINDOW | LATE_CANCELLATION | BOOKING_ALREADY_CLOSED"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "penaltyPct": {
+            "type": "number",
+            "description": "What would apply; slice 06 turns this into an amount"
+          },
+          "recordedAgainstPassenger": {
+            "type": "boolean",
+            "description": "A free cancel unlocked by a late driver does not"
+          },
+          "promisedPickupAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "freeCancelUnlockedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "freeCancelUnlocksAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "secondsUntilFreeCancel": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        },
+        "required": [
+          "bookingId",
+          "free",
+          "reasonCode",
+          "recordedAgainstPassenger"
+        ]
+      },
+      "CashCollectionRequest": {
         "type": "object",
         "required": [
-          "documentId",
-          "uploadUrl",
-          "objectKey",
-          "expiresAt"
+          "amountCollected"
         ],
+        "properties": {
+          "amountCollected": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "ChosenRateRequest": {
+        "type": "object",
+        "required": [
+          "ratePerKm"
+        ],
+        "properties": {
+          "ratePerKm": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "Coordinate": {
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude"
+        ],
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "minimum": -180,
+            "maximum": 180
+          }
+        }
+      },
+      "CreateBookingRequest": {
+        "type": "object",
+        "required": [
+          "rideSearchResultId",
+          "seatsBooked",
+          "paymentMethodType"
+        ],
+        "properties": {
+          "rideSearchResultId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "seatsBooked": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "paymentMethodType": {
+            "type": "string",
+            "enum": [
+              "CASH",
+              "CARD"
+            ]
+          },
+          "paymentMethodId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The card to hold the fare on. Omit for cash: nothing is authorised and the driver collects in the car."
+          }
+        }
+      },
+      "CreatePaymentIntentRequest": {
+        "type": "object",
+        "required": [
+          "bookingId",
+          "paymentMethodId"
+        ],
+        "properties": {
+          "bookingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentMethodId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CreatePaymentMethodRequest": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "CARD",
+              "CASH",
+              "WALLET"
+            ]
+          },
+          "providerToken": {
+            "type": "string"
+          },
+          "setDefault": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateSavedPlaceRequest": {
+        "type": "object",
+        "required": [
+          "label",
+          "addressText",
+          "location"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "addressText": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Coordinate"
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateSupportTicketMessageRequest": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateSupportTicketRequest": {
+        "type": "object",
+        "required": [
+          "category",
+          "subject",
+          "description"
+        ],
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tripId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "bookingId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "CreateTrustedContactRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "phone"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateVehicleRequest": {
+        "type": "object",
+        "required": [
+          "make",
+          "model",
+          "year",
+          "color",
+          "registrationNumber",
+          "passengerSeatCapacity",
+          "vehicleClass"
+        ],
+        "properties": {
+          "make": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "color": {
+            "type": "string"
+          },
+          "registrationNumber": {
+            "type": "string"
+          },
+          "vehicleType": {
+            "type": "string"
+          },
+          "passengerSeatCapacity": {
+            "type": "integer"
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "vehicleClass": {
+            "type": "string",
+            "enum": [
+              "CAR",
+              "SUV",
+              "VAN",
+              "THREE_WHEELER"
+            ],
+            "description": "Drives the seat cap (D07) and the range the band must sit inside."
+          }
+        }
+      },
+      "DocumentUploadRequest": {
+        "type": "object",
+        "required": [
+          "documentType",
+          "fileName",
+          "contentType"
+        ],
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DocumentUploadResponse": {
+        "type": "object",
         "properties": {
           "documentId": {
             "type": "integer",
@@ -14236,12 +12901,6 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "requiredHeaders": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
           }
         }
       },
@@ -14261,45 +12920,148 @@
           }
         }
       },
-      "ActiveModeRequest": {
+      "DriverApplicationRequest": {
         "type": "object",
         "required": [
-          "mode"
+          "fullName",
+          "dateOfBirth",
+          "addressText"
         ],
         "properties": {
-          "mode": {
+          "fullName": {
+            "type": "string"
+          },
+          "dateOfBirth": {
             "type": "string",
-            "enum": [
-              "PASSENGER",
-              "DRIVER"
-            ]
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "addressText": {
+            "type": "string"
           }
         }
       },
-      "ActiveModeResponse": {
+      "DriverKycIdentityRequest": {
         "type": "object",
-        "required": [
-          "mode"
-        ],
         "properties": {
-          "mode": {
+          "fullName": {
+            "type": "string"
+          },
+          "nicOrPassportNumber": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "dateOfBirth": {
             "type": "string",
-            "enum": [
-              "PASSENGER",
-              "DRIVER"
-            ]
+            "format": "date"
           }
         }
       },
-      "DriverReinstatementRequestBody": {
+      "DriverLicenceRequest": {
+        "type": "object",
+        "properties": {
+          "licenceNumber": {
+            "type": "string"
+          },
+          "expiryDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "licenceClass": {
+            "type": "string"
+          }
+        }
+      },
+      "DriverLocationUpdateRequest": {
         "type": "object",
         "required": [
-          "message"
+          "latitude",
+          "longitude",
+          "deviceRecordedAt"
         ],
         "properties": {
-          "message": {
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "format": "double"
+          },
+          "speedMps": {
+            "type": "number",
+            "format": "double"
+          },
+          "bearingDegrees": {
+            "type": "number",
+            "format": "double"
+          },
+          "deviceRecordedAt": {
             "type": "string",
-            "maxLength": 2000
+            "format": "date-time"
+          },
+          "devicePlatform": {
+            "type": "string"
+          },
+          "batteryPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "networkType": {
+            "type": "string"
+          }
+        }
+      },
+      "DriverProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "kycStatus": {
+            "type": "string"
+          },
+          "driverStatus": {
+            "type": "string"
+          },
+          "approvalStatus": {
+            "type": "string"
+          },
+          "ratingAverage": {
+            "type": "number"
+          },
+          "totalCompletedTrips": {
+            "type": "integer"
+          }
+        }
+      },
+      "DriverRatingSummary": {
+        "type": "object",
+        "properties": {
+          "averageRating": {
+            "type": "number"
+          },
+          "ratingCount": {
+            "type": "integer"
+          },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
           }
         }
       },
@@ -14361,323 +13123,344 @@
           }
         }
       },
-      "VehicleClass": {
+      "DriverReinstatementRequestBody": {
         "type": "object",
-        "description": "A class of vehicle: what it may carry, and the range its per-km band must sit inside.",
         "required": [
-          "classKey",
-          "label",
-          "maxPassengerSeats",
-          "defaultRateMin",
-          "defaultRateMax"
+          "message"
         ],
         "properties": {
-          "classKey": {
+          "message": {
             "type": "string",
-            "enum": [
-              "CAR",
-              "SUV",
-              "VAN",
-              "THREE_WHEELER"
-            ]
-          },
-          "label": {
+            "maxLength": 2000
+          }
+        }
+      },
+      "DriverReliability": {
+        "description": "D28's panel and D34's evidence.",
+        "type": "object",
+        "properties": {
+          "month": {
             "type": "string",
-            "example": "SUV / Wagon"
+            "format": "date"
           },
-          "maxPassengerSeats": {
+          "missedStarts": {
+            "$ref": "#/components/schemas/ReliabilityCounted"
+          },
+          "lateCancellations": {
+            "$ref": "#/components/schemas/ReliabilityCounted"
+          },
+          "startExtensionsUsed": {
             "type": "integer"
           },
-          "defaultRateMin": {
-            "type": "number",
-            "format": "double"
-          },
-          "defaultRateMax": {
-            "type": "number",
-            "format": "double"
-          }
-        }
-      },
-      "RateBandRange": {
-        "type": "object",
-        "required": [
-          "min",
-          "max"
-        ],
-        "properties": {
-          "min": {
-            "type": "number",
-            "format": "double"
-          },
-          "max": {
-            "type": "number",
-            "format": "double"
-          }
-        }
-      },
-      "RateBandFactor": {
-        "type": "object",
-        "description": "One line of the arithmetic on D39. Typed by an admin as justification; never an input the band was computed from.",
-        "required": [
-          "key",
-          "label",
-          "delta"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "enum": [
-              "AGE",
-              "INSURANCE",
-              "FUEL",
-              "SERVICE"
-            ]
-          },
-          "label": {
-            "type": "string",
-            "example": "Insurance"
-          },
-          "detail": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "Comprehensive cover · renews 14 Mar"
-          },
-          "delta": {
-            "type": "number",
-            "format": "double",
-            "description": "Signed adjustment in LKR/km."
-          }
-        }
-      },
-      "RatePositionOption": {
-        "type": "object",
-        "description": "Where a rate sits in the band and what that costs in visibility. Copy, not a ranking multiplier — the server applies no such thing.",
-        "required": [
-          "key",
-          "label",
-          "rank",
-          "demand"
-        ],
-        "properties": {
-          "key": {
-            "type": "string",
-            "enum": [
-              "min",
-              "mid",
-              "max"
-            ]
-          },
-          "label": {
-            "type": "string"
-          },
-          "rank": {
-            "type": "string"
-          },
-          "demand": {
-            "type": "string"
-          }
-        }
-      },
-      "RateBandReviewRequest": {
-        "type": "object",
-        "required": [
-          "requestId",
-          "vehicleId",
-          "reason",
-          "status",
-          "requestedAt"
-        ],
-        "properties": {
-          "requestId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "vehicleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "note": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "OPEN",
-              "APPROVED",
-              "REJECTED"
-            ]
-          },
-          "requestedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "decidedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
-          },
-          "decisionNote": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "RateBand": {
-        "type": "object",
-        "description": "The band ComiGo assessed and the rate the driver chose inside it (D39, D39b, D39c, D40). A driver never types a price; they pick a point in this range.",
-        "required": [
-          "vehicleId",
-          "classKey",
-          "classBand",
-          "band",
-          "status"
-        ],
-        "properties": {
-          "vehicleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "vehicleLabel": {
-            "type": "string",
-            "example": "Toyota · WP CAB-4417"
-          },
-          "classKey": {
-            "type": "string"
-          },
-          "classLabel": {
-            "type": "string"
-          },
-          "classBand": {
-            "$ref": "#/components/schemas/RateBandRange"
-          },
-          "band": {
-            "$ref": "#/components/schemas/RateBandRange"
-          },
-          "chosenRate": {
+          "onTimeStartPct": {
             "type": [
               "number",
               "null"
             ],
-            "format": "double"
+            "description": "null when there were no opportunities \u2014 not 0%"
           },
-          "status": {
-            "type": "string",
-            "enum": [
-              "NOT_SET",
-              "PENDING_ASSESSMENT",
-              "ACTIVE",
-              "UNDER_REVIEW"
+          "acceptancePct": {
+            "type": [
+              "number",
+              "null"
             ]
           },
-          "setBy": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Always \"ComiGo\" — the assessing admin is never named to the driver."
-          },
-          "setAt": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time"
-          },
-          "factors": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RateBandFactor"
-            }
-          },
-          "netEffect": {
-            "type": "number",
-            "format": "double",
-            "description": "Sum of the factor deltas."
-          },
-          "position": {
-            "$ref": "#/components/schemas/RatePositionOption"
-          },
-          "positions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RatePositionOption"
-            }
-          },
-          "reviewRequest": {
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/RateBandReviewRequestSummary"
+          "deactivationRisk": {
+            "type": "object",
+            "properties": {
+              "remaining": {
+                "type": "integer"
               },
-              {
-                "type": "null"
+              "deactivated": {
+                "type": "boolean"
               }
-            ]
+            }
+          },
+          "missedStartDetail": {
+            "type": "array",
+            "description": "D34 shows the misses themselves; a count cannot answer 'which three?'",
+            "items": {
+              "$ref": "#/components/schemas/ReliabilityOccurrence"
+            }
           }
-        }
+        },
+        "required": [
+          "month",
+          "missedStarts",
+          "deactivationRisk"
+        ]
       },
-      "RateBandReviewRequestSummary": {
+      "DriverTrip": {
         "type": "object",
         "properties": {
-          "requestId": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "routeOccurrenceId": {
             "type": "integer",
             "format": "int64"
           },
           "status": {
             "type": "string"
           },
-          "requestedAt": {
+          "scheduledDepartureAt": {
             "type": "string",
             "format": "date-time"
           },
-          "slaDays": {
-            "type": "integer",
-            "description": "Working days ComiGo answers within (D39)."
+          "availableSeats": {
+            "type": "integer"
           },
-          "decisionNote": {
+          "bookings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingRequest"
+            }
+          }
+        }
+      },
+      "DriverVerificationDetail": {
+        "type": "object",
+        "properties": {
+          "profileStatus": {
+            "type": "string"
+          },
+          "identityStatus": {
+            "type": "string"
+          },
+          "licenceStatus": {
+            "type": "string"
+          },
+          "vehicleStatuses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "canPublishRoutes": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DriverVerificationStatusResponse": {
+        "type": "object",
+        "properties": {
+          "profileStatus": {
+            "type": "string"
+          },
+          "hasApprovedVehicle": {
+            "type": "boolean"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "documentType": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "rejectionReason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EarlyDropAllowance": {
+        "description": "P16 / P16b. Exhaustion is data, not an error: the third drop still releases the seat.",
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "format": "date"
+          },
+          "used": {
+            "type": "integer"
+          },
+          "allowance": {
+            "type": "integer"
+          },
+          "remaining": {
+            "type": "integer"
+          },
+          "nextDropWillBeAdjusted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "month",
+          "used",
+          "allowance",
+          "remaining",
+          "nextDropWillBeAdjusted"
+        ]
+      },
+      "EarlyDropOffRequest": {
+        "type": "object",
+        "properties": {
+          "currentLocation": {
+            "$ref": "#/components/schemas/Coordinate"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "EarlyDropOffResult": {
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "traveledMeters": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "finalFare": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "captured": {
+            "type": "boolean"
+          },
+          "fareAdjusted": {
+            "type": "boolean",
+            "description": "False once the monthly allowance is spent"
+          },
+          "allowanceReasonCode": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "EARLY_DROP_ALLOWANCE_EXHAUSTED when the fare was not adjusted"
+          },
+          "allowanceUsed": {
+            "type": "integer"
+          },
+          "allowanceRemaining": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bookingId",
+          "traveledMeters",
+          "finalFare",
+          "currency",
+          "fareAdjusted"
+        ]
+      },
+      "EarningsSummary": {
+        "type": "object",
+        "properties": {
+          "availableBalance": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "pendingBalance": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "cashCommissionDue": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "completedTrips": {
+            "type": "integer"
           }
         }
       },
-      "ChosenRateRequest": {
+      "EarningsTransaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tripId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "type": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ErrorResponse": {
         "type": "object",
         "required": [
-          "ratePerKm"
+          "code",
+          "message",
+          "correlationId"
         ],
         "properties": {
-          "ratePerKm": {
-            "type": "number",
-            "format": "double"
+          "code": {
+            "type": "string",
+            "example": "VALIDATION_ERROR"
+          },
+          "message": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "fieldErrors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "actionPath": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the app should send the user to clear the refusal. Populated on gated 403s and 409s; null otherwise."
           }
         }
       },
-      "RateBandReviewRequestBody": {
+      "FareAdjustmentRequest": {
         "type": "object",
         "required": [
           "reason"
         ],
         "properties": {
-          "reason": {
-            "type": "string",
-            "maxLength": 120
+          "adjustedFare": {
+            "$ref": "#/components/schemas/Money"
           },
-          "note": {
-            "type": "string",
-            "maxLength": 2000
+          "reason": {
+            "type": "string"
           }
         }
       },
@@ -14784,9 +13567,1114 @@
           }
         }
       },
+      "LocationSnapshotResponse": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "driverProfileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "format": "double"
+          },
+          "speedMps": {
+            "type": "number",
+            "format": "double"
+          },
+          "bearingDegrees": {
+            "type": "number",
+            "format": "double"
+          },
+          "deviceRecordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "serverReceivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "stale": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LocationUpdateRequest": {
+        "type": "object",
+        "required": [
+          "tripId",
+          "location",
+          "accuracyMeters",
+          "deviceTimestamp"
+        ],
+        "properties": {
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Coordinate"
+          },
+          "accuracyMeters": {
+            "type": "number"
+          },
+          "speedMps": {
+            "type": "number"
+          },
+          "bearingDegrees": {
+            "type": "number"
+          },
+          "deviceTimestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "batteryLevel": {
+            "type": "number"
+          },
+          "networkType": {
+            "type": "string"
+          }
+        }
+      },
+      "LocationUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "boolean"
+          },
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "driverProfileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "serverReceivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latestLocation": {
+            "$ref": "#/components/schemas/LocationSnapshotResponse"
+          }
+        }
+      },
+      "Money": {
+        "type": "object",
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "currency": {
+            "type": "string",
+            "example": "LKR"
+          }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "NotificationPreferences": {
+        "type": "object",
+        "properties": {
+          "bookingUpdates": {
+            "type": "boolean"
+          },
+          "tripUpdates": {
+            "type": "boolean"
+          },
+          "payments": {
+            "type": "boolean"
+          },
+          "promotions": {
+            "type": "boolean"
+          }
+        }
+      },
+      "OtpRequest": {
+        "type": "object",
+        "required": [
+          "phoneNumber"
+        ],
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "example": "+94712345678"
+          }
+        }
+      },
+      "OtpRequestResponse": {
+        "type": "object",
+        "required": [
+          "verificationId",
+          "phoneNumber",
+          "expiresInSeconds",
+          "resendAfterSeconds"
+        ],
+        "properties": {
+          "verificationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "expiresInSeconds": {
+            "type": "integer"
+          },
+          "resendAfterSeconds": {
+            "type": "integer"
+          }
+        }
+      },
+      "OtpVerifyRequest": {
+        "type": "object",
+        "required": [
+          "verificationId",
+          "phoneNumber",
+          "code"
+        ],
+        "properties": {
+          "verificationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 6
+          }
+        }
+      },
+      "OtpVerifyResponse": {
+        "type": "object",
+        "required": [
+          "verified",
+          "phoneNumber",
+          "accessToken",
+          "expiresInSeconds"
+        ],
+        "properties": {
+          "verified": {
+            "type": "boolean"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresInSeconds": {
+            "type": "integer"
+          }
+        }
+      },
+      "PageMeta": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "totalElements": {
+            "type": "integer"
+          },
+          "totalPages": {
+            "type": "integer"
+          }
+        }
+      },
+      "PassengerLiveTripStateResponse": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tripStatus": {
+            "type": "string"
+          },
+          "originLabel": {
+            "type": "string"
+          },
+          "destinationLabel": {
+            "type": "string"
+          },
+          "departureTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latestDriverLocation": {
+            "$ref": "#/components/schemas/LocationSnapshotResponse"
+          },
+          "locationAvailable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PassengerProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "preferredName": {
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "profilePhotoUrl": {
+            "type": "string"
+          },
+          "ratingAverage": {
+            "type": "number"
+          },
+          "ratingCount": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "PassengerReliability": {
+        "description": "P39's panel.",
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "format": "date"
+          },
+          "completionPct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "noShows": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "prepayThreshold": {
+                "type": "integer"
+              }
+            }
+          },
+          "lateCancels": {
+            "type": "integer"
+          },
+          "onTimeAtPickupPct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "prepayRequired": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "month",
+          "noShows",
+          "prepayRequired"
+        ]
+      },
+      "PassengerVerificationStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "requiredForAllRides": {
+            "type": "boolean"
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "PaymentIntent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bookingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "providerAction": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "PaymentMethod": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "CARD",
+              "CASH",
+              "WALLET"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "PayoutProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "accountLast4": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "PayoutProfileRequest": {
+        "type": "object",
+        "required": [
+          "bankName",
+          "bankBranch",
+          "accountHolderName",
+          "accountNumber"
+        ],
+        "properties": {
+          "bankName": {
+            "type": "string"
+          },
+          "bankBranch": {
+            "type": "string"
+          },
+          "accountHolderName": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          }
+        }
+      },
+      "PickupWait": {
+        "description": "D19 / D19b from the driver's side and P38 / P38b from hers \u2014 the same clock.",
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bookingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "arrivedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Detected GPS arrival, never a driver tap"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "secondsRemaining": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "extensionsRemaining": {
+            "type": "integer"
+          },
+          "extensionMinutes": {
+            "type": "integer"
+          },
+          "expired": {
+            "type": "boolean"
+          },
+          "releasableNow": {
+            "type": "boolean",
+            "description": "Server-decided; a driver must not be able to release early"
+          },
+          "resolution": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "BOARDED | NO_SHOW | CANCELLED"
+          },
+          "noShowsThisMonth": {
+            "type": "integer"
+          },
+          "prepayThreshold": {
+            "type": "integer"
+          },
+          "consequence": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tripId",
+          "bookingId",
+          "arrivedAt",
+          "expiresAt",
+          "secondsRemaining",
+          "releasableNow"
+        ]
+      },
+      "PreTripChecklistRequest": {
+        "type": "object",
+        "properties": {
+          "vehicleChecked": {
+            "type": "boolean"
+          },
+          "documentsCarried": {
+            "type": "boolean"
+          },
+          "fuelOrBatteryOk": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicTripStatusResponse": {
+        "type": "object",
+        "properties": {
+          "originLabel": {
+            "type": "string"
+          },
+          "destinationLabel": {
+            "type": "string"
+          },
+          "departureTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bookingStatus": {
+            "type": "string"
+          },
+          "tripStatus": {
+            "type": "string"
+          },
+          "passengerTripStatus": {
+            "type": "string"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "vehiclePlate": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PushRegistrationRequest": {
+        "type": "object",
+        "required": [
+          "platform",
+          "token"
+        ],
+        "properties": {
+          "platform": {
+            "type": "string",
+            "enum": [
+              "IOS",
+              "ANDROID",
+              "WEB"
+            ]
+          },
+          "token": {
+            "type": "string"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "appVersion": {
+            "type": "string"
+          }
+        }
+      },
+      "RateBand": {
+        "type": "object",
+        "description": "The band ComiGo assessed and the rate the driver chose inside it (D39, D39b, D39c, D40). A driver never types a price; they pick a point in this range.",
+        "required": [
+          "vehicleId",
+          "classKey",
+          "classBand",
+          "band",
+          "status"
+        ],
+        "properties": {
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicleLabel": {
+            "type": "string",
+            "example": "Toyota \u00b7 WP CAB-4417"
+          },
+          "classKey": {
+            "type": "string"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "classBand": {
+            "$ref": "#/components/schemas/RateBandRange"
+          },
+          "band": {
+            "$ref": "#/components/schemas/RateBandRange"
+          },
+          "chosenRate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOT_SET",
+              "PENDING_ASSESSMENT",
+              "ACTIVE",
+              "UNDER_REVIEW"
+            ]
+          },
+          "setBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Always \"ComiGo\" \u2014 the assessing admin is never named to the driver."
+          },
+          "setAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "factors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RateBandFactor"
+            }
+          },
+          "netEffect": {
+            "type": "number",
+            "format": "double",
+            "description": "Sum of the factor deltas."
+          },
+          "position": {
+            "$ref": "#/components/schemas/RatePositionOption"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RatePositionOption"
+            }
+          },
+          "reviewRequest": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RateBandReviewRequestSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "RateBandFactor": {
+        "type": "object",
+        "description": "One line of the arithmetic on D39. Typed by an admin as justification; never an input the band was computed from.",
+        "required": [
+          "key",
+          "label",
+          "delta"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "AGE",
+              "INSURANCE",
+              "FUEL",
+              "SERVICE"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "example": "Insurance"
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Comprehensive cover \u00b7 renews 14 Mar"
+          },
+          "delta": {
+            "type": "number",
+            "format": "double",
+            "description": "Signed adjustment in LKR/km."
+          }
+        }
+      },
+      "RateBandRange": {
+        "type": "object",
+        "required": [
+          "min",
+          "max"
+        ],
+        "properties": {
+          "min": {
+            "type": "number",
+            "format": "double"
+          },
+          "max": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RateBandReviewRequest": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "vehicleId",
+          "reason",
+          "status",
+          "requestedAt"
+        ],
+        "properties": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RateBandReviewRequestBody": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "RateBandReviewRequestSummary": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "slaDays": {
+            "type": "integer",
+            "description": "Working days ComiGo answers within (D39)."
+          },
+          "decisionNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RatePositionOption": {
+        "type": "object",
+        "description": "Where a rate sits in the band and what that costs in visibility. Copy, not a ranking multiplier \u2014 the server applies no such thing.",
+        "required": [
+          "key",
+          "label",
+          "rank",
+          "demand"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "min",
+              "mid",
+              "max"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "string"
+          },
+          "demand": {
+            "type": "string"
+          }
+        }
+      },
+      "RatingRequest": {
+        "type": "object",
+        "required": [
+          "score"
+        ],
+        "properties": {
+          "score": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "comment": {
+            "type": "string"
+          }
+        }
+      },
+      "Receipt": {
+        "type": "object",
+        "properties": {
+          "bookingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tripId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fare": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "commission": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "paymentStatus": {
+            "type": "string"
+          },
+          "issuedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReliabilityCounted": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        }
+      },
+      "ReliabilityOccurrence": {
+        "type": "object",
+        "properties": {
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tripId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "metadata": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RideSearch": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pickup": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "dropoff": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "requestedDepartureAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seatsRequested": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RideSearchRequest": {
+        "type": "object",
+        "required": [
+          "pickup",
+          "dropoff",
+          "requestedDepartureAt",
+          "seatsRequested"
+        ],
+        "properties": {
+          "pickup": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "dropoff": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "requestedDepartureAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seatsRequested": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "RideSearchResult": {
+        "type": "object",
+        "description": "A scored ride match. Ride search is stateless; results are returned by POST /ride-searches and carried client-side into ride detail.",
+        "properties": {
+          "routePlanId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originLabel": {
+            "type": "string"
+          },
+          "destinationLabel": {
+            "type": "string"
+          },
+          "departureTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availableSeats": {
+            "type": "integer"
+          },
+          "routeLengthMeters": {
+            "type": "number"
+          },
+          "pickupRouteFraction": {
+            "type": "number"
+          },
+          "dropoffRouteFraction": {
+            "type": "number"
+          },
+          "pickupDistanceMeters": {
+            "type": "number"
+          },
+          "dropoffDistanceMeters": {
+            "type": "number"
+          },
+          "overlapDistanceMeters": {
+            "type": "number"
+          },
+          "overlapPercent": {
+            "type": "number"
+          },
+          "score": {
+            "type": "number"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "matchedDistanceMeters": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "estimatedFare": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "driverName": {
+            "type": "string"
+          },
+          "vehicleMake": {
+            "type": "string"
+          },
+          "vehicleModel": {
+            "type": "string"
+          },
+          "vehicleRegistration": {
+            "type": "string"
+          },
+          "vehicleSeatCount": {
+            "type": "integer"
+          }
+        }
+      },
       "RouteFareEstimateRequest": {
         "type": "object",
-        "description": "Locates a rider's pickup and drop-off along a published trip's route line. No distance, rate or fare may be sent — every pricing input is server-derived.",
+        "description": "Locates a rider's pickup and drop-off along a published trip's route line. No distance, rate or fare may be sent \u2014 every pricing input is server-derived.",
         "required": [
           "routeOccurrenceId",
           "pickupRouteFraction",
@@ -14832,63 +14720,403 @@
           }
         }
       },
-      "BookingPayment": {
+      "RouteShareLink": {
         "type": "object",
-        "description": "What has actually happened to this booking's money. P11 says authorised-not-charged, P12 states the exact capture time, P22 and P24 say never charged — all three read this block.",
         "properties": {
-          "method": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "CARD",
-              "CASH",
-              null
-            ]
+          "shareUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "qrCodeUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "RouteTemplate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "encodedPolyline": {
+            "type": "string"
+          },
+          "estimatedDistanceKm": {
+            "type": "number"
+          },
+          "pricePerKm": {
+            "type": "number"
+          },
+          "seatsOffered": {
+            "type": "integer"
+          },
+          "bookingMode": {
+            "type": "string"
           },
           "status": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string"
+          }
+        }
+      },
+      "RouteTemplateRequest": {
+        "type": "object",
+        "required": [
+          "vehicleId",
+          "origin",
+          "destination",
+          "pricePerKm",
+          "seatsOffered",
+          "bookingMode"
+        ],
+        "properties": {
+          "vehicleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddressedLocation"
+            }
+          },
+          "pricePerKm": {
+            "type": "number"
+          },
+          "seatsOffered": {
+            "type": "integer"
+          },
+          "bookingMode": {
+            "type": "string",
             "enum": [
-              "PENDING",
-              "AUTHORIZED",
-              "CAPTURED",
-              "VOIDED",
-              "REFUNDED",
-              "FAILED",
-              null
+              "INSTANT",
+              "MANUAL_APPROVAL"
             ]
           },
-          "authorizedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+          "schedule": {
+            "type": "object",
+            "properties": {
+              "scheduleType": {
+                "type": "string",
+                "enum": [
+                  "ONE_TIME",
+                  "RECURRING"
+                ]
+              },
+              "departureAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "daysOfWeek": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "endDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "departureTimeLocal": {
+                "type": "string"
+              },
+              "timezone": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "SavedPlace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "label": {
+            "type": "string"
+          },
+          "addressText": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Coordinate"
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SignedUploadRequest": {
+        "type": "object",
+        "required": [
+          "documentType",
+          "fileName",
+          "contentType"
+        ],
+        "properties": {
+          "documentType": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SignedUploadResponse": {
+        "type": "object",
+        "required": [
+          "documentId",
+          "uploadUrl",
+          "expiresAt"
+        ],
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SosRequest": {
+        "type": "object",
+        "required": [
+          "location"
+        ],
+        "properties": {
+          "bookingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Coordinate"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "StartWindow": {
+        "description": "D32 / D32b / D32c. The client renders a countdown and a consequence; it computes neither.",
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "departsAt": {
+            "type": "string",
             "format": "date-time"
           },
-          "capturedAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+          "expiresAt": {
+            "type": "string",
             "format": "date-time",
-            "description": "The minute the card was actually charged. Null until the trip starts."
+            "description": "Deadline in force now; the extension moved it or it did not"
           },
-          "amount": {
-            "type": [
-              "number",
-              "null"
-            ],
-            "format": "double"
+          "secondsRemaining": {
+            "type": "integer",
+            "format": "int64"
           },
-          "last4": {
+          "extensionsRemaining": {
+            "type": "integer",
+            "description": "0 or 1 \u2014 D32c disables the button rather than failing on tap"
+          },
+          "extensionMinutes": {
+            "type": "integer"
+          },
+          "expired": {
+            "type": "boolean"
+          },
+          "resolution": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "description": "STARTED | AUTO_CANCELLED | CANCELLED"
+          },
+          "missedStartsThisMonth": {
+            "type": "integer"
+          },
+          "missedStartsBeforeDeactivation": {
+            "type": "integer"
+          },
+          "consequence": {
+            "type": "string",
+            "description": "What happens at zero, in words the screen shows unchanged"
+          }
+        },
+        "required": [
+          "tripId",
+          "departsAt",
+          "expiresAt",
+          "secondsRemaining",
+          "extensionsRemaining"
+        ]
+      },
+      "SupportTicket": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ticketNumber": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SupportTicketDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportTicketMessage"
+            }
+          }
+        }
+      },
+      "SupportTicketMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "senderType": {
+            "type": "string"
+          }
+        }
+      },
+      "TripLiveState": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bookingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tripStatus": {
+            "type": "string"
+          },
+          "passengerStatus": {
+            "type": "string"
+          },
+          "driverLocation": {
+            "$ref": "#/components/schemas/Coordinate"
+          },
+          "etaMinutes": {
+            "type": "integer"
+          },
+          "fareSoFar": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "distanceSoFarKm": {
+            "type": "number"
+          }
+        }
+      },
+      "TripShare": {
+        "type": "object",
+        "properties": {
+          "shareUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -14926,6 +15154,210 @@
               "null"
             ],
             "description": "A safe code only; the provider's own wording never leaves the server."
+          }
+        }
+      },
+      "TrustedContact": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdatePassengerProfileRequest": {
+        "type": "object",
+        "required": [
+          "fullName"
+        ],
+        "properties": {
+          "fullName": {
+            "type": "string"
+          },
+          "preferredName": {
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "profilePhotoObjectKey": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateSavedPlaceRequest": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/components/schemas/AddressedLocation"
+          }
+        }
+      },
+      "UpdateTrustedContactRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "relationship": {
+            "type": "string"
+          }
+        }
+      },
+      "UploadUrlResponse": {
+        "type": "object",
+        "required": [
+          "documentId",
+          "uploadUrl",
+          "objectKey",
+          "expiresAt"
+        ],
+        "properties": {
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uploadUrl": {
+            "type": "string"
+          },
+          "objectKey": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requiredHeaders": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Vehicle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "make": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "color": {
+            "type": "string"
+          },
+          "registrationNumber": {
+            "type": "string"
+          },
+          "passengerSeatCapacity": {
+            "type": "integer"
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "verificationStatus": {
+            "type": "string"
+          },
+          "activeStatus": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "classKey": {
+            "type": "string",
+            "enum": [
+              "CAR",
+              "SUV",
+              "VAN",
+              "THREE_WHEELER"
+            ]
+          },
+          "bandStatus": {
+            "type": "string",
+            "enum": [
+              "NOT_SET",
+              "PENDING_ASSESSMENT",
+              "ACTIVE",
+              "UNDER_REVIEW"
+            ],
+            "description": "D06 shows this per vehicle: approved papers with no band still cannot carry a trip."
+          },
+          "chosenRatePerKm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "VehicleClass": {
+        "type": "object",
+        "description": "A class of vehicle: what it may carry, and the range its per-km band must sit inside.",
+        "required": [
+          "classKey",
+          "label",
+          "maxPassengerSeats",
+          "defaultRateMin",
+          "defaultRateMax"
+        ],
+        "properties": {
+          "classKey": {
+            "type": "string",
+            "enum": [
+              "CAR",
+              "SUV",
+              "VAN",
+              "THREE_WHEELER"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "example": "SUV / Wagon"
+          },
+          "maxPassengerSeats": {
+            "type": "integer"
+          },
+          "defaultRateMin": {
+            "type": "number",
+            "format": "double"
+          },
+          "defaultRateMax": {
+            "type": "number",
+            "format": "double"
           }
         }
       }

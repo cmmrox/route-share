@@ -229,17 +229,23 @@ the driver and leaves riding intact.
 
 ## Done criteria
 
-- [ ] ShedLock-backed scheduler runs exactly once across instances; proven by an integration test.
-- [ ] All four clocks implemented with database-backed deadlines and single extensions.
-- [ ] Pickup wait starts from detected GPS arrival, not a driver tap.
-- [ ] Start buffer and driver-late grace are separate clocks with separate consequences.
-- [ ] Auto-cancel charges nobody and notifies everybody with alternatives.
-- [ ] Reliability counters are projections of an append-only event log, reset monthly.
-- [ ] 3 missed starts deactivates driving only, leaving riding and pending payouts intact.
-- [ ] 2 no-shows in a month sets the prepay flag on `/me/context`.
-- [ ] Early-drop allowance enforced; the 3rd drop releases the seat without repricing.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] ShedLock-backed scheduler runs exactly once across instances; proven by an integration test.
+- [x] All four clocks implemented with database-backed deadlines and single extensions.
+- [x] Pickup wait starts from detected GPS arrival, not a driver tap. No endpoint can start one.
+- [x] Start buffer and driver-late grace are separate clocks with separate consequences; asserted
+      at runtime that their deadlines differ.
+- [x] Auto-cancel charges nobody — **partially**: verified at runtime that it *captures* nobody, but
+      the void itself is asserted against mocks, since no gateway exists locally (Blocker 015).
+      Riders are notified; **alternatives are not offered**, as seat resale is slice 07's.
+- [x] Reliability counters are projections of an append-only event log, reset monthly.
+- [x] 3 missed starts deactivates driving only, leaving riding and pending payouts intact; verified
+      at runtime, driven to three real auto-cancels.
+- [x] 2 no-shows in a month sets the prepay flag on `/me/context` — unit-covered; **not driven to a
+      second no-show at runtime**.
+- [x] Early-drop allowance enforced; the 3rd drop releases the seat without repricing, surfaced as
+      data on a 200 rather than an error.
+- [x] `./mvnw spotless:check verify` green (423 tests, 0 skipped), JaCoCo held.
+- [x] Tracking docs updated; focused commits ready.
 
 ## Suggested commit message
 
@@ -248,6 +254,94 @@ git commit -m "feat(api): add trip timers, reliability counters, and a leader-el
 ```
 
 ## Progress
+
+### 2026-08-02 (later) — steps 5 to 13 landed: the slice is complete
+
+All four clocks run, the panels are served, and the whole thing has been exercised against a real
+database rather than only against mocks. `scripts/simulation/verify-trip-timers.sh` → **42 passed,
+0 failed, 0 skipped**, including the deactivation trigger.
+
+**The first thing found was that no clock could ever have fired.** Nothing in the application
+created a `trip.trip` row at all: publication produced a route plan and a run of occurrences and
+stopped there. The start window opened for nobody and the sweeper swept an empty table. It also
+explains a quiet skip in slice 04's smoke script — `SKIP: no trip row for the booked route` — which
+means slice 04's card-capture checks have never run either, and nothing recorded that.
+
+A trip is now materialised when an occurrence takes its **first confirmed booking**, which is the
+moment the clock first has stakes. Creating one per generated occurrence, as a literal reading of
+step 2 suggests, would put every unbooked occurrence under the sweeper: each would auto-cancel and
+record a missed start against a driver who did nothing wrong, so three days of an empty recurring
+route would deactivate them. `V032` adds the partial unique index that arbitrates two passengers
+taking the last two seats at once, and `TripMaterialisationIT` proves it under twenty threads.
+
+Two live bugs were found alongside it, both of which would have fired the moment windows started
+being created:
+
+- `resolveStarted`/`resolveCancelled` were **dead code**. Nothing resolved a window on start, so a
+  trip started at +5 was still auto-cancelled at +11 — voiding holds captured minutes earlier, on a
+  car already moving. The start path now resolves in the same transaction, *and* the sweeper
+  independently refuses to act on a trip whose own status says it has moved. One line in the start
+  path is exactly what gets lost in a later refactor, and the cost of losing it is too high to rest
+  on.
+- `TripRepository.updateStatus` stamped `started_at`/`completed_at` from `Instant.now()` rather than
+  the injected `Clock`, against this slice's own rule.
+
+**Arrival detection (step 5)** is geofence *and* dwell, kept pure in `ArrivalDetector` so the rule a
+disputed no-show turns on is readable without a database. The detector walks back from the newest
+sample only while the driver stayed inside the fence, so dwell cannot accumulate across two passes
+of a loop, and arrival is dated from *entering* the fence rather than from when the dwell completed
+— dating it later would hand the driver back the seconds the dwell cost and shorten her wait.
+Distance is computed by PostGIS on the geography type rather than re-derived in Java, so there is
+one answer to the question a dispute turns on. The qualifying sample ids go into
+`pickup_wait.triggered_by_samples`.
+
+**The pickup wait (steps 6–7)** releases the seat, marks `NO_SHOW`, records the reliability event
+and publishes `booking.noshow`. Two refusals matter more than the happy path, and both sit at
+service level so the sweeper and the endpoint obey the same rule: a release before the deadline is
+refused, and ownership is checked rather than merely the DRIVER role — without that, any driver on
+the platform could read another driver's passenger's countdown, spend her extension, or release her
+seat.
+
+**The driver-late grace (step 8)** runs from her promised pickup, derived server-side from the
+occurrence's departure and how far along his road she gets on. A driver already detected at her
+pickup does not unlock a free cancel however late the clock reads. **`cancellation-terms` (step 9)**
+is the single source both P26 and P34 read.
+
+**The early-drop allowance (step 10)** adjusts twice a month. The third drop is not refused — she is
+getting out of the car either way — the seat is released, the fare stands, and
+`EARLY_DROP_ALLOWANCE_EXHAUSTED` comes back as data on a 200.
+
+**Panels and reset (step 11)**: D28/P39 read the counter, D34 reads the log itself. Percentages with
+no opportunities behind them return `null` rather than `0%`.
+
+**Deactivation (step 12)** lives with the counter rather than with the auto-cancel that happened to
+record the third miss, so a missed start recorded from anywhere fires the same rule. It stops
+driving only, and withdraws that driver's future published occurrences. **The prepay flag (step
+13)** is read from the same counter rather than stored separately.
+
+**Three defects that only a runtime run could find**, all fixed here:
+
+- `ReliabilityService.counter()` created the month's row on read. Every countdown in this slice
+  renders "no-shows this month" inside a read-only transaction, so the **first read by any user was
+  a 500**. Green unit tests throughout — none of them used a real transaction.
+- `reliability_event.metadata` and `pickup_wait.triggered_by_samples` are `jsonb` mapped as
+  `String`; Hibernate bound varchar and Postgres refused the cast. The `metadata` bug has been in
+  the merged code since the column was added and never fired only because every caller so far
+  passed `null`.
+- A **bean cycle**: `DriverFacade` gained a write needing `DriverDeactivationService`, which needs
+  identity, which depends back on `DriverFacade`. The whole suite stayed green because every unit
+  test builds its own collaborators; nothing ever asked Spring to wire the graph. Split onto
+  `DriverDeactivationFacade` rather than papered over with `@Lazy`, and `ApplicationContextLoadsIT`
+  now closes that hole in the gate.
+
+Gate: `./mvnw spotless:check verify` → **BUILD SUCCESS, 423 tests, 0 skipped, JaCoCo met**.
+Contract: `redocly lint docs/api/mobile-app.openapi.json` → valid. `pnpm run typecheck` in
+`packages/api-contracts` → clean.
+
+**Still not verified:** the card path — authorise → capture → void — has still never run against any
+gateway, so the auto-cancel's void is asserted against mocks only. **Blocker 015 stays OPEN**; the
+Cybersource sandbox was unavailable when this slice was built and the owner will supply credentials
+when it is.
 
 ### 2026-08-02 — steps 1–4 landed: scheduler, the start-buffer clock, and the reliability log
 
@@ -315,3 +409,23 @@ Still to do — steps 5 to 13:
 - **`PAX_PREPAY_NO_SHOW_THRESHOLD` added to `platform.policy_setting`.** The task refers to a
   `prepayThreshold` policy value; it was the only figure this slice needs that slice 03 had not
   already seeded.
+- **`V032` was added, and trips are materialised at first confirmed booking.** The task assumed
+  trips already existed and step 2 says only "created when a trip is published/generated". Nothing
+  created them at all, and creating one per generated occurrence would deactivate any driver whose
+  recurring route went unbooked for three days. Recorded in full in the progress note above.
+- **`promised_pickup_at` is derived from route length and a configured average speed**
+  (`routeshare.routing.average-speed-kmh`, default 30). The plan does not say where the promise
+  comes from, and there is no stored per-route duration: `route_plan` carries geometry and length
+  but no travel time. Calling Google Directions inside the booking transaction would put a network
+  call and an API key (Blocker 011) on the booking path. The derived value is deterministic and
+  server-side, which is the property that actually matters — no client timestamp reaches it. When a
+  real duration is stored, this becomes a one-line change behind the same query.
+- **The monthly reset runs on the scheduler's own tick and no-ops except on the 1st**, rather than
+  being wired to a `daily 00:05` cron as the job table says. The sweeper already holds the leader
+  lock; a second scheduling mechanism would be a second thing to get wrong about time zones.
+- **Booking status is left alone on a no-show.** The seat returns to inventory and the passenger
+  trip state says `NO_SHOW`, but `booking.status` stays `CONFIRMED` for slice 06 to settle, since
+  slice 06 owns what a no-show costs and slice 07 owns resale.
+- **`WAIT_NOT_EXPIRED` was added** alongside the errors the task lists. The task names
+  `WAIT_NOT_STARTED` but not the code for the case that actually protects the passenger — a driver
+  trying to release a seat while her clock is still running.

@@ -16,5 +16,16 @@ public interface RoutingFacade {
    */
   void releaseSeats(long routeOccurrenceId, int seats);
 
+  /**
+   * Withdraws a driver's future offers when driving is deactivated.
+   *
+   * <p>Leaving them published would let riders keep booking seats in a car that is no longer
+   * allowed to carry them, and the first anybody would hear of it is at the kerb. Occurrences that
+   * have already departed are left alone — those trips happened.
+   *
+   * @return how many future occurrences were withdrawn
+   */
+  int cancelFutureOccurrencesForDriver(long driverProfileId);
+
   record PriceableTrip(long routeOccurrenceId, long vehicleId, double routeLengthMeters) {}
 }
