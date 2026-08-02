@@ -48,6 +48,8 @@ class BookingServiceTest {
       org.mockito.Mockito.mock(com.routeshare.payment.facade.PaymentFacade.class);
   private final com.routeshare.trip.facade.TripLifecycleFacade tripLifecycle =
       org.mockito.Mockito.mock(com.routeshare.trip.facade.TripLifecycleFacade.class);
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties =
+      org.mockito.Mockito.mock(com.routeshare.penalty.facade.PenaltyFacade.class);
   private final BookingServiceImpl service =
       new BookingServiceImpl(
           current,
@@ -60,7 +62,8 @@ class BookingServiceTest {
           objectMapper,
           pricing,
           payments,
-          tripLifecycle);
+          tripLifecycle,
+          penalties);
 
   private static com.routeshare.pricing.domain.FareQuote quote(String passengerPays) {
     var amount = new java.math.BigDecimal(passengerPays);
@@ -86,6 +89,10 @@ class BookingServiceTest {
 
   @BeforeEach
   void setUp() {
+    org.mockito.Mockito.when(
+            penalties.applyOutstandingDues(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong()))
+        .thenReturn(com.routeshare.penalty.dto.response.AppliedDuesResponse.empty());
     org.mockito.Mockito.when(
             pricing.quoteForMatch(
                 org.mockito.ArgumentMatchers.any(),

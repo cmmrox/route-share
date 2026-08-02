@@ -1,6 +1,6 @@
 # RouteShareApp Blockers
 
-Last Updated: 2026-06-16 (Android Task 07 Search-screen device QA green)
+Last Updated: 2026-08-02 (slice 06 — Blocker 016 re-diagnosed; it folds into Blocker 015)
 
 ## Purpose
 
@@ -44,9 +44,20 @@ Impact:
 
 Resolution:
 
-Fix the endpoint path in `verify-charge-timing.sh` and re-run it now that bookings materialise
-trips. Both defects are the script's, not the backend's; no product change is expected. Worth doing
-before slice 06 prices anything against those paths.
+Partly done in slice 06, and **the original diagnosis was incomplete**. Both script defects are
+fixed: the endpoint is now `/api/v1/driver/trips/{tripId}/start` rather than the non-existent
+`/transitions`, and the trip lookup joins on `route_occurrence_id` rather than `route_plan_id`,
+since V032 keys a trip to its occurrence and a recurring plan has many. The `SKIP` for a missing
+trip is now a hard failure, so the branch can never be silently taken again.
+
+Re-running it still exercises nothing new. The capture checks sit inside a **card branch gated on a
+stored payment method**, and `POST /api/v1/passenger/payment-methods` answers `Card payments are not
+enabled. Set routeshare.cybersource.enabled=true to add cards.` — the cash-fallback gateway refuses
+to tokenize at all, contrary to the comment in the script that says it "still exercises the full
+state machine". So these checks are blocked on **Blocker 015**, not on the trip gap, and this
+blocker stays OPEN until the sandbox credentials arrive.
+
+Last run: 2026-08-02, `2 passed, 0 failed`, card path skipped.
 
 ---
 
@@ -80,6 +91,14 @@ Update 2026-08-02: the project owner reports the Cybersource sandbox is temporar
 will supply sandbox credentials (merchant ID, key ID, REST shared secret) when it returns. The
 gated local fake adapter was considered for slice 05 and deliberately left out of scope to keep that
 slice to the timers; it remains the cheaper of the two resolutions.
+
+Update 2026-08-02 (slice 06): the blast radius is now larger than slice 04 and 05. Slice 06's three
+collection paths are **netted, card-charge and dues**, and the first two both need a stored card, so
+`verify-penalties.sh` skips them by name (44 passed, 0 failed, 3 skipped). Netting is the path P27
+describes to the passenger — "the rest of the fare comes back to your Visa" — so the sentence on
+that screen is the one thing in the slice with no runtime evidence behind it. Blocker 016's capture
+checks are blocked on the same cause. A gated local fake adapter would unblock three slices at once
+and is now clearly the cheaper resolution.
 
 Resolution:
 

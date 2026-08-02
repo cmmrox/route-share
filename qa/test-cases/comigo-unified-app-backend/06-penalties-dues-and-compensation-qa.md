@@ -13,7 +13,7 @@ payout netting (slice 13).
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V032`.
+- Migration series applied through `V033`.
 - Slice 05's events available to trigger assessments.
 
 ## Automated test coverage
@@ -21,9 +21,12 @@ payout netting (slice 13).
 - `PenaltyPolicyTest` — kind → rate → base, against `data.jsx` figures.
 - `PenaltySplitPropertyTest` — halves always re-add, 0…1,000,000.
 - `MultiVictimDistributionTest` — beneficiary amounts sum exactly to the victim share.
-- `PenaltyIdempotencyTest` — concurrent triggers assess once.
-- `DuesLifecycleIT` — accrue, carry, apply at checkout, settle on capture.
-- `PenaltyDisputeTest` — 48-hour window, decision, reversal.
+- `PenaltyIdempotencyTest` — a repeated trigger assesses nothing further; losing the race to the
+  unique index reads the winner's row instead of failing.
+- `DuesLifecycleIT` — Testcontainers: the dues lifecycle, the split CHECK, the deferred
+  beneficiary-total trigger, one open dispute per penalty, and twenty concurrent triggers admitting
+  exactly one assessment.
+- `PenaltyDisputeTest` — 48-hour window, ownership, decision, reversal by payer role.
 
 ## Maestro automation
 
@@ -61,6 +64,27 @@ owned by the mobile feature plan and must link back to this QA file.
 - Reconcile a full cycle by hand: fee charged, victim credited, platform share retained. The three must sum.
 - Attempt to insert a beneficiary row breaking the sum constraint; confirm the database refuses.
 - Read a penalty explanation as a support agent would; confirm it is sufficient to answer a complaint without database access.
+
+## Run record — 2026-08-02 (slice 06 close)
+
+`./mvnw spotless:check verify` → BUILD SUCCESS, 462 tests, 0 skipped, JaCoCo met.
+`scripts/simulation/verify-penalties.sh` → **44 passed, 0 failed, 3 skipped** against PostgreSQL
+5434 / API 8088 on `routeshare_comigo`.
+
+Reproduced live: 25% of LKR 197 is a 49 fee split 25/24; 20% of LKR 429 expected net is 86, with 43
+shared across two riders as 22 and 21 and 43 to ComiGo.
+
+Skipped, all one cause (**Blocker 015**, no gateway on this stack — `POST
+/passenger/payment-methods` answers "Card payments are not enabled"):
+
+- 06-8 netted collection (card passenger, capture exists)
+- 06-9 card-charge collection (card passenger, no capture)
+- 06-14 dues settled on capture
+
+Found and fixed by the run: `beneficiaries[].firstName` printed a rider's **phone number**, because
+a phone-OTP account carries its number as its display name — the exact disclosure 06-20 exists to
+prevent. Anything that is not plainly a name now falls back to a generic label, and the smoke script
+asserts no digit or `@` reaches the field.
 
 ## Evidence to collect
 

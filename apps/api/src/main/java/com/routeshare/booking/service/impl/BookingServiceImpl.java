@@ -54,6 +54,7 @@ public class BookingServiceImpl implements BookingService {
   private final PricingFacade pricing;
   private final com.routeshare.payment.facade.PaymentFacade payments;
   private final com.routeshare.trip.facade.TripLifecycleFacade tripLifecycle;
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties;
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
       Map.of(
           "REQUESTED",
@@ -139,6 +140,13 @@ public class BookingServiceImpl implements BookingService {
     // The card is held now and charged when the driver starts. Accepting does not charge; approval
     // does not charge; a trip that never starts costs the passenger nothing.
     payments.authorizeForBooking(bookingId, req.paymentMethodId(), fareEstimate);
+    // Fees she could not be charged for at the time ride along to this checkout (P09d). They are
+    // added to the total, never a gate on making the booking: refusing a rider over an unpaid
+    // LKR 49 turns a small fee into a lost passenger, and P25 shows dues as a line, not a wall.
+    var appliedDues = penalties.applyOutstandingDues(app.appUserId(), bookingId);
+    if (appliedDues.total().signum() > 0) {
+      bookings.recordAppliedDues(bookingId, appliedDues.total());
+    }
     Map<String, Object> response =
         Map.of(
             "bookingId",
@@ -148,7 +156,11 @@ public class BookingServiceImpl implements BookingService {
             "routeOccurrenceId",
             reservation.routeOccurrenceId(),
             "fareEstimate",
-            fareEstimate);
+            fareEstimate,
+            "appliedDues",
+            appliedDues,
+            "totalDue",
+            fareEstimate.add(appliedDues.total()));
     idempotencyKeys.storeResponse(idempotencyKey, responseBody(response), 200);
     notifications.notifyUser(
         app.appUserId(),
@@ -170,8 +182,19 @@ public class BookingServiceImpl implements BookingService {
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
     updateBookingStatus(bookingId, app.appUserId(), fromStatus, toStatus, req.reason());
     if (CANCELLED.equals(toStatus)) {
-      // Cancelled before the wheels moved: the hold is released and nothing is taken.
-      payments.voidForBooking(bookingId, "PASSENGER_CANCELLED");
+      // The car being already in motion is the whole difference. Before the wheels moved the hold
+      // is simply released; after they moved, she leaves a seat nobody else can take on a trip that
+      // is already running, and P26 prices that at a fifth of her fare.
+      boolean afterStart = bookings.isTripStartedForBooking(bookingId);
+      if (afterStart) {
+        penalties.assessPassengerCancelAfterStart(
+            bookingId, bookings.findTripId(bookingId).orElse(null));
+      } else {
+        payments.voidForBooking(bookingId, "PASSENGER_CANCELLED");
+      }
+      // Any fee this booking was carrying rides on to the next one rather than being cleared by a
+      // checkout that never charged.
+      penalties.releaseDuesForBooking(bookingId);
       // Recorded as a free cancel if her driver was late, and as an ordinary one otherwise. The
       // grace row already knows which; the client is never asked.
       tripLifecycle.resolveLateGraceOnCancel(bookingId);
@@ -265,6 +288,7 @@ public class BookingServiceImpl implements BookingService {
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
     updateBookingStatus(bookingId, app.appUserId(), fromStatus, REJECTED, reason);
     payments.voidForBooking(bookingId, "DRIVER_DECLINED");
+    penalties.releaseDuesForBooking(bookingId);
     notifyPassenger(
         bookingId,
         "BOOKING_DECLINED",

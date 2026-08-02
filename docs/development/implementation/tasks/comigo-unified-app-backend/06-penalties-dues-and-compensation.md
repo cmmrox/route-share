@@ -122,7 +122,7 @@ New errors: `PENALTY_ALREADY_DISPUTED`, `DISPUTE_WINDOW_CLOSED`, `DUES_SETTLEMEN
 
 ## Database / migration changes
 
-**`V032__penalties_dues_and_compensation.sql`**
+**`V033__penalties_dues_and_compensation.sql`** — V032 was taken by slice 05's trip materialisation.
 
 - New `penalty.penalty_assessment`:
   `penalty_id`, `kind TEXT CHECK (...5 kinds...)`, `booking_id FK NULL`, `trip_id FK NULL`,
@@ -192,7 +192,7 @@ Backend slice. The contract must supply every figure these screens name:
 - `apps/api/.../booking/**` — dues application at creation, cancellation terms.
 - `apps/api/.../trip/**` — cancel-after-start hook.
 - `apps/api/.../admin/**` — penalty and dispute endpoints.
-- `apps/api/src/main/resources/db/migration/V032__penalties_dues_and_compensation.sql`.
+- `apps/api/src/main/resources/db/migration/V033__penalties_dues_and_compensation.sql`.
 - `apps/api/src/test/java/**` — policy tests against `data.jsx` figures, split property tests, multi-victim distribution tests, idempotency tests, dues lifecycle integration test.
 - `docs/api/mobile-app.openapi.json`, `docs/api/admin-web.openapi.json`, `packages/api-contracts/src/index.ts`.
 
@@ -231,16 +231,16 @@ fee, 25 to the driver and 24 to ComiGo; a driver late-cancellation on LKR 429 ex
 
 ## Done criteria
 
-- [ ] All five penalty kinds assessed at the right trigger, priced from policy settings.
-- [ ] The 50/50 split always re-adds to the fee; enforced by constraint and property test.
-- [ ] Multiple victims share the victim half exactly, deterministically.
-- [ ] Three collection paths implemented; drivers are deducted from earnings, never billed.
-- [ ] Compensation is a distinct ledger kind, not folded into fares.
-- [ ] Dues are carried, shown at checkout, settled on capture, and never block a booking.
-- [ ] Disputes work within 48 hours with admin decision and reversal.
-- [ ] Every prototype money figure for P25/P26/P27/P22/D21/D30/D31/D41 reproduces exactly.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] All five penalty kinds assessed at the right trigger, priced from policy settings.
+- [x] The 50/50 split always re-adds to the fee; enforced by constraint and property test.
+- [x] Multiple victims share the victim half exactly, deterministically.
+- [x] Three collection paths implemented; drivers are deducted from earnings, never billed. **Netted and card-charge are unrun at runtime — no gateway (Blocker 015).**
+- [x] Compensation is a distinct ledger kind, not folded into fares.
+- [x] Dues are carried, shown at checkout and never block a booking. **Settlement on capture is implemented but unrun — it needs a captured card booking (Blocker 015).**
+- [x] Disputes work within 48 hours with admin decision and reversal.
+- [x] Every prototype money figure for P25/P26/P27/P22/D21/D30/D31/D41 reproduces exactly.
+- [x] `./mvnw spotless:check verify` green, JaCoCo 80% held — 462 tests, 0 skipped.
+- [x] Tracking docs updated; focused commit ready.
 
 ## Suggested commit message
 

@@ -194,29 +194,7 @@ public class PaymentFacadeImpl implements PaymentFacade {
       if (difference.signum() <= 0) {
         return;
       }
-      attempt(
-          intent,
-          bookingId,
-          "REFUND",
-          "refund:booking:"
-              + bookingId
-              + ":amount:"
-              + difference.stripTrailingZeros().toPlainString(),
-          difference,
-          () -> {
-            if (isExternal(intent)) {
-              gateway.refund(intent.getProviderReference(), difference, CURRENCY);
-            }
-            fareLedger.recordPaymentLifecycleIfAbsent(
-                bookingId, "PAYMENT_REFUNDED", difference.negate(), CURRENCY);
-            notify(
-                bookingId,
-                "PAYMENT_REFUNDED",
-                "Part of your fare was refunded",
-                "You got out early, so " + difference + " " + CURRENCY + " is on its way back.");
-            return intent.getProviderReference();
-          },
-          failureCode -> log.error("refund failed bookingId={} code={}", bookingId, failureCode));
+      refundDifference(intent, bookingId, difference, "early-drop");
     }
   }
 
@@ -237,7 +215,146 @@ public class PaymentFacadeImpl implements PaymentFacade {
         bookingId, "COMMISSION_OWED_CASH", commission, CURRENCY);
   }
 
+  @Override
+  @Transactional
+  public PenaltyCollection collectPassengerPenalty(long bookingId, BigDecimal feeAmount) {
+    if (feeAmount == null || feeAmount.signum() <= 0) {
+      return PenaltyCollection.DUES;
+    }
+    Optional<PaymentIntentEntity> maybeIntent = intents.findLatestForBooking(bookingId);
+    if (maybeIntent.isEmpty()) {
+      // Cash. There is no instrument to take a fee from, so it rides to her next booking (P25).
+      return PenaltyCollection.DUES;
+    }
+    PaymentIntentEntity intent = maybeIntent.get();
+    PaymentIntentStatus status = PaymentIntentStatus.of(intent.getStatus());
+
+    if (status == PaymentIntentStatus.CAPTURED) {
+      BigDecimal captured = intent.getAmount();
+      BigDecimal refundable = captured.subtract(feeAmount);
+      if (refundable.signum() > 0) {
+        refundDifference(intent, bookingId, refundable, "penalty-netting");
+      }
+      fareLedger.recordPaymentLifecycleIfAbsent(bookingId, "PENALTY_CHARGE", feeAmount, CURRENCY);
+      meters
+          .counter("routeshare_penalties_total", "collection", PenaltyCollection.NETTED.name())
+          .increment();
+      return PenaltyCollection.NETTED;
+    }
+
+    if (status.isAuthorizedNotCaptured()) {
+      // The hold is live and nothing has been taken. Capture the fee and only the fee: the rest of
+      // the authorisation lapses rather than being charged for a ride that did not happen.
+      intent.setAmount(feeAmount);
+      intents.save(intent);
+      CaptureOutcome outcome = captureOne(bookingId, feeAmount);
+      if (outcome.result() == CaptureOutcome.Result.FAILED) {
+        // Her bank refused. The fee is real either way, so it becomes a due rather than vanishing.
+        return PenaltyCollection.DUES;
+      }
+      fareLedger.recordPaymentLifecycleIfAbsent(bookingId, "PENALTY_CHARGE", feeAmount, CURRENCY);
+      meters
+          .counter("routeshare_penalties_total", "collection", PenaltyCollection.CARD_CHARGE.name())
+          .increment();
+      return PenaltyCollection.CARD_CHARGE;
+    }
+
+    // Voided, failed or never authorised: there is nothing here to take.
+    meters
+        .counter("routeshare_penalties_total", "collection", PenaltyCollection.DUES.name())
+        .increment();
+    return PenaltyCollection.DUES;
+  }
+
+  @Override
+  @Transactional
+  public void recordDriverPenaltyDeduction(long bookingId, BigDecimal amount) {
+    if (amount == null || amount.signum() <= 0) {
+      return;
+    }
+    fareLedger.recordPaymentLifecycleIfAbsent(
+        bookingId, "PENALTY_DEDUCTION", amount.negate(), CURRENCY);
+  }
+
+  @Override
+  @Transactional
+  public void creditDriverCompensation(long bookingId, BigDecimal amount) {
+    if (amount == null || amount.signum() <= 0) {
+      return;
+    }
+    fareLedger.recordPaymentLifecycleIfAbsent(bookingId, "COMPENSATION", amount, CURRENCY);
+  }
+
+  @Override
+  @Transactional
+  public void recordDuesSettlement(long bookingId, BigDecimal amount) {
+    if (amount == null || amount.signum() <= 0) {
+      return;
+    }
+    fareLedger.recordPaymentLifecycleIfAbsent(bookingId, "DUES_SETTLEMENT", amount, CURRENCY);
+  }
+
+  @Override
+  @Transactional
+  public void reversePassengerPenalty(long bookingId, BigDecimal amount) {
+    if (amount == null || amount.signum() <= 0) {
+      return;
+    }
+    intents
+        .findLatestForBooking(bookingId)
+        .ifPresent(intent -> refundDifference(intent, bookingId, amount, "penalty-reversal"));
+    // A compensating row, not an edit of the original: a ledger that can be rewritten cannot be
+    // audited, and a support agent must still see that the fee was taken before it was returned.
+    fareLedger.recordPaymentLifecycleIfAbsent(
+        bookingId, "PENALTY_REVERSAL", amount.negate(), CURRENCY);
+  }
+
+  @Override
+  @Transactional
+  public void reverseDriverPenaltyDeduction(long bookingId, BigDecimal amount) {
+    if (amount == null || amount.signum() <= 0) {
+      return;
+    }
+    // He was never billed, so nothing is refunded: the deduction is simply given back, and his next
+    // payout is the larger for it.
+    fareLedger.recordPaymentLifecycleIfAbsent(bookingId, "PENALTY_REVERSAL", amount, CURRENCY);
+  }
+
   // ── internals ────────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Returns money already captured. The idempotency key carries the amount and the cause, so an
+   * early drop-off and a penalty netting on the same booking are two distinct refunds rather than
+   * one silently swallowing the other.
+   */
+  private void refundDifference(
+      PaymentIntentEntity intent, long bookingId, BigDecimal amount, String cause) {
+    attempt(
+        intent,
+        bookingId,
+        "REFUND",
+        "refund:booking:"
+            + bookingId
+            + ":"
+            + cause
+            + ":amount:"
+            + amount.stripTrailingZeros().toPlainString(),
+        amount,
+        () -> {
+          if (isExternal(intent)) {
+            gateway.refund(intent.getProviderReference(), amount, CURRENCY);
+          }
+          fareLedger.recordPaymentLifecycleIfAbsent(
+              bookingId, "PAYMENT_REFUNDED", amount.negate(), CURRENCY);
+          notify(
+              bookingId,
+              "PAYMENT_REFUNDED",
+              "Part of your fare was refunded",
+              amount + " " + CURRENCY + " is on its way back to your card.");
+          return intent.getProviderReference();
+        },
+        failureCode -> log.error("refund failed bookingId={} code={}", bookingId, failureCode));
+  }
 
   private CaptureOutcome captureOne(long bookingId, BigDecimal fare) {
     Optional<PaymentIntentEntity> maybeIntent = intents.findLatestForBooking(bookingId);

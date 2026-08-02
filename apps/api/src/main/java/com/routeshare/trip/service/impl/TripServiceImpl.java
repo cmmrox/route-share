@@ -32,6 +32,7 @@ public class TripServiceImpl implements TripService {
   private final PassengerTripStateRepository passengerStates;
   private final NotificationFacade notifications;
   private final com.routeshare.payment.facade.PaymentFacade payments;
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties;
   private final TripStartWindowService startWindows;
   private final com.routeshare.trip.service.PickupWaitService pickupWaits;
   private final java.time.Clock clock;
@@ -56,6 +57,9 @@ public class TripServiceImpl implements TripService {
       startWindows.resolveStarted(tripId);
     } else if (req.status() == com.routeshare.trip.domain.TripStatus.CANCELLED) {
       startWindows.resolveCancelled(tripId);
+      // Cancelling inside the free window strands everyone booked on it (D30/D31). Outside it,
+      // this returns without assessing anything: the seats resell and nobody was let down.
+      penalties.assessDriverLateCancellation(tripId);
     }
 
     // Starting the trip is what charges the cards — the promise on eleven screens. The transition
@@ -68,6 +72,15 @@ public class TripServiceImpl implements TripService {
         req.status() == com.routeshare.trip.domain.TripStatus.STARTED
             ? payments.captureForTripStart(tripId)
             : List.of();
+
+    // A fee carried from an earlier trip is paid when the checkout that carried it is actually
+    // charged — not when it was added to the total. A booking that never starts leaves it
+    // outstanding, which is the difference between showing a charge and taking one.
+    for (var capture : captures) {
+      if (capture.result() == com.routeshare.payment.domain.CaptureOutcome.Result.CAPTURED) {
+        penalties.settleDuesForBooking(capture.bookingId());
+      }
+    }
 
     notifyTripStatus(tripId, req.status());
     return Map.of(

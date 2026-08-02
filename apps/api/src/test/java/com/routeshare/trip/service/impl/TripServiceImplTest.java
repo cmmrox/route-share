@@ -39,6 +39,8 @@ class TripServiceImplTest {
   private final java.time.Clock clock =
       java.time.Clock.fixed(
           java.time.Instant.parse("2026-08-02T08:00:00Z"), java.time.ZoneOffset.UTC);
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties =
+      org.mockito.Mockito.mock(com.routeshare.penalty.facade.PenaltyFacade.class);
   private final TripServiceImpl service =
       new TripServiceImpl(
           current,
@@ -47,6 +49,7 @@ class TripServiceImplTest {
           passengerStates,
           notifications,
           payments,
+          penalties,
           startWindows,
           pickupWaits,
           clock);

@@ -574,3 +574,80 @@ Consequence:
   pickup-point paths.
 - A billing dashboard with per-SKU breakdown and a pre-credit-exhaustion alert is a release requirement.
 - Pricing must be re-verified against the billing console before launch; SKU rates and tiers change.
+
+
+## Decision 019 — A penalty's platform half is a subtraction, never a second rounding
+
+Date: 2026-08-02
+Status: `ADOPTED`
+
+Decision:
+
+`victimShare = round(fee × victimPct / 100)` and `platformShare = fee − victimShare`. The platform's
+half is never computed from its own percentage.
+
+Reason:
+
+Rounding both halves independently and hoping they add back is how a ledger drifts. A 49-rupee fee
+rounds to 25 and 25 that way — a rupee created out of nothing, once per penalty, invisible until
+somebody sums a month of them. Subtraction makes `victimShare + platformShare = feeAmount` true by
+construction rather than by convention, and `data.jsx` does exactly this.
+
+Consequence:
+
+- `penalty_assessment_split_adds_up` is a database `CHECK`, so a bad migration or a direct SQL edit
+  fails the insert rather than quietly mispaying someone.
+- `PenaltySplitPropertyTest` walks every fee from 0 to 1,000,000 at every victim percentage.
+- Multi-victim distribution follows the same rule: whole rupees each, remainder to the first
+  beneficiary by booking id, asserted by a deferred constraint trigger to total the victim half.
+
+## Decision 020 — A driver victim is paid through the ledger; a passenger victim through ride credit
+
+Date: 2026-08-02
+Status: `ADOPTED`
+
+Decision:
+
+Compensation reaches a driver as a `COMPENSATION` row in `payment.fare_ledger_entry`, and a
+passenger as a credit through `RewardsCreditPort` — never both, and never the other way round.
+
+Reason:
+
+The two are paid by different mechanisms in the product, not by preference. His money arrives
+through payouts, which is why D26 shows compensation as a ledger line with its own icon; hers is
+ride credit against a future booking, which is what P22 promises. Folding either into the other
+would put money somewhere its owner cannot see it — and folding compensation into fares at all would
+overstate what a driver earned from driving.
+
+Consequence:
+
+- `COMPENSATION` is a distinct `entry_type`, never summed into fare or earnings totals.
+- Slice 11 owns the rewards balance; the port is declared in `penalty` with an in-module
+  implementation so neither slice blocks the other. Every credit stays replayable from
+  `penalty.penalty_beneficiary`, so the real balance can be built from history rather than migrated.
+- A driver is never billed for his own penalty: it is a negative `PENALTY_DEDUCTION` row netted from
+  the next completed trip (D24, D31).
+
+## Decision 021 — A reversed penalty returns the payer's fee but does not claw back the victim's half
+
+Date: 2026-08-02
+Status: `ADOPTED`
+
+Decision:
+
+When an admin reverses a penalty, the payer is refunded (or their due waived, or their deduction
+given back), and the beneficiary keeps what they were credited. The platform absorbs the difference.
+
+Reason:
+
+She was stood up whether or not his appeal succeeded. Taking ride credit back from somebody already
+let down is a second injury for a mistake that was never theirs, and it would make every
+compensation credit provisional — which is not what the screens promise when they show it.
+
+Consequence:
+
+- Reversal writes a compensating `PENALTY_REVERSAL` row rather than editing the original; a ledger
+  that can be rewritten cannot be audited.
+- The platform's share absorbs the shortfall, so a rising reversal rate is a cost signal worth
+  watching rather than a silent transfer.
+- Beneficiary rows are never deleted, so "why do I have this credit" stays answerable.

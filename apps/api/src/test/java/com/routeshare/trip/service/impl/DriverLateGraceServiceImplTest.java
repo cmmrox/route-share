@@ -53,6 +53,9 @@ class DriverLateGraceServiceImplTest {
   private final NotificationFacade notifications = mock(NotificationFacade.class);
   private final DomainEventPublisher events = mock(DomainEventPublisher.class);
 
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties =
+      org.mockito.Mockito.mock(com.routeshare.penalty.facade.PenaltyFacade.class);
+
   private DriverLateGraceServiceImpl serviceAt(Instant now) {
     var user = new CurrentUser("pax-sub", "p@example.test", null, "Passenger", Set.of("PASSENGER"));
     when(current.requireCurrentUser()).thenReturn(user);
@@ -70,12 +73,22 @@ class DriverLateGraceServiceImplTest {
     when(policy.integer(PolicyKey.DRIVER_CANCEL_FREE_HOURS)).thenReturn(2);
     when(policy.decimal(PolicyKey.LATE_CANCEL_PENALTY_PCT)).thenReturn(new BigDecimal("50.00"));
     when(graces.isBookingOwnedByPassengerAppUser(BOOKING, PASSENGER_APP_USER)).thenReturn(true);
+    when(penalties.priceCancellation(
+            org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.any()))
+        .thenReturn(
+            new com.routeshare.penalty.facade.PenaltyFacade.PricedPenalty(
+                new BigDecimal("267.00"),
+                new BigDecimal("50.00"),
+                new BigDecimal("134.00"),
+                new BigDecimal("67.00"),
+                new BigDecimal("67.00")));
     return new DriverLateGraceServiceImpl(
         current,
         identityFacade,
         graces,
         policy,
         notifications,
+        penalties,
         events,
         Clock.fixed(now, ZoneOffset.UTC),
         30.0);

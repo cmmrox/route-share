@@ -36,6 +36,7 @@ public class TripStartWindowServiceImpl implements TripStartWindowService {
   private final PolicySettingService policy;
   private final ReliabilityService reliability;
   private final PaymentFacade payments;
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties;
   private final MeterRegistry meters;
   private final Clock clock;
 
@@ -46,6 +47,7 @@ public class TripStartWindowServiceImpl implements TripStartWindowService {
       PolicySettingService policy,
       ReliabilityService reliability,
       PaymentFacade payments,
+      com.routeshare.penalty.facade.PenaltyFacade penalties,
       MeterRegistry meters,
       Clock clock) {
     this.windows = windows;
@@ -53,6 +55,7 @@ public class TripStartWindowServiceImpl implements TripStartWindowService {
     this.policy = policy;
     this.reliability = reliability;
     this.payments = payments;
+    this.penalties = penalties;
     this.meters = meters;
     this.clock = clock;
   }
@@ -189,6 +192,10 @@ public class TripStartWindowServiceImpl implements TripStartWindowService {
                     null,
                     tripId,
                     null));
+
+    // D32b: this costs him no fee. The assessment is written at zero anyway, so the question "why
+    // does my month look like this" has one answer that support and the driver both read.
+    penalties.recordDriverMissedStart(tripId);
 
     meters.counter("routeshare_autocancels_total").increment();
     log.info(
