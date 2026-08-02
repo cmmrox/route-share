@@ -249,10 +249,10 @@ git commit -m "feat(api): add trip timers, reliability counters, and a leader-el
 
 ## Progress
 
-### 2026-08-02 — step 1 of 13 landed: scheduler infrastructure and the full migration
+### 2026-08-02 — steps 1–4 landed: scheduler, the start-buffer clock, and the reliability log
 
-Branch `feat/comigo-unified-app-slice-05`, not yet merged — the slice is incomplete and merging it
-would imply the clocks exist.
+Merged to `main`. The slice is **not complete** — three of the four clocks remain — but what is
+merged is coherent and running: the scheduler sweeps, and the first clock it sweeps is real.
 
 Done:
 
@@ -270,11 +270,37 @@ Done:
   job is recorded and does not propagate — otherwise one wedged sweep stops every other clock).
 - Runtime: ShedLock acquires `routeshare-scheduler-tick` and writes the row on a live stack.
 
-Still to do — steps 2 to 13: the start buffer and its extension, arrival detection, the pickup wait
-and its extension, the driver-late grace, `cancellation-terms`, the early-drop allowance, the
-reliability event log and counter projection with monthly reset, the deactivation trigger at three
-missed starts, the prepay flag at two no-shows, all ten endpoints, and the contract plus
-`verify-trip-timers.sh`.
+- **The start-buffer clock (steps 2–4)** — `trip.trip_start_window` opened from departure,
+  `TripStartWindowService` with a single spendable extension, `StartBufferExpiryJob` registered
+  against the scheduler, and `GET /api/v1/driver/trips/{tripId}/start-window` +
+  `POST /api/v1/driver/trips/{tripId}/start-extension`. Auto-cancel voids every hold **before**
+  marking the trip cancelled, so a part-way failure leaves holds released rather than a cancelled
+  trip with live authorisations. It records a `MISSED_START` and increments
+  `routeshare_autocancels_total`.
+- **The reliability log (part of step 11)** — `reliability.reliability_event` (append-only) and
+  `reliability.monthly_counter` as its projection, with `rebuild()` so the projection can be treated
+  as the cache it is. The event→column mapping lives in the entity so the live path and a rebuild
+  cannot disagree.
+- `TripStartWindowTest` — 9 cases on explicit instants, no sleeping. Includes that the extension is
+  measured from the buffer and not from the moment it was tapped: extending from "now" would let a
+  driver who waits until 9:59 buy nearly twenty extra minutes.
+- Runtime: the job registers, ticks under the leader lock and records `SUCCEEDED` runs.
+
+Still to do — steps 5 to 13:
+
+- Arrival detection from `location.location_sample` with geofence + dwell (step 5), and the pickup
+  wait and its extension (steps 6–7). `trip.pickup_wait` exists and is unused.
+- The driver-late grace seeded from `booking.promised_pickup_at` (step 8) and `cancellation-terms`
+  (step 9). `trip.driver_late_grace` exists and is unused.
+- The early-drop allowance (step 10), the monthly reset job and both reliability panels (step 11).
+- The deactivation trigger at three missed starts (step 12) — `MISSED_START` events are being
+  recorded, but nothing yet counts them and calls `DriverDeactivationService.deactivate`.
+- The prepay flag on `/me/context` (step 13).
+- `TripStartWindowService.open` is **not yet called from route publication**, so windows are only
+  created by a direct call. Wiring it into the publish/generate path is the first thing step 5
+  should do — without it the sweeper has nothing to find.
+- The remaining endpoints, `docs/api/mobile-app.openapi.json`, `packages/api-contracts`, and
+  `scripts/simulation/verify-trip-timers.sh`.
 
 ## Deviations from the plan as written
 

@@ -37,7 +37,9 @@ class PrePhase06ControllerContractTest {
   void driverTripOpsDelegateToTripService() {
     TripService trips = org.mockito.Mockito.mock(TripService.class);
     BookingService bookings = org.mockito.Mockito.mock(BookingService.class);
-    var controller = new DriverTripController(trips, bookings);
+    var startWindows =
+        org.mockito.Mockito.mock(com.routeshare.trip.service.TripStartWindowService.class);
+    var controller = new DriverTripController(trips, bookings, startWindows);
     var checklist = new PreTripChecklistRequest(true, true, true, "ready");
     when(trips.recordPreTripChecklist(9L, checklist))
         .thenReturn(Map.of("tripId", 9L, "status", "CHECKLIST_RECORDED"));

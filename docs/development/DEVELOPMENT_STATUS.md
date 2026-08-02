@@ -1,6 +1,51 @@
 # RouteShareApp Development Status
 
-2026-08-02 (Blocker 013 cleared — slices 01–04 verified against a real database for the first time)
+2026-08-02 (slice 05 in progress — the scheduler runs and the first of four clocks is real)
+
+## 2026-08-02 — Slice 05, steps 1–4: the scheduler and the start-buffer clock
+
+Sixteen screens count down. Until today nothing counted.
+
+**The scheduler had to come first, and leader election is the whole point of it.** Eleven
+time-driven behaviours across the plan depend on this infrastructure, and every one of them either
+moves money or marks somebody's record. A two-instance deploy without leader election auto-cancels
+each trip twice and charges each no-show fee twice — that is a refund and an apology, not a
+performance problem. `SchedulerLeaderElectionIT` runs eight simulated instances, each with its own
+`LockProvider` over one database, and exactly one executes.
+
+Correctness does not rest on the lock, though. A lock can lapse under a long GC pause, so the sweep
+claims rows under a pessimistic write lock and every row transition refuses to apply twice on its
+own. `resolve()` keeps the first outcome; a start that commits between the sweep query and the loop
+is re-checked before anything is cancelled, because auto-cancelling a trip already under way is
+unforgivable.
+
+**The start buffer is now a real clock.** Ten minutes from departure, one ten-minute extension, then
+auto-cancel. Two details that matter more than they look:
+
+- The extension is measured from the **buffer**, not from the moment it was tapped. Extending from
+  "now" would let a driver who waits until 9:59 buy nearly twenty extra minutes.
+- Auto-cancel voids every hold **before** marking the trip cancelled. The other order leaves a
+  cancelled trip with live authorisations on people's cards if it fails part-way.
+
+`V031` created the schema for all four clocks at once, so the remaining steps add behaviour rather
+than migrations — and it keeps the start buffer and the driver-late grace as separate tables on
+purpose. P35 exists to say they are different clocks: his runs from departure and protects him, hers
+runs from her promised pickup time and protects her, and a trip that left on time can still be
+twenty minutes from her corner.
+
+Reliability is an append-only event log with the monthly counter as a projection of it, rebuildable
+at any time. A counter incremented in place cannot answer "why am I one miss from deactivation?",
+and D34 has to show the three misses with their dates.
+
+Gate: `./mvnw spotless:check verify` → **BUILD SUCCESS, 363 tests, 0 skipped, JaCoCo met**. On a live
+stack the job registers, ticks under the lock and records `SUCCEEDED` runs.
+
+**Not done, and slice 05 is not closed:** three of the four clocks (pickup wait with GPS arrival
+detection, driver-late grace, early-drop allowance), both reliability panels, the monthly reset job,
+the deactivation trigger at three missed starts, the prepay flag, the contract and
+`verify-trip-timers.sh`. One wiring gap to fix first: `TripStartWindowService.open` is not yet
+called from route publication, so nothing creates windows in the normal flow yet.
+
 
 ## 2026-08-02 — Blocker 013 cleared: the first real database run, and what it found
 

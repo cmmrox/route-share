@@ -552,7 +552,7 @@ rule, and 18 have foundations but no product behaviour. Full register in
 | 02 | Vehicle classes and rate bands | M | `COMPLETED` 2026-08-02 — runtime smoke 18/18; both V028 triggers fired |
 | 03 | Fare engine rewrite | XL | `COMPLETED` 2026-08-02 — runtime smoke 8/8; both V029 CHECK constraints fired; V029 needed a missing `CREATE SCHEMA platform` |
 | 04 | Charge timing and capture correctness | L | `PARTIALLY_COMPLETED` 2026-08-02 — `CaptureOnTripStartIT` now written and passing; cash smoke 2/2, but the card path has never run against any gateway (Blocker 015) |
-| 05 | Trip timers and reliability | XL | `IN_PROGRESS` 2026-08-02 — V031 and the scheduler infrastructure landed on `feat/comigo-unified-app-slice-05` (leader election proven); the four clocks and the reliability module remain |
+| 05 | Trip timers and reliability | XL | `IN_PROGRESS` 2026-08-02 — merged: V031, the leader-elected scheduler, the start-buffer clock and the reliability event log. Remaining: pickup wait + arrival detection, driver-late grace, early-drop allowance, panels, deactivation trigger, prepay flag, contract |
 | 06 | Penalties, dues and compensation | L | `NOT_STARTED` |
 | 07 | Booking depth: seats, approval modes, expiry | L | `NOT_STARTED` |
 | 08 | Preferences, verification and eligibility | L | `NOT_STARTED` |
