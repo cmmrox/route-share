@@ -13,7 +13,7 @@ disclosure per plan §6.1.
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V033`.
+- Migration series applied through `V034`.
 - Concurrency harness available for the seat-race cases.
 
 ## Automated test coverage
@@ -63,6 +63,26 @@ owned by the mobile feature plan and must link back to this QA file.
 - Run the seat-race case at least 20 times; a single double-allocation is a fail.
 - Verify every contact disclosure wrote an audit row, including repeated reads.
 - Confirm the contact-disclosure volume alert fires under a scripted harvesting pattern.
+
+## Run record — 2026-08-02 (slice 07 close)
+
+`./mvnw spotless:check verify` → BUILD SUCCESS, 500 tests, 0 skipped, JaCoCo met.
+`scripts/simulation/verify-booking-depth.sh` → **50 passed, 0 failed, 0 skipped** against
+PostgreSQL 5434 / API 8088 on `routeshare_comigo`.
+
+Automated coverage as built: `TripFreezeTest` (freeze predicate and the seat plan),
+`SeatInventoryConcurrencyIT` (twenty riders at one seat — one hold, nineteen 23505),
+`RequestExpiryJobTest`, `OpenRequestLimitTest`, `OccurrenceCancellationTest`,
+`ContactDisclosureAuthorizationTest` (12 cases, every negative path in 07-15 to 07-20).
+
+Found by the run and fixed: a missing required header answered 500 rather than 400; a rolled-back
+transaction left the identity projection cache pointing at an `app_user` row that no longer existed,
+so a rider whose first-ever request lost the seat race could never book again; and an admin could
+not act on a driver's trip, which is the support case the endpoint exists for.
+
+Note on 07-2: the smoke script proves the race sequentially (one 200, one typed `SEATS_TAKEN`); the
+twenty-way concurrent proof is `SeatInventoryConcurrencyIT`, which is where a real index can be put
+under real contention.
 
 ## Evidence to collect
 

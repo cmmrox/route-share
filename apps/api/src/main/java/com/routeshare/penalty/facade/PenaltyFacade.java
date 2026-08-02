@@ -45,6 +45,12 @@ public interface PenaltyFacade {
    */
   PricedPenalty priceCancellation(long bookingId, BigDecimal percent);
 
+  /**
+   * The same preview for a driver about to call off a whole trip (D30), priced on what it was
+   * expected to net him rather than on any one fare.
+   */
+  PricedPenalty priceOccurrenceCancellation(long tripId, BigDecimal percent);
+
   /** A fee and its two halves, with the base it was taken from. */
   record PricedPenalty(
       BigDecimal fareBase,

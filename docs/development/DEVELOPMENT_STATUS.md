@@ -1,6 +1,58 @@
 # RouteShareApp Development Status
 
-2026-08-02 (slice 06 complete — every penalty is split 50/50, and both halves move)
+2026-08-02 (slice 07 complete — seats are named, requests expire, and numbers are disclosed by rule)
+
+## 2026-08-02 (later still) — Slice 07 complete: booking depth, and a privacy surface built once
+
+`booking.seats` was an integer. The product books a **seat** — the front one beside the driver, or a
+place in the rear row — because that is the only distinction that changes the ride (P08).
+
+**Naming the seats also fixes the race.** A counter decrement can be made safe, but it settles two
+riders taking "the last seat" by arithmetic: both asked for *a* seat and one is told there were
+none. One row per slot with a partial unique index makes it a constraint instead — whoever inserts
+first holds slot 3, and the loser is refused by the index with the closest alternative attached.
+`SeatInventoryConcurrencyIT` runs twenty riders at one seat: one hold survives, nineteen get 23505.
+
+**The freeze is computed, never stored** (D09). A boolean would have to be maintained on every
+booking, cancellation, expiry and no-show release, and the first path that forgot would leave a trip
+editable underneath somebody who had already paid.
+
+**An approve-each request now costs nothing until it is answered.** No trip is materialised and no
+card is authorised for a request the driver has not accepted — otherwise an unanswered request sits
+under the start-buffer sweeper and holds money against a seat that may never exist. The card the
+rider chose is stored on the booking so the deferred authorisation can still find it.
+
+**Phone disclosure (plan §6.1) is the highest-risk surface in the product**, and is deliberately one
+service method so a relay could replace it without touching a caller. Confirmed bookings only,
+reciprocal, scoped to the two parties, withdrawn 24 h after drop-off and immediately on any terminal
+state, audited on **every** read including repeats — "he looked up my number eleven times" is a
+pattern only repeated rows can show. Every refusal returns the same code, because a precise reason is
+itself a probe. Twelve cases cover the negatives.
+
+**Three defects the runtime run found**, all fixed:
+
+- **A missing required header answered HTTP 500.** `MissingRequestHeaderException` had no handler and
+  fell to the catch-all, so a client that simply forgot `Idempotency-Key` was told the server was
+  broken. The same family as slice 04's unmapped-path finding.
+- **A rolled-back transaction poisoned the identity cache.** `upsertFromToken` caches the projection,
+  but the `app_user` row it describes is rolled back with the caller's transaction while the cache
+  keeps the id — so a rider whose *first ever* request lost the seat race could never book again, on
+  a foreign-key violation. The cache entry is now evicted on rollback.
+- **An admin could not act on a driver's trip.** Ownership was checked without the admin escape every
+  other driver-facing service has, so ops could not cancel for a driver whose phone was dead — which
+  is exactly the support case. The actor is recorded either way.
+
+Gate: `./mvnw spotless:check verify` → **BUILD SUCCESS, 500 tests, 0 skipped, JaCoCo met**.
+`redocly lint` valid; `pnpm run typecheck` in `packages/api-contracts` clean.
+Runtime: `scripts/simulation/verify-booking-depth.sh` → **50 passed, 0 failed, 0 skipped**, on
+PostgreSQL 5434 / API 8088 against `routeshare_comigo`.
+
+**Blocker 015 still stands** and slice 07 inherits it: an approve-each booking's deferred
+authorisation, and the void on expiry, are both mock-only. Nothing in this slice needed a gateway to
+be verified, so it has no skips of its own.
+
+Next: slice 08 — preferences, verification and eligibility, which supplies the account-level default
+this slice stubs to `APPROVE_EACH`.
 
 ## 2026-08-02 (later still) — Slice 06 complete: penalties, dues and the 50/50 split
 
@@ -594,11 +646,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_06_PENALTIES_SPLIT_AND_COLLECTED`
-- Current Active Task: `Slices 00–06 complete and runtime-verified; slice 07 — booking depth, seats, approval and expiry — next`
+- Current Milestone: `MILESTONE_SLICE_07_BOOKINGS_ARE_FIRST_CLASS`
+- Current Active Task: `Slices 00–07 complete and runtime-verified; slice 08 — preferences, verification and eligibility — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_06_EVERY_PENALTY_IS_SPLIT_50_50`
-- Repository Git Status: `Slices 00–05 merged to main; slice 06 in progress; migrations V027–V033 added`
+- Status: `SLICE_07_A_BOOKING_HOLDS_A_NAMED_SEAT`
+- Repository Git Status: `Slices 00–06 merged to main; slice 07 in progress; migrations V027–V034 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

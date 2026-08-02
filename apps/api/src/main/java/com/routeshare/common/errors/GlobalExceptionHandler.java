@@ -13,7 +13,10 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -73,6 +76,29 @@ public class GlobalExceptionHandler {
                 "BAD_REQUEST",
                 "Request body is invalid or contains unsupported enum values",
                 correlation(req)));
+  }
+
+  /**
+   * A missing header or query parameter is the caller's mistake, and the caller can fix it — so it
+   * must say so.
+   *
+   * <p>Without these handlers both fall to the catch-all and a client that simply forgot {@code
+   * Idempotency-Key} is told "the server is broken", which sends them to look in exactly the wrong
+   * place. Found when slice 07's smoke script omitted the header and got a 500.
+   */
+  @ExceptionHandler({
+    MissingRequestHeaderException.class,
+    MissingServletRequestParameterException.class,
+    MethodArgumentTypeMismatchException.class
+  })
+  ResponseEntity<ApiError> missingInput(Exception ex, HttpServletRequest req) {
+    String detail =
+        ex instanceof MissingRequestHeaderException missingHeader
+            ? "Required header is missing: " + missingHeader.getHeaderName()
+            : ex instanceof MissingServletRequestParameterException missingParam
+                ? "Required parameter is missing: " + missingParam.getParameterName()
+                : "A parameter has the wrong type";
+    return ResponseEntity.badRequest().body(ApiError.of("BAD_REQUEST", detail, correlation(req)));
   }
 
   /**

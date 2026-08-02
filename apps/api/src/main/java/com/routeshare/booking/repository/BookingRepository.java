@@ -79,6 +79,193 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
       nativeQuery = true)
   boolean isTripStartedForBooking(@Param("bookingId") long bookingId);
 
+  /**
+   * How many unanswered requests this passenger is already holding (P11).
+   *
+   * <p>Two at once is the rule; the third is refused rather than queued, because a rider holding
+   * five seats across five cars has taken inventory nobody else can book while deciding.
+   */
+  @Query(
+      value =
+          """
+      SELECT count(*) FROM booking.booking
+      WHERE passenger_app_user_id = :appUserId
+        AND status = 'REQUESTED'
+        AND (expires_at IS NULL OR expires_at > now())
+      """,
+      nativeQuery = true)
+  int countOpenRequests(@Param("appUserId") long appUserId);
+
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE booking.booking
+         SET status = :status, expires_at = :expiresAt
+       WHERE booking_id = :bookingId
+      """,
+      nativeQuery = true)
+  int applyApprovalOutcome(
+      @Param("bookingId") long bookingId,
+      @Param("status") String status,
+      @Param("expiresAt") Instant expiresAt);
+
+  /** Requests whose deadline has passed — exactly what the expiry sweep reads. */
+  @Query(
+      value =
+          """
+      SELECT booking_id AS "bookingId",
+             passenger_app_user_id AS "passengerAppUserId",
+             route_occurrence_id AS "routeOccurrenceId",
+             status AS "status"
+      FROM booking.booking
+      WHERE status = 'REQUESTED'
+        AND expires_at IS NOT NULL
+        AND expires_at <= :now
+      ORDER BY expires_at
+      LIMIT :batchSize
+      """,
+      nativeQuery = true)
+  List<OpenBookingRow> findExpiredRequests(
+      @Param("now") Instant now, @Param("batchSize") int batchSize);
+
+  /**
+   * Marks a lapsed request expired, and only if it is still open.
+   *
+   * <p>The status predicate is what makes a second sweep harmless: a driver who approved the
+   * request one second before the sweep read it must not have his passenger expired underneath him.
+   */
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE booking.booking
+         SET status = 'EXPIRED', expired_at = :now
+       WHERE booking_id = :bookingId
+         AND status = 'REQUESTED'
+      """,
+      nativeQuery = true)
+  int markExpired(@Param("bookingId") long bookingId, @Param("now") Instant now);
+
+  /**
+   * The two people a contact disclosure is between, with the facts that decide whether it is
+   * allowed.
+   */
+  @Query(
+      value =
+          """
+      SELECT b.booking_id AS "bookingId",
+             b.status AS "bookingStatus",
+             b.passenger_app_user_id AS "passengerAppUserId",
+             d.app_user_id AS "driverAppUserId",
+             t.completed_at AS "completedAt",
+             pts.dropped_off_at AS "droppedOffAt"
+      FROM booking.booking b
+      JOIN routing.route_plan rp ON rp.route_plan_id = b.route_plan_id
+      JOIN driver.driver_profile d ON d.driver_profile_id = rp.driver_profile_id
+      LEFT JOIN trip.trip t ON t.route_occurrence_id = b.route_occurrence_id
+      LEFT JOIN trip.passenger_trip_state pts ON pts.booking_id = b.booking_id
+      WHERE b.booking_id = :bookingId
+      """,
+      nativeQuery = true)
+  Optional<ContactContextRow> findContactContext(@Param("bookingId") long bookingId);
+
+  interface ContactContextRow {
+    Long getBookingId();
+
+    String getBookingStatus();
+
+    Long getPassengerAppUserId();
+
+    Long getDriverAppUserId();
+
+    Instant getCompletedAt();
+
+    Instant getDroppedOffAt();
+  }
+
+  @Modifying
+  @Query(
+      value =
+          "UPDATE booking.booking SET payment_method_id = :paymentMethodId"
+              + " WHERE booking_id = :bookingId",
+      nativeQuery = true)
+  int recordChosenPaymentMethod(
+      @Param("bookingId") long bookingId, @Param("paymentMethodId") Long paymentMethodId);
+
+  @Modifying
+  @Query(
+      value = "UPDATE booking.booking SET expires_at = NULL WHERE booking_id = :bookingId",
+      nativeQuery = true)
+  int clearExpiry(@Param("bookingId") long bookingId);
+
+  @Query(
+      value =
+          """
+      SELECT EXISTS(
+        SELECT 1 FROM booking.booking
+         WHERE booking_id = :bookingId
+           AND status = 'REQUESTED'
+           AND expires_at IS NOT NULL
+           AND expires_at <= now())
+      """,
+      nativeQuery = true)
+  boolean isRequestExpired(@Param("bookingId") long bookingId);
+
+  /** What a deferred authorisation needs once the driver finally accepts. */
+  @Query(
+      value =
+          """
+      SELECT fare_estimate AS "fareEstimate",
+             payment_method_id AS "paymentMethodId",
+             passenger_app_user_id AS "passengerAppUserId"
+      FROM booking.booking
+      WHERE booking_id = :bookingId
+      """,
+      nativeQuery = true)
+  Optional<DeferredAuthorizationRow> findFareAndPaymentMethod(@Param("bookingId") long bookingId);
+
+  interface DeferredAuthorizationRow {
+    BigDecimal getFareEstimate();
+
+    Long getPaymentMethodId();
+
+    Long getPassengerAppUserId();
+  }
+
+  /** Open bookings on an occurrence — everyone a driver's cancellation would strand. */
+  @Query(
+      value =
+          """
+      SELECT booking_id AS "bookingId",
+             passenger_app_user_id AS "passengerAppUserId",
+             status AS "status",
+             route_occurrence_id AS "routeOccurrenceId"
+      FROM booking.booking
+      WHERE route_occurrence_id = :routeOccurrenceId
+        AND status IN ('REQUESTED', 'CONFIRMED')
+      ORDER BY booking_id
+      """,
+      nativeQuery = true)
+  List<OpenBookingRow> findOpenBookingsForOccurrence(
+      @Param("routeOccurrenceId") long routeOccurrenceId);
+
+  interface OpenBookingRow {
+    Long getBookingId();
+
+    Long getPassengerAppUserId();
+
+    String getStatus();
+
+    /** Null for an ad-hoc booking with no occurrence behind it. */
+    Long getRouteOccurrenceId();
+  }
+
+  @Query(
+      value = "SELECT trip_id FROM trip.trip WHERE route_occurrence_id = :routeOccurrenceId",
+      nativeQuery = true)
+  Optional<Long> findTripIdForOccurrence(@Param("routeOccurrenceId") long routeOccurrenceId);
+
   /** What this checkout carried over from an earlier trip, kept on the booking for the receipt. */
   @Modifying
   @Query(

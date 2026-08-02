@@ -50,6 +50,13 @@ class BookingServiceTest {
       org.mockito.Mockito.mock(com.routeshare.trip.facade.TripLifecycleFacade.class);
   private final com.routeshare.penalty.facade.PenaltyFacade penalties =
       org.mockito.Mockito.mock(com.routeshare.penalty.facade.PenaltyFacade.class);
+  private final com.routeshare.booking.service.SeatHoldService seatHolds =
+      org.mockito.Mockito.mock(com.routeshare.booking.service.SeatHoldService.class);
+  private final com.routeshare.platform.service.PolicySettingService policy =
+      org.mockito.Mockito.mock(com.routeshare.platform.service.PolicySettingService.class);
+  private final java.time.Clock clock =
+      java.time.Clock.fixed(
+          java.time.Instant.parse("2026-08-02T08:00:00Z"), java.time.ZoneOffset.UTC);
   private final BookingServiceImpl service =
       new BookingServiceImpl(
           current,
@@ -63,7 +70,10 @@ class BookingServiceTest {
           pricing,
           payments,
           tripLifecycle,
-          penalties);
+          penalties,
+          seatHolds,
+          policy,
+          clock);
 
   private static com.routeshare.pricing.domain.FareQuote quote(String passengerPays) {
     var amount = new java.math.BigDecimal(passengerPays);
@@ -89,6 +99,22 @@ class BookingServiceTest {
 
   @BeforeEach
   void setUp() {
+    org.mockito.Mockito.when(
+            policy.integer(com.routeshare.platform.domain.PolicyKey.MAX_OPEN_PASSENGER_REQUESTS))
+        .thenReturn(2);
+    org.mockito.Mockito.when(
+            policy.integer(
+                com.routeshare.platform.domain.PolicyKey.SCHEDULED_REQUEST_EXPIRY_MINUTES))
+        .thenReturn(30);
+    org.mockito.Mockito.when(seatHolds.approvalModeFor(org.mockito.ArgumentMatchers.anyLong()))
+        .thenReturn(com.routeshare.routing.domain.ApprovalMode.INSTANT);
+    org.mockito.Mockito.when(
+            seatHolds.hold(
+                org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyInt()))
+        .thenReturn(java.util.List.of());
     org.mockito.Mockito.when(
             penalties.applyOutstandingDues(
                 org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong()))
@@ -119,7 +145,7 @@ class BookingServiceTest {
 
   @Test
   void booksAgainstOccurrenceAndStoresMatchedFractions() {
-    var request = new BookingRequest(44L, 2, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null);
+    var request = new BookingRequest(44L, 2, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null, null);
     when(idempotencyKeys.reserveNew(anyString(), anyString(), anyString(), anyString()))
         .thenReturn("key-1");
     when(routingFacade.reserveSeatsAndReturnRouteLength(44L, 2))
@@ -137,7 +163,7 @@ class BookingServiceTest {
 
   @Test
   void recordsInitialBookingStatusHistoryWhenBookingIsCreated() {
-    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null);
+    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null, null);
     when(idempotencyKeys.reserveNew(anyString(), anyString(), anyString(), anyString()))
         .thenReturn("key-2");
     when(routingFacade.reserveSeatsAndReturnRouteLength(44L, 1))
@@ -153,7 +179,7 @@ class BookingServiceTest {
 
   @Test
   void returnsStoredBookingResponseForDuplicateIdempotencyKeyWithoutCreatingAnotherBooking() {
-    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null);
+    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null, null);
     when(idempotencyKeys.findActive("key-duplicate", "subject", "booking:create"))
         .thenReturn(
             java.util.Optional.of(
@@ -174,7 +200,7 @@ class BookingServiceTest {
 
   @Test
   void storesSuccessfulBookingResponseAgainstIdempotencyKey() {
-    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null);
+    var request = new BookingRequest(44L, 1, 6.90, 79.85, 6.95, 79.90, 0.25, 0.75, null, null);
     when(idempotencyKeys.reserveNew("key-store", "subject", "booking:create", requestHash(request)))
         .thenReturn("key-store");
     when(routingFacade.reserveSeatsAndReturnRouteLength(44L, 1))

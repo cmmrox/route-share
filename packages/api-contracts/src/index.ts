@@ -247,7 +247,15 @@ export const mobileApiEndpoints = [
   {"method": "POST", "path": "/api/v1/sos-events", "status": "PLANNED_SLICE_10", "operationId": "postSosEvents"},
   {"method": "POST", "path": "/api/v1/trips/{id}/transition", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "postTripsByIdTransition"},
   {"method": "PATCH", "path": "/api/v1/trips/{tripId}/passengers/{bookingId}/state", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "patchTripsByTripIdPassengersByBookingIdState"},
-  {"method": "GET", "path": "/api/v1/users/{appUserId}/reviews", "status": "PLANNED_SLICE_15", "operationId": "getUsersByAppUserIdReviews"}
+  {"method": "GET", "path": "/api/v1/users/{appUserId}/reviews", "status": "PLANNED_SLICE_15", "operationId": "getUsersByAppUserIdReviews"},
+  {"method": "GET", "path": "/api/v1/passenger/route-occurrences/{routeOccurrenceId}/seats", "status": "IMPLEMENTED", "operationId": "getPassengerRouteOccurrenceSeats"},
+  {"method": "GET", "path": "/api/v1/passenger/route-occurrences/{routeOccurrenceId}/alternatives", "status": "IMPLEMENTED", "operationId": "getPassengerRouteOccurrenceAlternatives"},
+  {"method": "GET", "path": "/api/v1/passenger/bookings/{bookingId}/contact", "status": "IMPLEMENTED", "operationId": "getPassengerBookingContact"},
+  {"method": "GET", "path": "/api/v1/driver/bookings/{bookingId}/contact", "status": "IMPLEMENTED", "operationId": "getDriverBookingContact"},
+  {"method": "PUT", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/approval-mode", "status": "IMPLEMENTED", "operationId": "putDriverRouteOccurrenceApprovalMode"},
+  {"method": "GET", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/editability", "status": "IMPLEMENTED", "operationId": "getDriverRouteOccurrenceEditability"},
+  {"method": "GET", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/cancellation-terms", "status": "IMPLEMENTED", "operationId": "getDriverRouteOccurrenceCancellationTerms"},
+  {"method": "POST", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/cancel", "status": "IMPLEMENTED", "operationId": "postDriverRouteOccurrenceCancel"}
 ] as const satisfies readonly MobileApiEndpoint[];
 
 export const adminApiEndpoints = [

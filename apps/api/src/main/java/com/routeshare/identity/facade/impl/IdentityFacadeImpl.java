@@ -73,7 +73,45 @@ public class IdentityFacadeImpl implements IdentityFacade {
     }
     AppUser appUser = appUsers.upsertFromToken(currentUser);
     projections.put(currentUser.subject(), CachedProjection.of(currentUser, appUser));
+    evictIfTheCallerRollsBack(currentUser.subject());
     return appUser;
+  }
+
+  /**
+   * Drops the cached projection if the transaction that created it does not commit.
+   *
+   * <p>This runs inside whatever transaction the caller opened. When that caller fails — a seat
+   * race, a validation refusal, anything — the {@code app_user} row this projection describes is
+   * rolled back with it, while the cache keeps the id it was given. Every later request from the
+   * same person then reuses an id that no longer exists and fails on a foreign key, so one refused
+   * booking permanently breaks a first-time user.
+   *
+   * <p>Found by slice 07's smoke run: a rider whose first-ever request lost the seat race could
+   * never book again.
+   */
+  private void evictIfTheCallerRollsBack(String subject) {
+    if (!org.springframework.transaction.support.TransactionSynchronizationManager
+        .isSynchronizationActive()) {
+      return;
+    }
+    org.springframework.transaction.support.TransactionSynchronizationManager
+        .registerSynchronization(
+            new org.springframework.transaction.support.TransactionSynchronization() {
+              @Override
+              public void afterCompletion(int status) {
+                if (status != STATUS_COMMITTED) {
+                  projections.invalidate(subject);
+                }
+              }
+            });
+  }
+
+  @Override
+  @org.springframework.transaction.annotation.Transactional(readOnly = true)
+  public Optional<Contact> findContact(long appUserId) {
+    return appUsers
+        .findContactById(appUserId)
+        .map(row -> new Contact(appUserId, row.getFirstName(), row.getPhone()));
   }
 
   @Override
