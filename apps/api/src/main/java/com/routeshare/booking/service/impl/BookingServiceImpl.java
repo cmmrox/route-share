@@ -133,6 +133,9 @@ public class BookingServiceImpl implements BookingService {
     // start-buffer clock opens with it. Until a seat is confirmed there is nobody for a
     // cancellation to strand and nothing for the sweeper to protect.
     tripLifecycle.ensureTripForBookedOccurrence(reservation.routeOccurrenceId());
+    // Her own clock, distinct from the trip's (P35). It decides whether a cancel is free, so the
+    // promised time is derived server-side and never taken from the request.
+    tripLifecycle.openLateGraceForBooking(bookingId);
     // The card is held now and charged when the driver starts. Accepting does not charge; approval
     // does not charge; a trip that never starts costs the passenger nothing.
     payments.authorizeForBooking(bookingId, req.paymentMethodId(), fareEstimate);
@@ -169,6 +172,9 @@ public class BookingServiceImpl implements BookingService {
     if (CANCELLED.equals(toStatus)) {
       // Cancelled before the wheels moved: the hold is released and nothing is taken.
       payments.voidForBooking(bookingId, "PASSENGER_CANCELLED");
+      // Recorded as a free cancel if her driver was late, and as an ordinary one otherwise. The
+      // grace row already knows which; the client is never asked.
+      tripLifecycle.resolveLateGraceOnCancel(bookingId);
       bookings
           .findDriverAppUserIdForPassengerBooking(bookingId, app.appUserId())
           .ifPresent(
@@ -240,6 +246,7 @@ public class BookingServiceImpl implements BookingService {
     bookings
         .findRouteOccurrenceId(bookingId)
         .ifPresent(tripLifecycle::ensureTripForBookedOccurrence);
+    tripLifecycle.openLateGraceForBooking(bookingId);
     notifyPassenger(
         bookingId,
         "BOOKING_CONFIRMED",

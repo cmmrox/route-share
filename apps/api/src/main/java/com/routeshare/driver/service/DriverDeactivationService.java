@@ -17,6 +17,16 @@ public interface DriverDeactivationService {
   DriverDeactivationResponse deactivate(
       long driverProfileId, String reason, String caseRef, long actorAppUserId);
 
+  /**
+   * The automatic path, from slice 05's three-missed-starts rule. No actor: nobody decided this, a
+   * rule did, and recording an admin who was not involved would make the audit trail a fiction.
+   *
+   * <p>Idempotent in the same way as the admin action — a driver already deactivated keeps their
+   * original case reference, so the fourth miss does not issue a second case.
+   */
+  DriverDeactivationResponse deactivateAutomatically(
+      long driverProfileId, String reason, String caseRef);
+
   /** Admin action. Clears the deactivation, restores the role, and closes any open request. */
   DriverDeactivationResponse reinstate(long driverProfileId, long actorAppUserId, String note);
 

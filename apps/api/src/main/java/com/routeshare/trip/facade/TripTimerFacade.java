@@ -10,4 +10,7 @@ public interface TripTimerFacade {
 
   /** P38 / P38b. */
   PickupWaitResponse pickupWindowForBooking(long bookingId);
+
+  /** P26 and P34's single source: whether a cancel is free right now, and why. */
+  com.routeshare.trip.dto.response.CancellationTermsResponse cancellationTerms(long bookingId);
 }

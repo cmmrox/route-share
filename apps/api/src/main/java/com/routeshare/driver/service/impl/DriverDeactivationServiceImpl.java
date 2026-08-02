@@ -38,8 +38,20 @@ public class DriverDeactivationServiceImpl implements DriverDeactivationService 
 
   @Override
   @Transactional
+  public DriverDeactivationResponse deactivateAutomatically(
+      long driverProfileId, String reason, String caseRef) {
+    return applyDeactivation(driverProfileId, reason, caseRef, null);
+  }
+
+  @Override
+  @Transactional
   public DriverDeactivationResponse deactivate(
       long driverProfileId, String reason, String caseRef, long actorAppUserId) {
+    return applyDeactivation(driverProfileId, reason, caseRef, actorAppUserId);
+  }
+
+  private DriverDeactivationResponse applyDeactivation(
+      long driverProfileId, String reason, String caseRef, Long actorAppUserId) {
     DriverProfileEntity driver = requireProfile(driverProfileId);
     Optional<DriverDeactivationEntity> open =
         deactivations.findByDriverProfileIdAndReinstatedAtIsNull(driverProfileId);

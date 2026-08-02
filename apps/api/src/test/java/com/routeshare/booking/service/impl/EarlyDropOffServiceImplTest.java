@@ -32,6 +32,8 @@ class EarlyDropOffServiceImplTest {
   private final PaymentService payments = mock(PaymentService.class);
   private final com.routeshare.pricing.facade.PricingFacade pricing =
       mock(com.routeshare.pricing.facade.PricingFacade.class);
+  private final com.routeshare.reliability.facade.ReliabilityFacade reliability =
+      org.mockito.Mockito.mock(com.routeshare.reliability.facade.ReliabilityFacade.class);
   private final EarlyDropOffServiceImpl service =
       new EarlyDropOffServiceImpl(
           current,
@@ -39,13 +41,25 @@ class EarlyDropOffServiceImplTest {
           bookings,
           payments,
           pricing,
-          mock(com.routeshare.payment.facade.PaymentFacade.class));
+          mock(com.routeshare.payment.facade.PaymentFacade.class),
+          reliability);
 
   @BeforeEach
   void setUp() {
     var user = new CurrentUser("sub", "p@test", null, "P", Set.of("PASSENGER"));
     var appUser = new AppUser(5L, UUID.randomUUID(), "sub", "p@test", null, "P", "ACTIVE");
     when(current.requireCurrentUser()).thenReturn(user);
+    // Within the monthly allowance unless a case says otherwise: these cases are about the
+    // reprice arithmetic, not about P16b's exhaustion.
+    when(reliability.consumeEarlyDropAllowance(
+            org.mockito.ArgumentMatchers.anyLong(),
+            org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.any()))
+        .thenReturn(true);
+    when(reliability.earlyDropAllowance(org.mockito.ArgumentMatchers.anyLong()))
+        .thenReturn(
+            new com.routeshare.reliability.dto.response.EarlyDropAllowanceResponse(
+                java.time.LocalDate.of(2026, 8, 1), 1, 2, 1, true));
     when(identityFacade.upsertFromToken(user)).thenReturn(appUser);
     when(pricing.repriceForActualDistance(
             org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.any()))
@@ -87,6 +101,11 @@ class EarlyDropOffServiceImplTest {
       @Override
       public Double getExitFraction() {
         return exit;
+      }
+
+      @Override
+      public BigDecimal getFareEstimate() {
+        return new BigDecimal("500.00");
       }
 
       @Override

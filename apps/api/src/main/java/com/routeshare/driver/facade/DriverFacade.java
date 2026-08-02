@@ -25,4 +25,15 @@ public interface DriverFacade {
 
   /** True while a driver deactivation is open. Riding and payouts are unaffected by it. */
   boolean isDeactivated(long appUserId);
+
+  /**
+   * Slice 05's automatic trigger at the missed-start limit.
+   *
+   * <p>Deactivation stops <em>driving</em>. The same person keeps booking rides and money already
+   * earned still pays out — that is the whole distinction between this and a suspension, and it is
+   * why this goes through the driver module rather than touching the account.
+   *
+   * @return the case reference the driver is given, or empty if they have no driver profile
+   */
+  java.util.Optional<String> deactivateForMissedStarts(long appUserId, int missedStarts);
 }

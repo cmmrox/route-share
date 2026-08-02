@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class DriverFacadeImpl implements DriverFacade {
   private final DriverProfileRepository drivers;
   private final DriverGateService gates;
+  private final com.routeshare.driver.service.DriverDeactivationService deactivations;
 
   @Override
   public Optional<Long> findDriverProfileIdByAppUserId(long appUserId) {
@@ -49,5 +50,19 @@ public class DriverFacadeImpl implements DriverFacade {
   @Override
   public boolean isDeactivated(long appUserId) {
     return gates.isDeactivated(appUserId);
+  }
+
+  @Override
+  @org.springframework.transaction.annotation.Transactional
+  public java.util.Optional<String> deactivateForMissedStarts(long appUserId, int missedStarts) {
+    return findDriverProfileIdByAppUserId(appUserId)
+        .map(
+            driverProfileId ->
+                deactivations
+                    .deactivateAutomatically(
+                        driverProfileId,
+                        "Missed " + missedStarts + " trip starts this month",
+                        "AUTO-MISSED-START-" + driverProfileId + "-" + missedStarts)
+                    .caseRef());
   }
 }

@@ -84,6 +84,16 @@ public class PassengerBookingController {
     return ApiResponse.ok(tripTimers.pickupWindowForBooking(bookingId));
   }
 
+  /**
+   * P26 and P34 read this same endpoint. Two screens asking the same question of two code paths is
+   * how they come to disagree, and the disagreement surfaces as a fee the screen said was waived.
+   */
+  @GetMapping("/{bookingId}/cancellation-terms")
+  ApiResponse<com.routeshare.trip.dto.response.CancellationTermsResponse> cancellationTerms(
+      @PathVariable long bookingId) {
+    return ApiResponse.ok(tripTimers.cancellationTerms(bookingId));
+  }
+
   @PostMapping("/{bookingId}/early-drop-off")
   ApiResponse<EarlyDropOffResponse> earlyDropOff(
       @PathVariable long bookingId, @Valid @RequestBody EarlyDropOffRequest req) {

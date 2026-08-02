@@ -10,4 +10,7 @@ public interface MonthlyCounterRepository extends JpaRepository<MonthlyCounterEn
 
   Optional<MonthlyCounterEntity> findByAppUserIdAndRoleAndPeriodMonth(
       long appUserId, ReliabilityRole role, LocalDate periodMonth);
+
+  /** Everyone who had a counter last month — the set the rollover opens fresh rows for. */
+  java.util.List<MonthlyCounterEntity> findByPeriodMonth(LocalDate periodMonth);
 }
