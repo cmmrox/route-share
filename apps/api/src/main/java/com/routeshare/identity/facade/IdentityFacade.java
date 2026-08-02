@@ -55,5 +55,18 @@ public interface IdentityFacade {
    */
   void setLastActiveMode(long appUserId, String mode);
 
+  /**
+   * A person's first name and dialable number, for the counterparty disclosure in plan §6.1.
+   *
+   * <p>Deliberately narrow: no email, no surname, no account state. The caller has already decided
+   * the disclosure is allowed, and this must not become the convenient way to read a user record.
+   *
+   * <p>A phone-OTP account carries its number as its display name, so a name that is not plainly a
+   * name is reported as absent rather than echoed back.
+   */
+  Optional<Contact> findContact(long appUserId);
+
+  record Contact(long appUserId, String firstName, String phoneNumber) {}
+
   record StatusChange(String toStatus, String reason, String caseRef, Instant changedAt) {}
 }

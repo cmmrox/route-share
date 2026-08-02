@@ -64,4 +64,32 @@ public interface AppUserRepository extends JpaRepository<AppUserEntity, Long> {
         entity.getDisplayName(),
         entity.getLocalStatus());
   }
+
+  /**
+   * First name and dialable number, and nothing else (plan §6.1).
+   *
+   * <p>A phone-OTP account carries its number as its display name, so a "name" containing digits or
+   * an @ is reported as absent rather than echoed back as somebody's first name.
+   */
+  @Query(
+      value =
+          """
+      SELECT CASE
+               WHEN display_name IS NULL THEN NULL
+               WHEN display_name ~ '[0-9@]' THEN NULL
+               ELSE split_part(btrim(display_name), ' ', 1)
+             END AS "firstName",
+             phone AS "phone"
+        FROM identity.app_user
+       WHERE app_user_id = :appUserId
+      """,
+      nativeQuery = true)
+  java.util.Optional<ContactRow> findContactById(
+      @org.springframework.data.repository.query.Param("appUserId") long appUserId);
+
+  interface ContactRow {
+    String getFirstName();
+
+    String getPhone();
+  }
 }

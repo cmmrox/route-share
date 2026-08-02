@@ -66,8 +66,18 @@ public class PenaltyFacadeImpl implements PenaltyFacade {
 
   @Override
   @Transactional(readOnly = true)
+  public PricedPenalty priceOccurrenceCancellation(long tripId, BigDecimal percent) {
+    return price(assessments.findExpectedNetForTrip(tripId), percent);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public PricedPenalty priceCancellation(long bookingId, BigDecimal percent) {
-    BigDecimal base = assessments.findPassengerFare(bookingId).orElse(ZERO);
+    return price(assessments.findPassengerFare(bookingId).orElse(ZERO), percent);
+  }
+
+  private PricedPenalty price(BigDecimal rawBase, BigDecimal percent) {
+    BigDecimal base = rawBase == null ? ZERO : rawBase;
     BigDecimal fee = PenaltyPolicy.fee(base, percent);
     PenaltySplit split = PenaltyPolicy.split(fee, policy.decimal(PolicyKey.PENALTY_VICTIM_PCT));
     return new PricedPenalty(

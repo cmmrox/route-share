@@ -55,6 +55,9 @@ public class BookingServiceImpl implements BookingService {
   private final com.routeshare.payment.facade.PaymentFacade payments;
   private final com.routeshare.trip.facade.TripLifecycleFacade tripLifecycle;
   private final com.routeshare.penalty.facade.PenaltyFacade penalties;
+  private final com.routeshare.booking.service.SeatHoldService seatHolds;
+  private final com.routeshare.platform.service.PolicySettingService policy;
+  private final java.time.Clock clock;
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
       Map.of(
           "REQUESTED",
@@ -95,6 +98,19 @@ public class BookingServiceImpl implements BookingService {
     }
 
     var app = identityFacade.upsertFromToken(user);
+    // P11: two unanswered requests at once. The third is refused rather than queued — a rider
+    // holding five seats across five cars has taken inventory nobody else can book while deciding.
+    int openRequests = bookings.countOpenRequests(app.appUserId());
+    if (openRequests
+        >= policy.integer(com.routeshare.platform.domain.PolicyKey.MAX_OPEN_PASSENGER_REQUESTS)) {
+      throw new com.routeshare.common.errors.GateConflictException(
+          "TOO_MANY_OPEN_REQUESTS",
+          "You already have "
+              + openRequests
+              + " requests waiting for a driver. Cancel one, or wait"
+              + " for a reply.",
+          "/passenger/bookings");
+    }
     var reservation =
         routingFacade
             .reserveSeatsAndReturnRouteLength(req.routeOccurrenceId(), req.seats())
@@ -120,6 +136,9 @@ public class BookingServiceImpl implements BookingService {
     // record of what was charged and why.
     BigDecimal fareEstimate = quote.passengerPays();
     long bookingId = bookings.create(app.appUserId(), req, reservation.routePlanId(), fareEstimate);
+    // Stored rather than passed straight through, because an approve-each booking authorises when
+    // the driver accepts — by which time the request that named the card is long gone.
+    bookings.recordChosenPaymentMethod(bookingId, req.paymentMethodId());
     pricing.persistForBooking(
         bookingId,
         reservation.routeOccurrenceId(),
@@ -128,45 +147,79 @@ public class BookingServiceImpl implements BookingService {
         BigDecimal.valueOf(matchedDistanceMeters),
         matchPercent,
         req.seats());
+    // The named slots are held in the same transaction as the booking row, so the race between two
+    // riders taking the last seat is decided by the unique index rather than by whichever request
+    // happened to read the counter first.
+    var heldSeats =
+        seatHolds.hold(bookingId, reservation.routeOccurrenceId(), req.seatSlotIds(), req.seats());
+
+    // D13: instant-book confirms now; approve-each waits for the driver and lapses if he never
+    // answers. The mode belongs to the occurrence, so the client never gets to choose it.
+    var approvalMode = seatHolds.approvalModeFor(reservation.routeOccurrenceId());
+    boolean confirmed = approvalMode.confirmsImmediately();
+    java.time.Instant expiresAt =
+        confirmed
+            ? null
+            : clock
+                .instant()
+                .plus(
+                    java.time.Duration.ofMinutes(
+                        policy.integer(
+                            com.routeshare.platform.domain.PolicyKey
+                                .SCHEDULED_REQUEST_EXPIRY_MINUTES)));
+    String initialStatus = confirmed ? CONFIRMED : "REQUESTED";
+    bookings.applyApprovalOutcome(bookingId, initialStatus, expiresAt);
     statusHistory.recordInitialStatus(
-        bookingId, CONFIRMED, app.appUserId(), INITIAL_CONFIRMATION_REASON);
-    // The occurrence becomes a trip the moment somebody is actually riding on it, and the
-    // start-buffer clock opens with it. Until a seat is confirmed there is nobody for a
-    // cancellation to strand and nothing for the sweeper to protect.
-    tripLifecycle.ensureTripForBookedOccurrence(reservation.routeOccurrenceId());
-    // Her own clock, distinct from the trip's (P35). It decides whether a cancel is free, so the
-    // promised time is derived server-side and never taken from the request.
-    tripLifecycle.openLateGraceForBooking(bookingId);
-    // The card is held now and charged when the driver starts. Accepting does not charge; approval
-    // does not charge; a trip that never starts costs the passenger nothing.
-    payments.authorizeForBooking(bookingId, req.paymentMethodId(), fareEstimate);
-    // Fees she could not be charged for at the time ride along to this checkout (P09d). They are
-    // added to the total, never a gate on making the booking: refusing a rider over an unpaid
-    // LKR 49 turns a small fee into a lost passenger, and P25 shows dues as a line, not a wall.
-    var appliedDues = penalties.applyOutstandingDues(app.appUserId(), bookingId);
-    if (appliedDues.total().signum() > 0) {
-      bookings.recordAppliedDues(bookingId, appliedDues.total());
+        bookingId,
+        initialStatus,
+        app.appUserId(),
+        confirmed ? INITIAL_CONFIRMATION_REASON : "Request sent to the driver for approval");
+    // Only a confirmed seat earns a trip and a card hold. A request the driver has not answered is
+    // not somebody riding: materialising a trip for it would put an unanswered request under the
+    // start-buffer sweeper, and authorising for it would hold money on a seat that may never exist.
+    var appliedDues = com.routeshare.penalty.dto.response.AppliedDuesResponse.empty();
+    if (confirmed) {
+      // The occurrence becomes a trip the moment somebody is actually riding on it, and the
+      // start-buffer clock opens with it.
+      tripLifecycle.ensureTripForBookedOccurrence(reservation.routeOccurrenceId());
+      // Her own clock, distinct from the trip's (P35). It decides whether a cancel is free, so the
+      // promised time is derived server-side and never taken from the request.
+      tripLifecycle.openLateGraceForBooking(bookingId);
+      // The card is held now and charged when the driver starts. Accepting does not charge;
+      // approval does not charge; a trip that never starts costs the passenger nothing.
+      payments.authorizeForBooking(bookingId, req.paymentMethodId(), fareEstimate);
+      // Fees she could not be charged for at the time ride along to this checkout (P09d). They are
+      // added to the total, never a gate on making the booking: refusing a rider over an unpaid
+      // LKR 49 turns a small fee into a lost passenger, and P25 shows dues as a line, not a wall.
+      appliedDues = penalties.applyOutstandingDues(app.appUserId(), bookingId);
+      if (appliedDues.total().signum() > 0) {
+        bookings.recordAppliedDues(bookingId, appliedDues.total());
+      }
     }
-    Map<String, Object> response =
-        Map.of(
-            "bookingId",
-            bookingId,
-            "status",
-            CONFIRMED,
-            "routeOccurrenceId",
-            reservation.routeOccurrenceId(),
-            "fareEstimate",
-            fareEstimate,
-            "appliedDues",
-            appliedDues,
-            "totalDue",
-            fareEstimate.add(appliedDues.total()));
+
+    Map<String, Object> response = new java.util.LinkedHashMap<>();
+    response.put("bookingId", bookingId);
+    response.put("status", initialStatus);
+    response.put("routeOccurrenceId", reservation.routeOccurrenceId());
+    response.put("fareEstimate", fareEstimate);
+    response.put("appliedDues", appliedDues);
+    response.put("totalDue", fareEstimate.add(appliedDues.total()));
+    response.put("approvalMode", approvalMode.name());
+    response.put("seats", heldSeats);
+    response.put("expiresAt", expiresAt);
+    response.put(
+        "secondsRemaining",
+        expiresAt == null
+            ? null
+            : Math.max(0, java.time.Duration.between(clock.instant(), expiresAt).toSeconds()));
     idempotencyKeys.storeResponse(idempotencyKey, responseBody(response), 200);
     notifications.notifyUser(
         app.appUserId(),
-        "BOOKING_CONFIRMED",
-        "Booking confirmed",
-        "Your seat has been reserved and the booking is confirmed.",
+        confirmed ? "BOOKING_CONFIRMED" : "BOOKING_REQUESTED",
+        confirmed ? "Booking confirmed" : "Request sent",
+        confirmed
+            ? "Your seat has been reserved and the booking is confirmed."
+            : "Your driver has 30 minutes to reply. Nothing is charged unless they accept.",
         Map.of("bookingId", String.valueOf(bookingId)));
     return response;
   }
@@ -195,6 +248,10 @@ public class BookingServiceImpl implements BookingService {
       // Any fee this booking was carrying rides on to the next one rather than being cleared by a
       // checkout that never charged.
       penalties.releaseDuesForBooking(bookingId);
+      // The seat goes back to the car the moment the booking stops holding it. A leaked hold
+      // removes inventory permanently and silently — the driver sees a full trip and nobody can
+      // say why.
+      seatHolds.release(bookingId);
       // Recorded as a free cancel if her driver was late, and as an ordinary one otherwise. The
       // grace row already knows which; the client is never asked.
       tripLifecycle.resolveLateGraceOnCancel(bookingId);
@@ -262,14 +319,34 @@ public class BookingServiceImpl implements BookingService {
         bookings
             .findStatusForUpdateByIdAndDriverAppUserId(bookingId, app.appUserId())
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
+    // A request the driver takes too long over is gone, and approving it would confirm a seat the
+    // rider has already been told she lost.
+    if (bookings.isRequestExpired(bookingId)) {
+      throw new com.routeshare.common.errors.GateConflictException(
+          "REQUEST_EXPIRED",
+          "This request lapsed before you replied, and the seat has been released.",
+          "/driver/trips");
+    }
     updateBookingStatus(
         bookingId, app.appUserId(), fromStatus, CONFIRMED, "Driver approved booking");
+    bookings.clearExpiry(bookingId);
     // A booking that needed approval reaches CONFIRMED here instead of at creation, so this is
-    // where its occurrence earns a trip.
+    // where its occurrence earns a trip — and where the card is finally held.
     bookings
         .findRouteOccurrenceId(bookingId)
         .ifPresent(tripLifecycle::ensureTripForBookedOccurrence);
     tripLifecycle.openLateGraceForBooking(bookingId);
+    bookings
+        .findFareAndPaymentMethod(bookingId)
+        .ifPresent(
+            row -> {
+              payments.authorizeForBooking(
+                  bookingId, row.getPaymentMethodId(), row.getFareEstimate());
+              var carried = penalties.applyOutstandingDues(row.getPassengerAppUserId(), bookingId);
+              if (carried.total().signum() > 0) {
+                bookings.recordAppliedDues(bookingId, carried.total());
+              }
+            });
     notifyPassenger(
         bookingId,
         "BOOKING_CONFIRMED",
@@ -289,6 +366,7 @@ public class BookingServiceImpl implements BookingService {
     updateBookingStatus(bookingId, app.appUserId(), fromStatus, REJECTED, reason);
     payments.voidForBooking(bookingId, "DRIVER_DECLINED");
     penalties.releaseDuesForBooking(bookingId);
+    seatHolds.release(bookingId);
     notifyPassenger(
         bookingId,
         "BOOKING_DECLINED",

@@ -24,5 +24,23 @@ public interface BookingFacade {
   void recordPaymentState(
       long bookingId, String paymentMethod, String paymentStatus, java.time.Instant capturedAt);
 
+  /**
+   * Closes every open booking on an occurrence its driver has called off, releasing the seats they
+   * held.
+   *
+   * <p>Status and seats only. Money is the caller's to settle — routing voids each authorisation
+   * afterwards — because putting a gateway call inside this facade would close a dependency loop
+   * between booking and payment for no gain.
+   *
+   * @return the bookings that were open, so each can be voided and its rider told
+   */
+  java.util.List<CancelledBooking> cancelOpenBookingsForOccurrence(
+      long routeOccurrenceId, String reason, long actorAppUserId);
+
+  /** The trip behind an occurrence, if one has been materialised. */
+  Optional<Long> findTripIdForOccurrence(long routeOccurrenceId);
+
   record BookingToCharge(long bookingId, BigDecimal fare) {}
+
+  record CancelledBooking(long bookingId, long passengerAppUserId, String previousStatus) {}
 }

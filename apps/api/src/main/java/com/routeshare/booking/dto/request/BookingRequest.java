@@ -18,4 +18,10 @@ public record BookingRequest(
      * The card to hold the fare on. Null means cash: nothing is authorised, and the driver collects
      * in the car (boards D23 and P09's cash variant).
      */
-    Long paymentMethodId) {}
+    Long paymentMethodId,
+    /**
+     * The named slots the rider chose (P08). Omitted or empty means "any", and the server takes the
+     * lowest free ones — a client that has never heard of seats keeps working, and nobody is left
+     * unable to book because they did not pick.
+     */
+    java.util.List<Long> seatSlotIds) {}
