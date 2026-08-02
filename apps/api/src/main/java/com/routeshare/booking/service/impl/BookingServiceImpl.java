@@ -53,6 +53,7 @@ public class BookingServiceImpl implements BookingService {
   private final ObjectMapper objectMapper;
   private final PricingFacade pricing;
   private final com.routeshare.payment.facade.PaymentFacade payments;
+  private final com.routeshare.trip.facade.TripLifecycleFacade tripLifecycle;
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
       Map.of(
           "REQUESTED",
@@ -128,6 +129,10 @@ public class BookingServiceImpl implements BookingService {
         req.seats());
     statusHistory.recordInitialStatus(
         bookingId, CONFIRMED, app.appUserId(), INITIAL_CONFIRMATION_REASON);
+    // The occurrence becomes a trip the moment somebody is actually riding on it, and the
+    // start-buffer clock opens with it. Until a seat is confirmed there is nobody for a
+    // cancellation to strand and nothing for the sweeper to protect.
+    tripLifecycle.ensureTripForBookedOccurrence(reservation.routeOccurrenceId());
     // The card is held now and charged when the driver starts. Accepting does not charge; approval
     // does not charge; a trip that never starts costs the passenger nothing.
     payments.authorizeForBooking(bookingId, req.paymentMethodId(), fareEstimate);
@@ -230,6 +235,11 @@ public class BookingServiceImpl implements BookingService {
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
     updateBookingStatus(
         bookingId, app.appUserId(), fromStatus, CONFIRMED, "Driver approved booking");
+    // A booking that needed approval reaches CONFIRMED here instead of at creation, so this is
+    // where its occurrence earns a trip.
+    bookings
+        .findRouteOccurrenceId(bookingId)
+        .ifPresent(tripLifecycle::ensureTripForBookedOccurrence);
     notifyPassenger(
         bookingId,
         "BOOKING_CONFIRMED",

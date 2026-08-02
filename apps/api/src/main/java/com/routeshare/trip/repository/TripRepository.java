@@ -121,6 +121,41 @@ public interface TripRepository extends JpaRepository<TripEntity, Long> {
   int insertArrivedPickupEvent(
       @Param("tripId") long tripId, @Param("actorAppUserId") long actorAppUserId);
 
+  /**
+   * Materialises the trip for an occurrence. Reads the route plan from the occurrence rather than
+   * taking it from the caller, so the two can never be paired wrongly.
+   *
+   * <p>{@code DO NOTHING} rather than a check-then-insert: the unique index is the only arbiter
+   * that holds when two passengers book the last two seats in the same instant.
+   */
+  @Modifying
+  @Query(
+      value =
+          """
+      INSERT INTO trip.trip(route_plan_id, route_occurrence_id, status)
+      SELECT ro.route_plan_id, ro.route_occurrence_id, 'SCHEDULED'
+      FROM routing.route_occurrence ro
+      WHERE ro.route_occurrence_id = :routeOccurrenceId
+      ON CONFLICT (route_occurrence_id) WHERE route_occurrence_id IS NOT NULL DO NOTHING
+      """,
+      nativeQuery = true)
+  int insertTripForOccurrence(@Param("routeOccurrenceId") long routeOccurrenceId);
+
+  @Query("select t.id from TripEntity t where t.routeOccurrenceId = :routeOccurrenceId")
+  Optional<Long> findTripIdByRouteOccurrenceId(@Param("routeOccurrenceId") long routeOccurrenceId);
+
+  /** The only accepted source of a start window's departure time. */
+  @Query(
+      value =
+          """
+      SELECT ro.scheduled_departure_at
+      FROM routing.route_occurrence ro
+      WHERE ro.route_occurrence_id = :routeOccurrenceId
+      """,
+      nativeQuery = true)
+  Optional<Instant> findScheduledDepartureForOccurrence(
+      @Param("routeOccurrenceId") long routeOccurrenceId);
+
   @Query(
       value =
           """
@@ -161,10 +196,14 @@ public interface TripRepository extends JpaRepository<TripEntity, Long> {
     return lockAndFindStatus(tripId).orElseThrow();
   }
 
-  default void updateStatus(long tripId, TripStatus status) {
+  /**
+   * {@code now} is passed in rather than read here: a trip's started/completed instants are the
+   * basis of later timing decisions, and every instant in this slice comes from the injected {@code
+   * Clock} so that tests can move time without sleeping and nothing can be influenced off-server.
+   */
+  default void updateStatus(long tripId, TripStatus status, Instant now) {
     TripEntity trip = findById(tripId).orElseThrow();
     trip.setStatus(status);
-    java.time.Instant now = java.time.Instant.now();
     if (status == TripStatus.STARTED) {
       trip.setStartedAt(now);
     }

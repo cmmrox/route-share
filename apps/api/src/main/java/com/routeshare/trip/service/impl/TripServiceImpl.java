@@ -13,6 +13,7 @@ import com.routeshare.trip.dto.response.DriverTripResponse;
 import com.routeshare.trip.repository.PassengerTripStateRepository;
 import com.routeshare.trip.repository.TripRepository;
 import com.routeshare.trip.service.TripService;
+import com.routeshare.trip.service.TripStartWindowService;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -30,6 +31,8 @@ public class TripServiceImpl implements TripService {
   private final PassengerTripStateRepository passengerStates;
   private final NotificationFacade notifications;
   private final com.routeshare.payment.facade.PaymentFacade payments;
+  private final TripStartWindowService startWindows;
+  private final java.time.Clock clock;
   private final TripStateMachine stateMachine = new TripStateMachine();
   private final PassengerTripStateMachine passengerStateMachine = new PassengerTripStateMachine();
 
@@ -42,7 +45,16 @@ public class TripServiceImpl implements TripService {
 
     var currentStatus = trips.findStatusForUpdate(tripId);
     stateMachine.assertTransition(currentStatus, req.status());
-    trips.updateStatus(tripId, req.status());
+    trips.updateStatus(tripId, req.status(), clock.instant());
+
+    // The start window closes in the same transaction as the transition that closed it. Left
+    // unresolved, the sweeper would find a trip that is already under way and auto-cancel it —
+    // voiding holds that were captured minutes earlier, on a car that is already moving.
+    if (req.status() == com.routeshare.trip.domain.TripStatus.STARTED) {
+      startWindows.resolveStarted(tripId);
+    } else if (req.status() == com.routeshare.trip.domain.TripStatus.CANCELLED) {
+      startWindows.resolveCancelled(tripId);
+    }
 
     // Starting the trip is what charges the cards — the promise on eleven screens. The transition
     // and the intent to capture commit together: a start that is recorded but never charged, or a
@@ -125,7 +137,8 @@ public class TripServiceImpl implements TripService {
     var currentStatus = trips.findStatusForUpdate(tripId);
     stateMachine.assertTransition(
         currentStatus, com.routeshare.trip.domain.TripStatus.ARRIVED_PICKUP);
-    trips.updateStatus(tripId, com.routeshare.trip.domain.TripStatus.ARRIVED_PICKUP);
+    trips.updateStatus(
+        tripId, com.routeshare.trip.domain.TripStatus.ARRIVED_PICKUP, clock.instant());
     trips.insertArrivedPickupEvent(tripId, app.appUserId());
     notifyPassengers(
         tripId, "DRIVER_ARRIVED", "Driver arrived", "Your driver has arrived at the pickup point.");

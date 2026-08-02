@@ -32,8 +32,21 @@ class TripServiceImplTest {
       org.mockito.Mockito.mock(com.routeshare.notification.facade.NotificationFacade.class);
   private final com.routeshare.payment.facade.PaymentFacade payments =
       org.mockito.Mockito.mock(com.routeshare.payment.facade.PaymentFacade.class);
+  private final com.routeshare.trip.service.TripStartWindowService startWindows =
+      org.mockito.Mockito.mock(com.routeshare.trip.service.TripStartWindowService.class);
+  private final java.time.Clock clock =
+      java.time.Clock.fixed(
+          java.time.Instant.parse("2026-08-02T08:00:00Z"), java.time.ZoneOffset.UTC);
   private final TripServiceImpl service =
-      new TripServiceImpl(current, identityFacade, trips, passengerStates, notifications, payments);
+      new TripServiceImpl(
+          current,
+          identityFacade,
+          trips,
+          passengerStates,
+          notifications,
+          payments,
+          startWindows,
+          clock);
 
   @BeforeEach
   void setUp() {
