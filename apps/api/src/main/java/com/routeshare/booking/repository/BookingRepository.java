@@ -54,6 +54,42 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
   @Query(
       value =
           """
+      SELECT t.trip_id
+      FROM booking.booking b
+      JOIN trip.trip t ON t.route_occurrence_id = b.route_occurrence_id
+      WHERE b.booking_id = :bookingId
+      """,
+      nativeQuery = true)
+  Optional<Long> findTripId(@Param("bookingId") long bookingId);
+
+  /**
+   * Whether the car is already moving. This is what separates a free cancel from a priced one, so
+   * it is read from the trip's own status rather than inferred from a timestamp on the booking.
+   */
+  @Query(
+      value =
+          """
+      SELECT EXISTS(
+        SELECT 1
+        FROM booking.booking b
+        JOIN trip.trip t ON t.route_occurrence_id = b.route_occurrence_id
+        WHERE b.booking_id = :bookingId
+          AND t.status IN ('STARTED', 'ARRIVED_PICKUP', 'PASSENGER_ONBOARD'))
+      """,
+      nativeQuery = true)
+  boolean isTripStartedForBooking(@Param("bookingId") long bookingId);
+
+  /** What this checkout carried over from an earlier trip, kept on the booking for the receipt. */
+  @Modifying
+  @Query(
+      value =
+          "UPDATE booking.booking SET applied_dues_amount = :amount WHERE booking_id = :bookingId",
+      nativeQuery = true)
+  int recordAppliedDues(@Param("bookingId") long bookingId, @Param("amount") BigDecimal amount);
+
+  @Query(
+      value =
+          """
       SELECT b.fare_estimate
       FROM booking.booking b
       JOIN routing.route_plan r ON r.route_plan_id = b.route_plan_id

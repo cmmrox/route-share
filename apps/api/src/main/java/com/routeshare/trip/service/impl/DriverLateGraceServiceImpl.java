@@ -41,6 +41,7 @@ public class DriverLateGraceServiceImpl implements DriverLateGraceService {
   private final DriverLateGraceRepository graces;
   private final PolicySettingService policy;
   private final NotificationFacade notifications;
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties;
   private final DomainEventPublisher events;
   private final Clock clock;
   private final double averageSpeedKmh;
@@ -52,6 +53,7 @@ public class DriverLateGraceServiceImpl implements DriverLateGraceService {
       DriverLateGraceRepository graces,
       PolicySettingService policy,
       NotificationFacade notifications,
+      com.routeshare.penalty.facade.PenaltyFacade penalties,
       DomainEventPublisher events,
       Clock clock,
       @Value("${routeshare.routing.average-speed-kmh:30}") double averageSpeedKmh) {
@@ -60,6 +62,7 @@ public class DriverLateGraceServiceImpl implements DriverLateGraceService {
     this.graces = graces;
     this.policy = policy;
     this.notifications = notifications;
+    this.penalties = penalties;
     this.events = events;
     this.clock = clock;
     this.averageSpeedKmh = averageSpeedKmh;
@@ -172,12 +175,19 @@ public class DriverLateGraceServiceImpl implements DriverLateGraceService {
         .findByBookingId(bookingId)
         .ifPresent(
             grace -> {
+              boolean free = grace.isUnlocked();
               grace.resolve(
-                  grace.isUnlocked()
+                  free
                       ? DriverLateGraceEntity.RESOLUTION_FREE_CANCELLED
                       : DriverLateGraceEntity.RESOLUTION_EXPIRED,
                   clock.instant());
               graces.save(grace);
+              if (free) {
+                // She cancelled because he was late, which is the moment his fee becomes real.
+                // Assessed on the cancel rather than on the unlock: a grace that expires while she
+                // rides anyway costs him nothing, and D41 charges him for a ride she lost.
+                penalties.assessDriverLate(bookingId);
+              }
             });
   }
 
@@ -245,12 +255,19 @@ public class DriverLateGraceServiceImpl implements DriverLateGraceService {
       boolean recorded,
       Optional<DriverLateGraceEntity> grace,
       Long secondsUntilFreeCancel) {
+    // The percentage is this module's decision; the arithmetic and the split are slice 06's. P26
+    // must never guess a figure the penalty engine would compute differently.
+    var priced = penalties.priceCancellation(bookingId, penaltyPct);
     return new CancellationTermsResponse(
         bookingId,
         free,
         reasonCode,
         explanation,
         penaltyPct,
+        priced.fareBase(),
+        priced.feeAmount(),
+        priced.victimShare(),
+        priced.platformShare(),
         recorded,
         grace.map(DriverLateGraceEntity::getPromisedPickupAt).orElse(null),
         grace.map(DriverLateGraceEntity::getUnlockedAt).orElse(null),

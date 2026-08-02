@@ -44,6 +44,7 @@ public class PickupWaitServiceImpl implements PickupWaitService {
   private final PolicySettingService policy;
   private final ReliabilityService reliability;
   private final NotificationFacade notifications;
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties;
   private final DomainEventPublisher events;
   private final MeterRegistry meters;
   private final Clock clock;
@@ -58,6 +59,7 @@ public class PickupWaitServiceImpl implements PickupWaitService {
       PolicySettingService policy,
       ReliabilityService reliability,
       NotificationFacade notifications,
+      com.routeshare.penalty.facade.PenaltyFacade penalties,
       DomainEventPublisher events,
       MeterRegistry meters,
       Clock clock) {
@@ -69,6 +71,7 @@ public class PickupWaitServiceImpl implements PickupWaitService {
     this.policy = policy;
     this.reliability = reliability;
     this.notifications = notifications;
+    this.penalties = penalties;
     this.events = events;
     this.meters = meters;
     this.clock = clock;
@@ -200,6 +203,10 @@ public class PickupWaitServiceImpl implements PickupWaitService {
                   "Your driver waited and has now left. Your seat has been released.",
                   Map.of("bookingId", String.valueOf(bookingId)));
             });
+
+    // The fee, priced and split, in the same transaction that decided the no-show happened. Slice
+    // 06 owns what it costs; this slice only owns the evidence that it did.
+    penalties.assessPassengerNoShow(bookingId, tripId);
 
     events.publish(
         DomainEvent.of(

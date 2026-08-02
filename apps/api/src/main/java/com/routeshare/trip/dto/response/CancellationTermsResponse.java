@@ -12,7 +12,11 @@ import java.time.Instant;
  *
  * @param free whether cancelling right now costs her nothing
  * @param reasonCode why, as a stable code the client maps to copy
- * @param penaltyPct what would apply if she cancels anyway; slice 06 turns this into an amount
+ * @param penaltyPct what would apply if she cancels anyway
+ * @param penaltyAmount the same rule, priced — so P26 states a figure rather than asking her to
+ *     work out 20% of a fare she is looking at on another screen
+ * @param penaltyVictimShare her driver's half of it, which P26 names explicitly
+ * @param penaltyPlatformShare ComiGo's half; the two always re-add to {@code penaltyAmount}
  * @param recordedAgainstPassenger whether this cancel goes on her record — a free cancel unlocked
  *     by a late driver does not
  */
@@ -22,6 +26,10 @@ public record CancellationTermsResponse(
     String reasonCode,
     String explanation,
     BigDecimal penaltyPct,
+    BigDecimal fareBase,
+    BigDecimal penaltyAmount,
+    BigDecimal penaltyVictimShare,
+    BigDecimal penaltyPlatformShare,
     boolean recordedAgainstPassenger,
     Instant promisedPickupAt,
     Instant freeCancelUnlockedAt,

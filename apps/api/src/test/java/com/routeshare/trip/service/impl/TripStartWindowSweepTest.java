@@ -44,6 +44,8 @@ class TripStartWindowSweepTest {
   private final PolicySettingService policy = mock(PolicySettingService.class);
   private final ReliabilityService reliability = mock(ReliabilityService.class);
   private final PaymentFacade payments = mock(PaymentFacade.class);
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties =
+      mock(com.routeshare.penalty.facade.PenaltyFacade.class);
 
   private final TripStartWindowServiceImpl service =
       new TripStartWindowServiceImpl(
@@ -52,6 +54,7 @@ class TripStartWindowSweepTest {
           policy,
           reliability,
           payments,
+          penalties,
           new SimpleMeterRegistry(),
           Clock.fixed(PAST_DEADLINE, ZoneOffset.UTC));
 

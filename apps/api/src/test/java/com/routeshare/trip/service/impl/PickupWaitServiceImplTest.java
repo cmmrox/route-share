@@ -68,6 +68,9 @@ class PickupWaitServiceImplTest {
   private final NotificationFacade notifications = mock(NotificationFacade.class);
   private final DomainEventPublisher events = mock(DomainEventPublisher.class);
 
+  private final com.routeshare.penalty.facade.PenaltyFacade penalties =
+      org.mockito.Mockito.mock(com.routeshare.penalty.facade.PenaltyFacade.class);
+
   private PickupWaitServiceImpl serviceAt(Instant now) {
     var user = new CurrentUser("driver-sub", "d@example.test", null, "Driver", Set.of("DRIVER"));
     when(current.requireCurrentUser()).thenReturn(user);
@@ -96,6 +99,7 @@ class PickupWaitServiceImplTest {
         policy,
         reliability,
         notifications,
+        penalties,
         events,
         new SimpleMeterRegistry(),
         Clock.fixed(now, ZoneOffset.UTC));

@@ -57,7 +57,7 @@ class FlywayPostgisMigrationIntegrationTest {
                   connection,
                   "SELECT 1 FROM information_schema.tables WHERE table_schema = 'routing' AND table_name = 'route_share_link'"))
           .isTrue();
-      assertThat(latestMigrationVersion(connection)).isEqualTo("032");
+      assertThat(latestMigrationVersion(connection)).isEqualTo("033");
     }
   }
 
