@@ -38,6 +38,8 @@ class AppContextServiceTest {
   private final CurrentUserProvider current = mock(CurrentUserProvider.class);
   private final IdentityFacade identity = mock(IdentityFacade.class);
   private final PassengerFacade passengers = mock(PassengerFacade.class);
+  private final com.routeshare.passenger.service.PhotoVisibilityService photos =
+      mock(com.routeshare.passenger.service.PhotoVisibilityService.class);
   private final DriverFacade drivers = mock(DriverFacade.class);
   private final BookingService bookings = mock(BookingService.class);
   private final NotificationService notifications = mock(NotificationService.class);
@@ -49,11 +51,22 @@ class AppContextServiceTest {
           current,
           identity,
           passengers,
+          photos,
           drivers,
           bookings,
           notifications,
           reliability,
           Clock.fixed(NOW, ZoneOffset.UTC));
+
+  @org.junit.jupiter.api.BeforeEach
+  void riderDefaults() {
+    // A rider who has never saved a profile is unverified with no gender on record — the same
+    // answer the facade gives for a missing row.
+    when(passengers.riderEligibilityProfile(org.mockito.ArgumentMatchers.anyLong()))
+        .thenReturn(PassengerFacade.RiderEligibilityProfile.unknown());
+    when(passengers.photoVisibilityOf(org.mockito.ArgumentMatchers.anyLong()))
+        .thenReturn("MATCHED");
+  }
 
   private CurrentUser token(Set<String> roles) {
     return new CurrentUser(

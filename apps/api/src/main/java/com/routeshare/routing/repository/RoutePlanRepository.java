@@ -96,6 +96,12 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
           )
           AND ST_DWithin(r.route_line::geography, p.pickup::geography, :pickupRadiusMeters)
           AND ST_DWithin(r.route_line::geography, p.dropoff::geography, :dropoffRadiusMeters)
+          -- Slice 08. A trip this rider cannot book never leaves the database. P36 promises that
+          -- nobody wastes a request, which only holds if the filter and the booking guard are the
+          -- same rule, and search must not say *why* a trip is absent: an absence is fine, an
+          -- enumerable policy is not.
+          AND (o.gender_policy = 'ANYONE' OR CAST(:riderVerifiedFemale AS BOOLEAN))
+          AND (o.verified_riders_only = false OR CAST(:riderVerified AS BOOLEAN))
       )
       SELECT
         "routePlanId",
@@ -136,7 +142,62 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
       @Param("bucketResolution") int bucketResolution,
       @Param("pickupBucketCell") String pickupBucketCell,
       @Param("dropoffBucketCell") String dropoffBucketCell,
-      @Param("limit") int limit);
+      @Param("limit") int limit,
+      @Param("riderVerified") boolean riderVerified,
+      @Param("riderVerifiedFemale") boolean riderVerifiedFemale);
+
+  /**
+   * The trips this rider's search just dropped, and which rule dropped each one.
+   *
+   * <p>Without this there is nothing to count. A rider filtered out of search never makes a
+   * request, so D35's "verified riders only cost you 3 requests last week" has no other source —
+   * the omission is the whole event, and it leaves no trace anywhere else.
+   *
+   * <p>Deliberately narrow: the same corridor and window predicates, inverted on eligibility only,
+   * returning ids rather than rows.
+   */
+  @Query(
+      value =
+          """
+      SELECT o.route_occurrence_id AS "routeOccurrenceId",
+             CASE WHEN o.gender_policy <> 'ANYONE' AND NOT CAST(:riderVerifiedFemale AS BOOLEAN)
+                  THEN 'NOT_ELIGIBLE_WOMEN_ONLY'
+                  ELSE 'NOT_ELIGIBLE_VERIFIED_ONLY'
+             END AS "reason"
+        FROM routing.route_occurrence o
+        JOIN routing.route_plan r ON r.route_plan_id = o.route_plan_id
+       WHERE r.status = 'PUBLISHED'
+         AND o.status = 'PUBLISHED'
+         AND o.scheduled_departure_at BETWEEN :windowStart AND :windowEnd
+         AND o.available_seats >= :seats
+         AND EXISTS (
+           SELECT 1
+             FROM routing.route_bucket_cell b
+            WHERE b.route_occurrence_id = o.route_occurrence_id
+              AND b.bucket_resolution = :bucketResolution
+              AND b.bucket_cell IN (:pickupBucketCell, :dropoffBucketCell)
+         )
+         AND NOT ((o.gender_policy = 'ANYONE' OR CAST(:riderVerifiedFemale AS BOOLEAN))
+                  AND (o.verified_riders_only = false OR CAST(:riderVerified AS BOOLEAN)))
+       LIMIT :limit
+      """,
+      nativeQuery = true)
+  List<EligibilityExclusionRow> findEligibilityExclusions(
+      @Param("windowStart") Instant windowStart,
+      @Param("windowEnd") Instant windowEnd,
+      @Param("seats") int seats,
+      @Param("bucketResolution") int bucketResolution,
+      @Param("pickupBucketCell") String pickupBucketCell,
+      @Param("dropoffBucketCell") String dropoffBucketCell,
+      @Param("limit") int limit,
+      @Param("riderVerified") boolean riderVerified,
+      @Param("riderVerifiedFemale") boolean riderVerifiedFemale);
+
+  interface EligibilityExclusionRow {
+    long getRouteOccurrenceId();
+
+    String getReason();
+  }
 
   @Query(
       value =

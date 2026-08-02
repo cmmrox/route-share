@@ -55,6 +55,7 @@ public class OccurrenceLifecycleServiceImpl implements OccurrenceLifecycleServic
   private final PenaltyFacade penalties;
   private final PaymentFacade payments;
   private final BookingFacade bookings;
+  private final com.routeshare.driver.facade.DriverFacade drivers;
   private final NotificationFacade notifications;
   private final DomainEventPublisher events;
   private final MeterRegistry meters;
@@ -72,6 +73,33 @@ public class OccurrenceLifecycleServiceImpl implements OccurrenceLifecycleServic
     ApprovalMode mode = ApprovalMode.valueOf(request.mode());
     occurrences.updateApprovalMode(routeOccurrenceId, mode.name());
     return Map.of("routeOccurrenceId", routeOccurrenceId, "approvalMode", mode.name());
+  }
+
+  // ── per-trip eligibility ─────────────────────────────────────────────────────────────────────
+
+  @Override
+  @Transactional
+  public Map<String, Object> setEligibility(
+      long routeOccurrenceId,
+      com.routeshare.routing.dto.request.OccurrenceEligibilityRequest request) {
+    long appUserId = requireOwner(routeOccurrenceId);
+    requireEditable(routeOccurrenceId);
+    var policyValue = com.routeshare.driver.domain.GenderPolicy.of(request.genderPolicy());
+    // The same gate as the account-level preference. Without it the per-trip path would be a way
+    // round the one that checks, and the women-only promise would be worth nothing.
+    if (policyValue.isWomenOnly() && !drivers.canSetWomenOnly(appUserId)) {
+      throw new com.routeshare.common.errors.GateDeniedException(
+          com.routeshare.common.errors.GateCodes.WOMEN_ONLY_NOT_AVAILABLE,
+          "Women-only trips are offered once your NIC verification is complete and confirms you"
+              + " as female.",
+          "/driver/verification");
+    }
+    occurrences.updateEligibility(
+        routeOccurrenceId, policyValue.name(), request.verifiedRidersOnly());
+    return Map.of(
+        "routeOccurrenceId", routeOccurrenceId,
+        "genderPolicy", policyValue.name(),
+        "verifiedRidersOnly", request.verifiedRidersOnly());
   }
 
   // ── freeze ───────────────────────────────────────────────────────────────────────────────────

@@ -52,6 +52,8 @@ class BookingServiceTest {
       org.mockito.Mockito.mock(com.routeshare.penalty.facade.PenaltyFacade.class);
   private final com.routeshare.booking.service.SeatHoldService seatHolds =
       org.mockito.Mockito.mock(com.routeshare.booking.service.SeatHoldService.class);
+  private final com.routeshare.routing.service.EligibilityService eligibility =
+      org.mockito.Mockito.mock(com.routeshare.routing.service.EligibilityService.class);
   private final com.routeshare.platform.service.PolicySettingService policy =
       org.mockito.Mockito.mock(com.routeshare.platform.service.PolicySettingService.class);
   private final java.time.Clock clock =
@@ -72,6 +74,7 @@ class BookingServiceTest {
           tripLifecycle,
           penalties,
           seatHolds,
+          eligibility,
           policy,
           clock);
 

@@ -72,9 +72,9 @@ export const mobileApiEndpoints = [
   {"method": "GET", "path": "/api/v1/driver/payouts/{payoutBatchItemId}", "status": "PLANNED_SLICE_14", "operationId": "getDriverPayoutsByPayoutBatchItemId"},
   {"method": "GET", "path": "/api/v1/driver/penalties", "status": "IMPLEMENTED", "operationId": "getDriverPenalties"},
   {"method": "POST", "path": "/api/v1/driver/penalties/{penaltyId}/dispute", "status": "IMPLEMENTED", "operationId": "postDriverPenaltiesByPenaltyIdDispute"},
-  {"method": "GET", "path": "/api/v1/driver/preferences", "status": "PLANNED_SLICE_08", "operationId": "getDriverPreferences"},
-  {"method": "PUT", "path": "/api/v1/driver/preferences", "status": "PLANNED_SLICE_08", "operationId": "putDriverPreferences"},
-  {"method": "GET", "path": "/api/v1/driver/preferences/eligibility-impact", "status": "PLANNED_SLICE_08", "operationId": "getDriverPreferencesEligibilityImpact"},
+  {"method": "GET", "path": "/api/v1/driver/preferences", "status": "IMPLEMENTED", "operationId": "getDriverPreferences"},
+  {"method": "PUT", "path": "/api/v1/driver/preferences", "status": "IMPLEMENTED", "operationId": "putDriverPreferences"},
+  {"method": "GET", "path": "/api/v1/driver/preferences/eligibility-impact", "status": "IMPLEMENTED", "operationId": "getDriverPreferencesEligibilityImpact"},
   {"method": "GET", "path": "/api/v1/driver/profile", "status": "IMPLEMENTED", "operationId": "getDriverProfile"},
   {"method": "POST", "path": "/api/v1/driver/push-registrations", "status": "IMPLEMENTED", "operationId": "postDriverPushRegistrations"},
   {"method": "GET", "path": "/api/v1/driver/ratings", "status": "IMPLEMENTED", "operationId": "getDriverRatings"},
@@ -231,11 +231,11 @@ export const mobileApiEndpoints = [
   {"method": "GET", "path": "/api/v1/passenger/trusted-contacts/{contactId}", "status": "IMPLEMENTED", "operationId": "getPassengerTrustedContactsByContactId"},
   {"method": "PUT", "path": "/api/v1/passenger/trusted-contacts/{contactId}", "status": "IMPLEMENTED", "operationId": "putPassengerTrustedContactsByContactId"},
   {"method": "DELETE", "path": "/api/v1/passenger/trusted-contacts/{contactId}", "status": "IMPLEMENTED", "operationId": "deletePassengerTrustedContactsByContactId"},
-  {"method": "GET", "path": "/api/v1/passenger/verification", "status": "PLANNED_SLICE_08", "operationId": "getPassengerVerification"},
+  {"method": "GET", "path": "/api/v1/passenger/verification", "status": "IMPLEMENTED", "operationId": "getPassengerVerification"},
   {"method": "POST", "path": "/api/v1/passenger/verification/documents", "status": "IMPLEMENTED", "operationId": "postPassengerVerificationDocuments"},
-  {"method": "POST", "path": "/api/v1/passenger/verification/sessions", "status": "PLANNED_SLICE_08", "operationId": "postPassengerVerificationSessions"},
+  {"method": "POST", "path": "/api/v1/passenger/verification/sessions", "status": "IMPLEMENTED", "operationId": "postPassengerVerificationSessions"},
   {"method": "GET", "path": "/api/v1/passenger/verification/status", "status": "IMPLEMENTED", "operationId": "getPassengerVerificationStatus"},
-  {"method": "POST", "path": "/api/v1/passenger/verification/submit", "status": "PLANNED_SLICE_08", "operationId": "postPassengerVerificationSubmit"},
+  {"method": "POST", "path": "/api/v1/passenger/verification/submit", "status": "IMPLEMENTED", "operationId": "postPassengerVerificationSubmit"},
   {"method": "POST", "path": "/api/v1/payments/intents", "status": "INTERNAL_NOT_FOR_CLIENTS", "operationId": "postPaymentsIntents"},
   {"method": "POST", "path": "/api/v1/pricing/estimate-by-route", "status": "IMPLEMENTED", "operationId": "postPricingEstimateByRoute"},
   {"method": "GET", "path": "/api/v1/public/trip-shares/{token}", "status": "IMPLEMENTED", "operationId": "getPublicTripSharesByToken"},
@@ -255,7 +255,12 @@ export const mobileApiEndpoints = [
   {"method": "PUT", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/approval-mode", "status": "IMPLEMENTED", "operationId": "putDriverRouteOccurrenceApprovalMode"},
   {"method": "GET", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/editability", "status": "IMPLEMENTED", "operationId": "getDriverRouteOccurrenceEditability"},
   {"method": "GET", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/cancellation-terms", "status": "IMPLEMENTED", "operationId": "getDriverRouteOccurrenceCancellationTerms"},
-  {"method": "POST", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/cancel", "status": "IMPLEMENTED", "operationId": "postDriverRouteOccurrenceCancel"}
+  {"method": "POST", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/cancel", "status": "IMPLEMENTED", "operationId": "postDriverRouteOccurrenceCancel"},
+  {"method": "POST", "path": "/api/v1/passenger/verification/steps/{stepKey}/upload-url", "status": "IMPLEMENTED", "operationId": "postPassengerVerificationStepUploadUrl"},
+  {"method": "POST", "path": "/api/v1/passenger/verification/steps/{stepKey}/submit", "status": "IMPLEMENTED", "operationId": "postPassengerVerificationStepSubmit"},
+  {"method": "GET", "path": "/api/v1/passenger/profile/photo-visibility", "status": "IMPLEMENTED", "operationId": "getPassengerPhotoVisibility"},
+  {"method": "PUT", "path": "/api/v1/passenger/profile/photo-visibility", "status": "IMPLEMENTED", "operationId": "putPassengerPhotoVisibility"},
+  {"method": "PUT", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/eligibility", "status": "IMPLEMENTED", "operationId": "putDriverRouteOccurrenceEligibility"}
 ] as const satisfies readonly MobileApiEndpoint[];
 
 export const adminApiEndpoints = [
@@ -287,6 +292,8 @@ export const adminApiEndpoints = [
   {"method": "POST", "path": "/api/v1/admin/payments/{paymentIntentId}/refund"},
   {"method": "POST", "path": "/api/v1/admin/payments/{paymentIntentId}/void"},
   {"method": "GET", "path": "/api/v1/admin/penalties"},
+  {"method": "GET", "path": "/api/v1/admin/passenger-verifications/pending"},
+  {"method": "POST", "path": "/api/v1/admin/passenger-verifications/{sessionId}/decide"},
   {"method": "GET", "path": "/api/v1/admin/penalty-disputes"},
   {"method": "POST", "path": "/api/v1/admin/penalty-disputes/{disputeId}/decide"},
   {"method": "POST", "path": "/api/v1/admin/reports/export"},
@@ -334,7 +341,7 @@ export const mobileApiPlannedEndpoints = mobileApiEndpoints.filter((e) =>
 
 export const apiContractCounts = {
   mobile: mobileApiEndpoints.length,
-  mobileImplemented: 120,
-  mobilePlanned: 91,
+  mobileImplemented: 163,
+  mobilePlanned: 61,
   admin: adminApiEndpoints.length,
 } as const;

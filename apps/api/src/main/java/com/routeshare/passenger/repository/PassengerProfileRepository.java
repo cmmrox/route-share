@@ -11,6 +11,51 @@ import org.springframework.transaction.annotation.Transactional;
 public interface PassengerProfileRepository extends JpaRepository<PassengerProfileEntity, Long> {
   boolean existsByAppUserId(long appUserId);
 
+  Optional<PassengerProfileEntity> findEntityByAppUserId(long appUserId);
+
+  /**
+   * Creates the profile row if a rider has never saved one.
+   *
+   * <p>Verification, photo visibility and the eligibility inputs all hang off this row, and a rider
+   * who signed up by phone OTP and went straight to booking has no other reason to have created it
+   * — so a missing row must not mean "not verified and no settings", it must mean "defaults".
+   */
+  @Transactional
+  @Modifying
+  @Query(
+      value =
+          """
+          INSERT INTO passenger.passenger_profile(app_user_id, full_name)
+          SELECT :appUserId, COALESCE(u.display_name, 'Passenger')
+            FROM identity.app_user u
+           WHERE u.app_user_id = :appUserId
+          ON CONFLICT (app_user_id) DO NOTHING
+          """,
+      nativeQuery = true)
+  void ensureExists(@Param("appUserId") long appUserId);
+
+  /** The three eligibility and disclosure facts, for callers that need nothing else. */
+  @Query(
+      value =
+          """
+          SELECT verification_level AS "verificationLevel", gender AS "gender",
+                 photo_visibility AS "photoVisibility", photo_url AS "photoUrl"
+            FROM passenger.passenger_profile
+           WHERE app_user_id = :appUserId
+          """,
+      nativeQuery = true)
+  Optional<RiderProfileRow> findRiderProfile(@Param("appUserId") long appUserId);
+
+  interface RiderProfileRow {
+    String getVerificationLevel();
+
+    String getGender();
+
+    String getPhotoVisibility();
+
+    String getPhotoUrl();
+  }
+
   @Query(
       value =
           """

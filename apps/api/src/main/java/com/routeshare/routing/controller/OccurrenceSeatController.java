@@ -53,6 +53,15 @@ public class OccurrenceSeatController {
     return ApiResponse.ok(lifecycle.setApprovalMode(routeOccurrenceId, request));
   }
 
+  /** D13 — who can ride on this one trip. */
+  @PutMapping("/driver/route-occurrences/{routeOccurrenceId}/eligibility")
+  @PreAuthorize("hasAnyRole('DRIVER','ADMIN','SUPER_ADMIN')")
+  ApiResponse<Map<String, Object>> setEligibility(
+      @PathVariable long routeOccurrenceId,
+      @Valid @RequestBody com.routeshare.routing.dto.request.OccurrenceEligibilityRequest request) {
+    return ApiResponse.ok(lifecycle.setEligibility(routeOccurrenceId, request));
+  }
+
   /** D09's banner. */
   @GetMapping("/driver/route-occurrences/{routeOccurrenceId}/editability")
   @PreAuthorize("hasAnyRole('DRIVER','ADMIN','SUPER_ADMIN')")

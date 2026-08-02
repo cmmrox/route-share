@@ -111,7 +111,7 @@ New errors: `WOMEN_ONLY_NOT_AVAILABLE`, `NOT_ELIGIBLE_WOMEN_ONLY`, `NOT_ELIGIBLE
 
 ## Database / migration changes
 
-**`V034__preferences_verification_eligibility.sql`**
+**`V035__preferences_verification_eligibility.sql`** — `V034` was taken by slice 07's booking depth.
 
 - New `driver.driving_preference`:
   `driver_profile_id PK FK`, `gender_policy TEXT CHECK (gender_policy IN ('ANYONE','WOMEN_ONLY')) DEFAULT 'ANYONE'`,
@@ -134,11 +134,22 @@ New errors: `WOMEN_ONLY_NOT_AVAILABLE`, `NOT_ELIGIBLE_WOMEN_ONLY`, `NOT_ELIGIBLE
   The `capture_source` CHECK allowing only `CAMERA` is the schema-level expression of `POLICY.verifyCameraOnly`.
 - `driver.driver_profile` — add `gender TEXT` (written by driver KYC review; needed for the women-only set gate).
 - Index `idx_occurrence_eligibility ON routing.route_occurrence(gender_policy, verified_riders_only) WHERE status = 'PUBLISHED'`.
+- New `routing.eligibility_denial`: `id`, `route_occurrence_id FK`, `app_user_id FK`, `reason`,
+  `surface TEXT CHECK (surface IN ('SEARCH','BOOKING'))`, `denied_at`. **Added during implementation
+  and not in the original plan.** D35's "cost you 3 requests last week" cannot be derived from
+  anything else: a rider filtered out of search never makes a request, so the omission is the whole
+  event and leaves no other trace. Without this table `eligibility-impact` would return zero for
+  every driver forever.
 
 ## Configuration / environment changes
 
-- `ROUTESHARE_VERIFICATION_SESSION_TTL_MINUTES` (default `30`).
+- Policy setting `VERIFICATION_SESSION_TTL_MINUTES` (default `30`). **Specified as an environment
+  variable and implemented as a policy setting instead:** D1 forbids a rule the product states from
+  also existing as a value in a file, and support needs to change it without a deploy.
 - Policy setting `VERIFY_CAMERA_ONLY` (default `true`) — leaving a switch, since a support-assisted path may be needed later.
+- Policy setting `VERIFIED_RIDES_SHARE_PCT` (default `34`) — P28's "how many more requests get accepted", stated once.
+- `ROUTESHARE_VERIFICATION_REVIEW_SLA_HOURS` (default `24`) — an alerting threshold rather than a
+  product rule, so this one stayed an env var. Drives the pending-over-SLA gauge.
 - No new secrets; captures use the existing S3 presigned lifecycle.
 
 ## UI / UX requirements
@@ -175,7 +186,7 @@ Backend slice. The contract must supply:
 - `apps/api/.../booking/**` — booking eligibility guard, request-list sort key.
 - `apps/api/.../admin/**` — passenger verification decisions.
 - `apps/api/.../platform/**` — `/me/context` additions.
-- `apps/api/src/main/resources/db/migration/V034__preferences_verification_eligibility.sql`.
+- `apps/api/src/main/resources/db/migration/V035__preferences_verification_eligibility.sql`.
 - `apps/api/src/test/java/**` — eligibility matrix tests, camera-only enforcement, photo visibility matrix, women-only set/book gates, verification-never-blocks-booking test.
 - `docs/api/mobile-app.openapi.json`, `docs/api/admin-web.openapi.json`, `packages/api-contracts/src/index.ts`.
 
@@ -193,11 +204,11 @@ cd apps/api && ./mvnw spotless:apply spotless:check verify
 ```
 
 ```bash
-cd apps/api && ./mvnw -Dtest='EligibilityServiceTest,EligibilitySearchIT,PhotoVisibilityMatrixTest,CameraOnlyEnforcementTest,WomenOnlyGateTest,VerificationNeverBlocksBookingTest' test
+cd apps/api && ./mvnw -Dtest='EligibilityServiceTest,EligibilitySearchIT,PhotoVisibilityMatrixTest,CameraOnlyEnforcementTest,WomenOnlyGateTest,VerificationNeverBlocksBookingTest,EligibilityPrivacyTest' test
 ```
 
 ```bash
-bash scripts/simulation/verify-eligibility.sh
+ROUTESHARE_API_BASE=http://localhost:8088 ROUTESHARE_DB_NAME=routeshare_comigo bash scripts/simulation/verify-eligibility.sh
 ```
 
 The smoke must prove: an unverified rider's search never returns a verified-only trip; a male rider's
@@ -216,16 +227,17 @@ the id; an unverified rider can still book an ordinary trip; a non-female driver
 
 ## Done criteria
 
-- [ ] All six driving preferences stored, defaulted onto occurrences, overridable until frozen.
-- [ ] Women-only can only be set by a verified female driver and booked by a verified female rider.
-- [ ] Verified-only trips are absent from an unverified rider's search and refused at booking with a typed reason.
-- [ ] Verification is provably not a booking gate.
-- [ ] Four capture steps, camera-only at the schema level, session-bound, human-reviewed.
-- [ ] Photo visibility honours all three modes and the driver asymmetry.
-- [ ] Verified riders sort first in the driver's request list.
-- [ ] `eligibility-impact` returns real counts for D35.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] All six driving preferences stored, defaulted onto occurrences, overridable until frozen.
+- [x] Women-only can only be set by a verified female driver and booked by a verified female rider — and the per-trip override checks the same gate, or it would be the way round it.
+- [x] Verified-only trips are absent from an unverified rider's search and refused at booking with a typed reason. Search never says why.
+- [x] Verification is provably not a booking gate (`VerificationNeverBlocksBookingTest`).
+- [x] Four capture steps, camera-only at the schema level, session-bound, human-reviewed.
+- [x] Photo visibility honours all three modes and the driver asymmetry.
+- [x] Verified riders sort first in the driver's request list.
+- [x] `eligibility-impact` returns real counts for D35, from `routing.eligibility_denial`.
+- [x] `./mvnw spotless:check verify` green — 551 tests, 0 skipped, JaCoCo held.
+- [x] Runtime: `verify-eligibility.sh` 50/50 against a live stack with `V035` applied.
+- [x] Tracking docs updated; focused commit ready.
 
 ## Suggested commit message
 

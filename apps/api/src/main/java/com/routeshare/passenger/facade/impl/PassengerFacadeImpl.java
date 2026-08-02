@@ -24,4 +24,20 @@ public class PassengerFacadeImpl implements PassengerFacade {
         .map(c -> new TrustedContact(c.getName(), c.getPhone()))
         .toList();
   }
+
+  @Override
+  public RiderEligibilityProfile riderEligibilityProfile(long appUserId) {
+    return passengers
+        .findRiderProfile(appUserId)
+        .map(row -> new RiderEligibilityProfile(row.getVerificationLevel(), row.getGender()))
+        .orElseGet(RiderEligibilityProfile::unknown);
+  }
+
+  @Override
+  public String photoVisibilityOf(long appUserId) {
+    return passengers
+        .findRiderProfile(appUserId)
+        .map(PassengerProfileRepository.RiderProfileRow::getPhotoVisibility)
+        .orElse("MATCHED");
+  }
 }

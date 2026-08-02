@@ -63,6 +63,7 @@ public class RouteServiceImpl implements RouteService {
   private final MatchingSettingsRepository matchingSettings;
   private final com.routeshare.pricing.facade.PricingFacade pricing;
   private final com.routeshare.routing.service.SeatInventoryService seatInventory;
+  private final com.routeshare.routing.service.EligibilityService eligibility;
 
   public RouteServiceImpl(
       CurrentUserProvider current,
@@ -95,6 +96,7 @@ public class RouteServiceImpl implements RouteService {
         null,
         null,
         null,
+        null,
         null);
   }
 
@@ -122,8 +124,8 @@ public class RouteServiceImpl implements RouteService {
             req.availableSeats());
     long scheduleRuleId = scheduleRules.insertOneTimeRule(routePlanId, req.departureTime());
     long routeOccurrenceId =
-        occurrences.insertOccurrence(
-            routePlanId, generatedOccurrences.getFirst(), req.availableSeats());
+        insertOccurrenceWithDriverDefaults(
+            routePlanId, generatedOccurrences.getFirst(), req.availableSeats(), driverId);
     // The seats exist from the moment the trip does. Generating them lazily at first booking would
     // make the seat picker empty on a trip nobody has booked yet — which is every new trip.
     seatInventory.generateFor(routeOccurrenceId);
@@ -145,7 +147,11 @@ public class RouteServiceImpl implements RouteService {
   @Transactional
   public List<RouteSearchResponse> search(RouteSearchRequest req) {
     validateSearchRequest(req);
-    identityFacade.upsertFromToken(current.requireCurrentUser());
+    long appUserId = identityFacade.upsertFromToken(current.requireCurrentUser()).appUserId();
+    // Asked once rather than per candidate row: the answer is the same for every trip in this
+    // search, and it is what the query filters on.
+    boolean riderVerified = eligibility.isVerified(appUserId);
+    boolean riderVerifiedFemale = eligibility.isVerifiedFemale(appUserId);
     MatchingDefaults defaults = matchingDefaults();
     int pickupRadiusMeters =
         clamp(
@@ -165,25 +171,56 @@ public class RouteServiceImpl implements RouteService {
     Instant windowEnd =
         req.requestedDepartureTime().plus(Duration.ofMinutes(departureWindowMinutes));
 
-    return routes
-        .findSearchCandidates(
-            req.pickup().longitude(),
-            req.pickup().latitude(),
-            req.dropoff().longitude(),
-            req.dropoff().latitude(),
-            windowStart,
-            windowEnd,
-            req.seats(),
-            pickupRadiusMeters,
-            dropoffRadiusMeters,
-            ROUTE_BUCKET_RESOLUTION,
-            routeBucketCellGenerator.cellFor(req.pickup(), ROUTE_BUCKET_RESOLUTION),
-            routeBucketCellGenerator.cellFor(req.dropoff(), ROUTE_BUCKET_RESOLUTION),
-            limit)
-        .stream()
-        .map(row -> toSearchResponse(row, req.seats()))
-        .sorted(Comparator.comparing(RouteSearchResponse::score).reversed())
-        .toList();
+    String pickupCell = routeBucketCellGenerator.cellFor(req.pickup(), ROUTE_BUCKET_RESOLUTION);
+    String dropoffCell = routeBucketCellGenerator.cellFor(req.dropoff(), ROUTE_BUCKET_RESOLUTION);
+
+    List<RouteSearchResponse> results =
+        routes
+            .findSearchCandidates(
+                req.pickup().longitude(),
+                req.pickup().latitude(),
+                req.dropoff().longitude(),
+                req.dropoff().latitude(),
+                windowStart,
+                windowEnd,
+                req.seats(),
+                pickupRadiusMeters,
+                dropoffRadiusMeters,
+                ROUTE_BUCKET_RESOLUTION,
+                pickupCell,
+                dropoffCell,
+                limit,
+                riderVerified,
+                riderVerifiedFemale)
+            .stream()
+            .map(row -> toSearchResponse(row, req.seats()))
+            .sorted(Comparator.comparing(RouteSearchResponse::score).reversed())
+            .toList();
+
+    // The rider is told nothing — the trips are simply not there. The rows are for the driver, who
+    // is the only person a silent omission actually costs.
+    if (!riderVerified || !riderVerifiedFemale) {
+      eligibility.recordSearchDenials(
+          appUserId,
+          routes
+              .findEligibilityExclusions(
+                  windowStart,
+                  windowEnd,
+                  req.seats(),
+                  ROUTE_BUCKET_RESOLUTION,
+                  pickupCell,
+                  dropoffCell,
+                  limit,
+                  riderVerified,
+                  riderVerifiedFemale)
+              .stream()
+              .map(
+                  row ->
+                      new com.routeshare.routing.service.EligibilityService.SearchExclusion(
+                          row.getRouteOccurrenceId(), row.getReason()))
+              .toList());
+    }
+    return results;
   }
 
   @Override
@@ -278,7 +315,8 @@ public class RouteServiceImpl implements RouteService {
     for (Instant departure : departures) {
       long occurrenceId =
           seatInventory.generateFor(
-              occurrences.insertOccurrence(routePlanId, departure, req.availableSeats()));
+              insertOccurrenceWithDriverDefaults(
+                  routePlanId, departure, req.availableSeats(), driverId));
       occurrenceIds.add(occurrenceId);
       cells.forEach(
           cell -> bucketCells.insertCell(routePlanId, occurrenceId, ROUTE_BUCKET_RESOLUTION, cell));
@@ -353,8 +391,11 @@ public class RouteServiceImpl implements RouteService {
     int generated = 0;
     for (Instant departure : departures) {
       long occurrenceId =
-          occurrences.insertOccurrence(
-              rule.getRoutePlanId(), departure, latest.getAvailableSeats());
+          insertOccurrenceWithDriverDefaults(
+              rule.getRoutePlanId(),
+              departure,
+              latest.getAvailableSeats(),
+              driverFacade.findDriverProfileIdByAppUserId(app.appUserId()).orElseThrow());
       seatInventory.generateFor(occurrenceId);
       bucketCells.copyCellsToOccurrence(latest.getOccurrenceId(), occurrenceId);
       generated++;
@@ -363,6 +404,23 @@ public class RouteServiceImpl implements RouteService {
         "routeScheduleRuleId", ruleId,
         "routePlanId", rule.getRoutePlanId(),
         "generatedOccurrences", generated);
+  }
+
+  /**
+   * A new trip inherits D35. Copied onto the occurrence rather than joined through at query time,
+   * so a preference changed on Tuesday cannot change the terms of a trip booked on Monday — and so
+   * a driver who has never opened the preferences screen still publishes coherent terms.
+   */
+  private long insertOccurrenceWithDriverDefaults(
+      long routePlanId, Instant departureAt, int availableSeats, long driverProfileId) {
+    var defaults = driverFacade.tripDefaultsFor(driverProfileId);
+    return occurrences.insertOccurrence(
+        routePlanId,
+        departureAt,
+        availableSeats,
+        defaults.genderPolicy(),
+        defaults.verifiedRidersOnly(),
+        defaults.approveEachRequest() ? "APPROVE_EACH" : "INSTANT");
   }
 
   private RecurringRouteResponse toRecurringResponse(

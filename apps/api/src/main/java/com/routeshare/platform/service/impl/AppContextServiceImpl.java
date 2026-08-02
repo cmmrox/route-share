@@ -13,6 +13,7 @@ import com.routeshare.identity.domain.AppUser;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.notification.service.NotificationService;
 import com.routeshare.passenger.facade.PassengerFacade;
+import com.routeshare.passenger.service.PhotoVisibilityService;
 import com.routeshare.platform.dto.response.ActiveModeResponse;
 import com.routeshare.platform.dto.response.AppContextResponse;
 import com.routeshare.platform.service.AppContextService;
@@ -56,6 +57,7 @@ public class AppContextServiceImpl implements AppContextService {
   private final CurrentUserProvider currentUsers;
   private final IdentityFacade identity;
   private final PassengerFacade passengers;
+  private final PhotoVisibilityService photos;
   private final DriverFacade drivers;
   private final BookingService bookings;
   private final NotificationService notifications;
@@ -76,15 +78,18 @@ public class AppContextServiceImpl implements AppContextService {
         token.displayName(),
         token.phone(),
         token.email(),
-        null, // photo URL arrives with slice 08's visibility rules
+        photos
+            .resolve(user.appUserId(), user.appUserId(), PhotoVisibilityService.ViewContext.SELF)
+            .orElse(null),
         availableModes(token, user.appUserId(), hasPassengerProfile, driverStatus, suspended),
         activeModeDefault(user.appUserId(), suspended),
         driver(user.appUserId(), driverStatus, suspended),
-        // Verification level and photo visibility still arrive with slice 08; the prepay flag is
-        // slice 05's, and it is read from the month's counter rather than stored separately so
-        // there is one number and nothing to fall out of step with it.
+        // The prepay flag is slice 05's, and it is read from the month's counter rather than
+        // stored separately so there is one number and nothing to fall out of step with it.
         new AppContextResponse.Passenger(
-            "NONE", "MATCHED", reliability.prepayRequired(user.appUserId())),
+            passengers.riderEligibilityProfile(user.appUserId()).verificationLevel(),
+            passengers.photoVisibilityOf(user.appUserId()),
+            reliability.prepayRequired(user.appUserId())),
         account(user, suspended),
         suspended ? null : activeTrip(),
         new AppContextResponse.Money(CURRENCY, BigDecimal.ZERO, BigDecimal.ZERO), // slices 06, 11
@@ -156,8 +161,9 @@ public class AppContextServiceImpl implements AppContextService {
       gates =
           drivers.publishGatesFor(appUserId).stream().map(AppContextServiceImpl::toGate).toList();
     }
-    // canSetWomenOnly is slice 08's preference gate.
-    return new AppContextResponse.Driver(driverStatus, gates, canPublish, false);
+    // D35 hides the toggle rather than showing one that always fails.
+    return new AppContextResponse.Driver(
+        driverStatus, gates, canPublish, drivers.canSetWomenOnly(appUserId));
   }
 
   private static AppContextResponse.Gate toGate(DriverGate gate) {

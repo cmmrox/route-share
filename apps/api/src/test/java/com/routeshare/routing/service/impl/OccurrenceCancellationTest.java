@@ -102,6 +102,7 @@ class OccurrenceCancellationTest {
         penalties,
         payments,
         bookings,
+        mock(com.routeshare.driver.facade.DriverFacade.class),
         notifications,
         events,
         new SimpleMeterRegistry(),

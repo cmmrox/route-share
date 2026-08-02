@@ -89,6 +89,12 @@ routeshare:
     # sitting in limbo, and reconciliation surfaces it to operations.
     auth-validity-hours: ${ROUTESHARE_PAYMENT_AUTH_VALIDITY_HOURS:168}
     capture-max-attempts: ${ROUTESHARE_PAYMENT_CAPTURE_MAX_ATTEMPTS:3}
+  verification:
+    # How long a rider may wait on an identity decision before operations should be told. Only the
+    # alerting threshold lives here; the session TTL and the camera-only switch are policy settings
+    # (VERIFICATION_SESSION_TTL_MINUTES, VERIFY_CAMERA_ONLY), because a rule the product states is
+    # runtime-configurable by decision D1 and must not also exist as a second value in a file.
+    review-sla-hours: ${ROUTESHARE_VERIFICATION_REVIEW_SLA_HOURS:24}
   google-maps:
     enabled: ${GOOGLE_MAPS_ENABLED:false}
     server-api-key: ${GOOGLE_MAPS_SERVER_API_KEY:}

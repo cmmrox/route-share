@@ -12,17 +12,18 @@ identity verification with camera-only capture, and profile photo visibility.
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V034`.
+- Migration series applied through `V035` (slice 07 took `V034`; this slice is `V035`).
 - Test accounts: verified female rider, verified male rider, unverified rider, verified female driver, verified male driver.
 
 ## Automated test coverage
 
-- `EligibilityServiceTest` — the full rider × trip matrix.
-- `EligibilitySearchIT` — ineligible trips absent from search, not filtered client-side.
-- `PhotoVisibilityMatrixTest` — PUBLIC/MATCHED/HIDDEN × viewer × booking state, including the driver asymmetry.
-- `CameraOnlyEnforcementTest` — non-camera capture source refused at the schema level.
-- `WomenOnlyGateTest` — set gate and book gate.
-- `VerificationNeverBlocksBookingTest` — an unverified rider books an ordinary trip.
+- `EligibilityServiceTest` (14) — the full rider × trip matrix, including that an ordinary trip never reads the rider's profile at all and that women-only is the reason given when both rules apply.
+- `EligibilitySearchIT` (7) — ineligible trips absent from the *database's* answer, against real PostGIS; plus the two schema-level guards (`capture_source` admits only `CAMERA`, one live session per rider).
+- `PhotoVisibilityMatrixTest` (11) — PUBLIC/MATCHED/HIDDEN × viewer × booking state, including the driver asymmetry.
+- `CameraOnlyEnforcementTest` (7) — non-camera capture refused, no presigned URL minted for it, the rule honoured as a switch, and the session-expiry and already-pending paths.
+- `WomenOnlyGateTest` (5) — the set gate, and that it applies to the toggle alone.
+- `VerificationNeverBlocksBookingTest` (4) — an unverified rider books and is authorised as normal, and an ineligible booking never touches inventory.
+- `EligibilityPrivacyTest` (3) — cases 08-21 and 08-22 asserted structurally: no response DTO anywhere declares a gender or NIC field, and no DTO ships a photo URL beside a raw visibility.
 
 ## Maestro automation
 
@@ -63,6 +64,31 @@ owned by the mobile feature plan and must link back to this QA file.
 - Attempt to read another user's NIC image via a presigned URL after expiry; confirm refusal.
 - Confirm search omission does not leak the reason (a rider must not be able to enumerate a driver's policy).
 - Confirm verification decisions are audited with per-step outcomes and the gender written.
+
+## Run of record — 2026-08-02
+
+`scripts/simulation/verify-eligibility.sh` → **50 passed, 0 failed, 0 skipped**, on PostgreSQL 5434
+/ API 8088 against `routeshare_comigo`, with object storage enabled so the camera-capture accept
+path ran rather than skipping.
+
+Three defects the run found, all in the script rather than the backend, and all fixed:
+
+- `psql` prints the command tag after a `RETURNING` row, so every fixture occurrence id read back as
+  `"85\nINSERT 0 1"` and every booking was refused as an invalid body.
+- The fixture occurrences carried no `route_bucket_cell` rows, so **search omitted all three,
+  including the ordinary one** — every negative check passed while proving nothing. The
+  "the ordinary trip is there" assertion exists to catch exactly that, and did. The fixture now
+  clones a real seeded occurrence and derives its search coordinates from that plan's stored line.
+- An `app_user` row is created lazily on the first authenticated call, so seeding a rider's
+  verification level before that updated nothing.
+
+## Deviation from the task file
+
+`ROUTESHARE_VERIFICATION_SESSION_TTL_MINUTES` is a **policy setting**
+(`VERIFICATION_SESSION_TTL_MINUTES`), not an environment variable, alongside `VERIFY_CAMERA_ONLY`.
+D1 forbids a rule the product states from also existing as a value in a file, and support needs both
+changeable without a deploy. `ROUTESHARE_VERIFICATION_REVIEW_SLA_HOURS` stayed an env var because it
+is an alerting threshold rather than a product rule.
 
 ## Evidence to collect
 

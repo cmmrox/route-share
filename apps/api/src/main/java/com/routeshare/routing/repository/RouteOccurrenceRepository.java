@@ -9,18 +9,44 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface RouteOccurrenceRepository extends JpaRepository<RouteOccurrenceEntity, Long> {
+  /**
+   * Slice 08: the eligibility and approval terms are copied onto the trip at generation.
+   *
+   * <p>Copied rather than joined through to the driver's preferences at query time, because a
+   * preference changed on Tuesday must not change the terms of a trip somebody booked on Monday.
+   */
   @Query(
       value =
           """
-      INSERT INTO routing.route_occurrence(route_plan_id, scheduled_departure_at, available_seats)
-      VALUES (:routePlanId, :departureAt, :availableSeats)
+      INSERT INTO routing.route_occurrence(route_plan_id, scheduled_departure_at, available_seats,
+                                           gender_policy, verified_riders_only, approval_mode)
+      VALUES (:routePlanId, :departureAt, :availableSeats, :genderPolicy, :verifiedRidersOnly,
+              :approvalMode)
       RETURNING route_occurrence_id
       """,
       nativeQuery = true)
   long insertOccurrence(
       @Param("routePlanId") long routePlanId,
       @Param("departureAt") Instant departureAt,
-      @Param("availableSeats") int availableSeats);
+      @Param("availableSeats") int availableSeats,
+      @Param("genderPolicy") String genderPolicy,
+      @Param("verifiedRidersOnly") boolean verifiedRidersOnly,
+      @Param("approvalMode") String approvalMode);
+
+  /** D13/D35 per-trip override, refused once the trip is frozen by its first confirmed booking. */
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE routing.route_occurrence
+         SET gender_policy = :genderPolicy, verified_riders_only = :verifiedRidersOnly
+       WHERE route_occurrence_id = :routeOccurrenceId
+      """,
+      nativeQuery = true)
+  int updateEligibility(
+      @Param("routeOccurrenceId") long routeOccurrenceId,
+      @Param("genderPolicy") String genderPolicy,
+      @Param("verifiedRidersOnly") boolean verifiedRidersOnly);
 
   @Query(
       value =

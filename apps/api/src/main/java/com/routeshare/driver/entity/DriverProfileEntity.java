@@ -32,4 +32,16 @@ public class DriverProfileEntity {
 
   @Column(name = "verification_status", nullable = false)
   private String verificationStatus;
+
+  /**
+   * Written by KYC review from the NIC, never self-declared. Its only use is D35's women-only set
+   * gate — "Your NIC verifies you as female" — so it is null until a reviewer has read the card.
+   */
+  @Column(name = "gender")
+  private String gender;
+
+  public DriverProfileEntity(
+      Long id, Long appUserId, String displayName, String verificationStatus) {
+    this(id, appUserId, displayName, verificationStatus, null);
+  }
 }
