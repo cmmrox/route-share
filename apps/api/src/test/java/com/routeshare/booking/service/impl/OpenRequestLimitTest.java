@@ -75,6 +75,7 @@ class OpenRequestLimitTest {
         mock(com.routeshare.penalty.facade.PenaltyFacade.class),
         seatHolds,
         mock(com.routeshare.routing.service.EligibilityService.class),
+        mock(com.routeshare.routing.service.PickupPointService.class),
         policy,
         java.time.Clock.systemUTC());
   }

@@ -1690,14 +1690,14 @@
             "description": "OK"
           },
           "400": {
+            "description": "Bad request",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
-            },
-            "description": "Bad request"
+            }
           },
           "401": {
             "description": "Unauthorized"
@@ -1720,7 +1720,8 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "description": "Trip-start radius semantics from slice 09. The 20 km ceiling is a product decision - past it a driver is making a trip for the rider rather than sharing one - so no operator setting may exceed it, and the default must be one of the offered chips."
       }
     },
     "/api/v1/admin/notifications/broadcasts": {
@@ -2526,6 +2527,106 @@
           },
           "409": {
             "description": "Already decided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/pickup-points": {
+      "get": {
+        "tags": [
+          "Pickup Points"
+        ],
+        "summary": "Curated and derived pickup points",
+        "description": "The curated tier is worth an operator's time because it is the only one that produces a real landmark name: a derived point can only be labelled by its address, since a Places displayName is Pro-tier and one Pro field re-prices the whole request.",
+        "operationId": "PickupPointsList",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CURATED",
+                "DERIVED",
+                "LEARNED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminPickupPoint"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Pickup Points"
+        ],
+        "summary": "Add a curated landmark",
+        "description": "Every curated corner is a corner that never reaches Google Places. Seeding the launch corridors is a cost control as much as a data load.",
+        "operationId": "PickupPointsCreate",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminPickupPointRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPickupPoint"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
             "content": {
               "application/json": {
                 "schema": {
@@ -5792,6 +5893,72 @@
           "decision"
         ]
       },
+      "AdminPickupPoint": {
+        "type": "object",
+        "properties": {
+          "pickupPointId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sideHint": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "CURATED",
+              "DERIVED",
+              "LEARNED"
+            ]
+          }
+        }
+      },
+      "AdminPickupPointRequest": {
+        "type": "object",
+        "required": [
+          "label",
+          "position"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sideHint": {
+            "type": "string",
+            "description": "Kerb side, opposite the pharmacy."
+          },
+          "position": {
+            "type": "object",
+            "required": [
+              "latitude",
+              "longitude"
+            ],
+            "properties": {
+              "latitude": {
+                "type": "number"
+              },
+              "longitude": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
       "AdminPolicySetting": {
         "type": "object",
         "properties": {
@@ -6640,18 +6807,18 @@
       },
       "MatchingSettings": {
         "type": "object",
-        "required": [
-          "defaultSearchRadiusMeters",
-          "maxSearchRadiusMeters",
-          "defaultDepartureWindowMinutes",
-          "maxDepartureWindowMinutes"
-        ],
         "properties": {
-          "defaultSearchRadiusMeters": {
+          "defaultTripStartRadiusMeters": {
             "type": "integer"
           },
-          "maxSearchRadiusMeters": {
+          "maxTripStartRadiusMeters": {
             "type": "integer"
+          },
+          "allowedTripStartRadiiMeters": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
           },
           "defaultDepartureWindowMinutes": {
             "type": "integer"

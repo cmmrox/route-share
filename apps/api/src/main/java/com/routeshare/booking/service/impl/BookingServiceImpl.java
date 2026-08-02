@@ -57,6 +57,7 @@ public class BookingServiceImpl implements BookingService {
   private final com.routeshare.penalty.facade.PenaltyFacade penalties;
   private final com.routeshare.booking.service.SeatHoldService seatHolds;
   private final com.routeshare.routing.service.EligibilityService eligibility;
+  private final com.routeshare.routing.service.PickupPointService pickupPoints;
   private final com.routeshare.platform.service.PolicySettingService policy;
   private final java.time.Clock clock;
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
@@ -158,6 +159,15 @@ public class BookingServiceImpl implements BookingService {
     // happened to read the counter first.
     var heldSeats =
         seatHolds.hold(bookingId, reservation.routeOccurrenceId(), req.seatSlotIds(), req.seats());
+    // Slice 09: a coordinate is not an instruction. Resolved once, here, at the only moment it is
+    // needed — never per search keystroke and never per location ping, which is what keeps the
+    // Places bill at a few hundred calls a month instead of thirty thousand.
+    var pickupPoint = resolvePointQuietly(req.pickupLat(), req.pickupLng());
+    var dropoffPoint = resolvePointQuietly(req.dropLat(), req.dropLng());
+    bookings.recordPickupPoints(
+        bookingId,
+        pickupPoint == null ? null : pickupPoint.pickupPointId(),
+        dropoffPoint == null ? null : dropoffPoint.pickupPointId());
 
     // D13: instant-book confirms now; approve-each waits for the driver and lapses if he never
     // answers. The mode belongs to the occurrence, so the client never gets to choose it.
@@ -212,6 +222,8 @@ public class BookingServiceImpl implements BookingService {
     response.put("totalDue", fareEstimate.add(appliedDues.total()));
     response.put("approvalMode", approvalMode.name());
     response.put("seats", heldSeats);
+    response.put("pickupPoint", pickupPoint);
+    response.put("dropoffPoint", dropoffPoint);
     response.put("expiresAt", expiresAt);
     response.put(
         "secondsRemaining",
@@ -542,6 +554,19 @@ public class BookingServiceImpl implements BookingService {
       return objectMapper.writeValueAsString(response);
     } catch (JsonProcessingException e) {
       throw new IllegalStateException("Unable to store idempotency response", e);
+    }
+  }
+
+  /**
+   * A booking must never fail because a landmark could not be named. The rider can still be picked
+   * up at the pin she dropped; she just does not get the sentence that makes it easier.
+   */
+  private com.routeshare.routing.dto.response.PickupPointResponse resolvePointQuietly(
+      double latitude, double longitude) {
+    try {
+      return pickupPoints.resolve(latitude, longitude);
+    } catch (RuntimeException ex) {
+      return null;
     }
   }
 

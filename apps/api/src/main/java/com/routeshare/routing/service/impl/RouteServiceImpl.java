@@ -3,6 +3,8 @@ package com.routeshare.routing.service.impl;
 import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.driver.facade.DriverFacade;
 import com.routeshare.identity.facade.IdentityFacade;
+import com.routeshare.routing.domain.MatchTier;
+import com.routeshare.routing.domain.RideSearchSort;
 import com.routeshare.routing.domain.RouteBucketCellGenerator;
 import com.routeshare.routing.domain.RouteMatchCandidate;
 import com.routeshare.routing.domain.RouteMatchScorer;
@@ -13,6 +15,7 @@ import com.routeshare.routing.dto.request.RoutePublishRequest;
 import com.routeshare.routing.dto.request.RouteSearchRequest;
 import com.routeshare.routing.dto.response.DriverRouteResponse;
 import com.routeshare.routing.dto.response.RecurringRouteResponse;
+import com.routeshare.routing.dto.response.RideSearchPageResponse;
 import com.routeshare.routing.dto.response.RouteSearchResponse;
 import com.routeshare.routing.repository.MatchingSettingsRepository;
 import com.routeshare.routing.repository.RouteBucketCellRepository;
@@ -26,7 +29,6 @@ import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,9 +45,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class RouteServiceImpl implements RouteService {
   public static final int MIN_ROUTE_POINTS = 2;
   public static final int MAX_ROUTE_POINTS = 500;
-  private static final int DEFAULT_SEARCH_RADIUS_METERS = 1_000;
+  private static final int DEFAULT_TRIP_START_RADIUS_METERS = 20_000;
   private static final int DEFAULT_DEPARTURE_WINDOW_MINUTES = 120;
   private static final int DEFAULT_SEARCH_LIMIT = 20;
+  private static final int MAX_SEARCH_PAGE_SIZE = 100;
+  private static final int METERS_PER_KM = 1_000;
   private static final int ROUTE_BUCKET_RESOLUTION = 3;
 
   private final CurrentUserProvider current;
@@ -64,6 +68,8 @@ public class RouteServiceImpl implements RouteService {
   private final com.routeshare.pricing.facade.PricingFacade pricing;
   private final com.routeshare.routing.service.SeatInventoryService seatInventory;
   private final com.routeshare.routing.service.EligibilityService eligibility;
+  private final io.micrometer.core.instrument.MeterRegistry meters;
+  private final com.routeshare.platform.service.PolicySettingService policy;
 
   public RouteServiceImpl(
       CurrentUserProvider current,
@@ -97,6 +103,8 @@ public class RouteServiceImpl implements RouteService {
         null,
         null,
         null,
+        null,
+        new io.micrometer.core.instrument.simple.SimpleMeterRegistry(),
         null);
   }
 
@@ -144,48 +152,160 @@ public class RouteServiceImpl implements RouteService {
         routeOccurrenceId);
   }
 
+  /**
+   * P03 to P05, in one statement.
+   *
+   * <p>The radius is measured from the driver's <b>trip origin</b> — the change that defines this
+   * slice. A driver whose route happens to pass the rider's corner but who starts 40 km away is
+   * making a trip for her, not sharing one, and the old pickup-proximity filter could not tell the
+   * two apart.
+   */
   @Transactional
-  public List<RouteSearchResponse> search(RouteSearchRequest req) {
+  public RideSearchPageResponse search(RouteSearchRequest req) {
     validateSearchRequest(req);
     long appUserId = identityFacade.upsertFromToken(current.requireCurrentUser()).appUserId();
     // Asked once rather than per candidate row: the answer is the same for every trip in this
     // search, and it is what the query filters on.
     boolean riderVerified = eligibility.isVerified(appUserId);
     boolean riderVerifiedFemale = eligibility.isVerifiedFemale(appUserId);
+
     MatchingDefaults defaults = matchingDefaults();
-    int pickupRadiusMeters =
-        clamp(
-            valueOrDefault(req.pickupRadiusMeters(), defaults.defaultSearchRadiusMeters()),
-            defaults.maxSearchRadiusMeters());
-    int dropoffRadiusMeters =
-        clamp(
-            valueOrDefault(req.dropoffRadiusMeters(), defaults.defaultSearchRadiusMeters()),
-            defaults.maxSearchRadiusMeters());
+    int radiusMeters = resolveRadiusMeters(req.radiusKm(), defaults);
     int departureWindowMinutes =
         clamp(
             valueOrDefault(req.departureWindowMinutes(), defaults.defaultDepartureWindowMinutes()),
             defaults.maxDepartureWindowMinutes());
-    int limit = valueOrDefault(req.limit(), DEFAULT_SEARCH_LIMIT);
+    RideSearchSort sort = RideSearchSort.of(req.sort());
+    int page = Math.max(0, valueOrDefault(req.page(), 0));
+    int size = clamp(valueOrDefault(req.size(), DEFAULT_SEARCH_LIMIT), MAX_SEARCH_PAGE_SIZE);
+
     Instant windowStart =
         req.requestedDepartureTime().minus(Duration.ofMinutes(departureWindowMinutes));
     Instant windowEnd =
         req.requestedDepartureTime().plus(Duration.ofMinutes(departureWindowMinutes));
-
     String pickupCell = routeBucketCellGenerator.cellFor(req.pickup(), ROUTE_BUCKET_RESOLUTION);
     String dropoffCell = routeBucketCellGenerator.cellFor(req.dropoff(), ROUTE_BUCKET_RESOLUTION);
 
+    // One extra row decides `hasMore` without a second count over the same predicates.
+    var rows =
+        routes.findSearchCandidates(
+            req.pickup().longitude(),
+            req.pickup().latitude(),
+            req.dropoff().longitude(),
+            req.dropoff().latitude(),
+            windowStart,
+            windowEnd,
+            req.seats(),
+            radiusMeters,
+            ROUTE_BUCKET_RESOLUTION,
+            pickupCell,
+            dropoffCell,
+            sort.name(),
+            page * size,
+            size + 1,
+            riderVerified,
+            riderVerifiedFemale);
+
+    boolean hasMore = rows.size() > size;
+    var pageRows = hasMore ? rows.subList(0, size) : rows;
+    // Both aggregates ride on every row of the same statement, so an empty page reports zero rather
+    // than inventing a number from a second query against a table that has moved on.
+    long totalMatching = pageRows.isEmpty() ? 0 : pageRows.getFirst().getTotalMatching();
+    long filteredOut = pageRows.isEmpty() ? 0 : pageRows.getFirst().getFilteredOut();
+
     List<RouteSearchResponse> results =
+        pageRows.stream().map(row -> toSearchResponse(row, req.seats())).toList();
+
+    recordSearchDenials(
+        appUserId,
+        req,
+        windowStart,
+        windowEnd,
+        radiusMeters,
+        pickupCell,
+        dropoffCell,
+        size,
+        riderVerified,
+        riderVerifiedFemale);
+
+    searchesCounter(radiusMeters, sort).increment();
+    meters.summary("routeshare_search_results_returned").record(results.size());
+    meters.summary("routeshare_search_filtered_out_by_radius").record(filteredOut);
+
+    return new RideSearchPageResponse(
+        results,
+        totalMatching,
+        filteredOut,
+        radiusMeters / METERS_PER_KM,
+        defaults.maxTripStartRadiusMeters() / METERS_PER_KM,
+        defaults.allowedTripStartRadiiMeters().stream().map(m -> m / METERS_PER_KM).toList(),
+        sort.name(),
+        page,
+        size,
+        hasMore);
+  }
+
+  /**
+   * P03 offers three chips and nothing between them, so an unoffered radius is refused rather than
+   * clamped. Clamping would answer a question the rider did not ask and label the answer with the
+   * number she did.
+   */
+  private int resolveRadiusMeters(Integer requestedKm, MatchingDefaults defaults) {
+    if (requestedKm == null) {
+      return defaults.defaultTripStartRadiusMeters();
+    }
+    int meters = requestedKm * METERS_PER_KM;
+    if (meters > defaults.maxTripStartRadiusMeters()) {
+      throw new com.routeshare.common.errors.GateDeniedException(
+          "RADIUS_EXCEEDS_MAXIMUM",
+          "The furthest we search is "
+              + defaults.maxTripStartRadiusMeters() / METERS_PER_KM
+              + " km. Past that a driver is making a trip for you, not sharing one.",
+          "/passenger/search");
+    }
+    if (!defaults.allowedTripStartRadiiMeters().contains(meters)) {
+      throw new com.routeshare.common.errors.GateDeniedException(
+          "RADIUS_NOT_ALLOWED",
+          "Choose one of the offered distances: "
+              + defaults.allowedTripStartRadiiMeters().stream()
+                  .map(m -> (m / METERS_PER_KM) + " km")
+                  .collect(java.util.stream.Collectors.joining(", ")),
+          "/passenger/search");
+    }
+    return meters;
+  }
+
+  /**
+   * Slice 08's silent omissions, recorded for the driver.
+   *
+   * <p>The rider is told nothing — search omits, it does not explain. These rows exist because a
+   * driver deserves to know what "verified riders only" actually cost him, and an omission leaves
+   * no other trace.
+   */
+  private void recordSearchDenials(
+      long appUserId,
+      RouteSearchRequest req,
+      Instant windowStart,
+      Instant windowEnd,
+      int radiusMeters,
+      String pickupCell,
+      String dropoffCell,
+      int limit,
+      boolean riderVerified,
+      boolean riderVerifiedFemale) {
+    if (riderVerified && riderVerifiedFemale) {
+      return;
+    }
+    eligibility.recordSearchDenials(
+        appUserId,
         routes
-            .findSearchCandidates(
+            .findEligibilityExclusions(
                 req.pickup().longitude(),
                 req.pickup().latitude(),
-                req.dropoff().longitude(),
-                req.dropoff().latitude(),
                 windowStart,
                 windowEnd,
                 req.seats(),
-                pickupRadiusMeters,
-                dropoffRadiusMeters,
+                radiusMeters,
                 ROUTE_BUCKET_RESOLUTION,
                 pickupCell,
                 dropoffCell,
@@ -193,34 +313,11 @@ public class RouteServiceImpl implements RouteService {
                 riderVerified,
                 riderVerifiedFemale)
             .stream()
-            .map(row -> toSearchResponse(row, req.seats()))
-            .sorted(Comparator.comparing(RouteSearchResponse::score).reversed())
-            .toList();
-
-    // The rider is told nothing — the trips are simply not there. The rows are for the driver, who
-    // is the only person a silent omission actually costs.
-    if (!riderVerified || !riderVerifiedFemale) {
-      eligibility.recordSearchDenials(
-          appUserId,
-          routes
-              .findEligibilityExclusions(
-                  windowStart,
-                  windowEnd,
-                  req.seats(),
-                  ROUTE_BUCKET_RESOLUTION,
-                  pickupCell,
-                  dropoffCell,
-                  limit,
-                  riderVerified,
-                  riderVerifiedFemale)
-              .stream()
-              .map(
-                  row ->
-                      new com.routeshare.routing.service.EligibilityService.SearchExclusion(
-                          row.getRouteOccurrenceId(), row.getReason()))
-              .toList());
-    }
-    return results;
+            .map(
+                row ->
+                    new com.routeshare.routing.service.EligibilityService.SearchExclusion(
+                        row.getRouteOccurrenceId(), row.getReason()))
+            .toList());
   }
 
   @Override
@@ -516,6 +613,20 @@ public class RouteServiceImpl implements RouteService {
     }
   }
 
+  /**
+   * A rising filtered-out ratio is a supply problem — too few drivers starting near enough — and it
+   * is invisible in every other metric, because those searches look like ordinary short lists.
+   */
+  private io.micrometer.core.instrument.Counter searchesCounter(
+      int radiusMeters, RideSearchSort sort) {
+    return meters.counter(
+        "routeshare_ride_searches_total",
+        "radiusKm",
+        String.valueOf(radiusMeters / METERS_PER_KM),
+        "sort",
+        sort.name());
+  }
+
   private void validateSearchRequest(RouteSearchRequest req) {
     validateCoordinate(req.pickup());
     validateCoordinate(req.dropoff());
@@ -574,6 +685,24 @@ public class RouteServiceImpl implements RouteService {
             ex);
       }
     }
+    // The tier is read off the discount the quote actually applied, never recomputed from the
+    // percentage. Recomputing is how a rider ends up reading "Full route" beside an 8% discount.
+    MatchTier tier =
+        fare != null
+            ? MatchTier.of(
+                com.routeshare.pricing.domain.MatchDiscountTier.valueOf(fare.matchTier()))
+            // No live rate band means no quote and so no applied discount to read the tier from.
+            // Falling back to the same three policy thresholds keeps the single source intact.
+            : MatchTier.of(
+                java.math.BigDecimal.valueOf(score.overlapPercent()),
+                policy.decimal(
+                    com.routeshare.platform.domain.PolicyKey.MATCH_DISCOUNT_THRESHOLD_HIGH),
+                policy.decimal(
+                    com.routeshare.platform.domain.PolicyKey.MATCH_DISCOUNT_THRESHOLD_MID),
+                policy.decimal(
+                    com.routeshare.platform.domain.PolicyKey.MATCH_DISCOUNT_THRESHOLD_LOW));
+    double startsKmAway = round(row.getStartsMetersAway() / METERS_PER_KM);
+
     return new RouteSearchResponse(
         row.getRoutePlanId(),
         row.getRouteOccurrenceId(),
@@ -598,7 +727,30 @@ public class RouteServiceImpl implements RouteService {
         row.getVehicleMake(),
         row.getVehicleModel(),
         row.getVehicleRegistration(),
-        row.getVehicleSeatCount());
+        row.getVehicleSeatCount(),
+        startsKmAway,
+        tier.name(),
+        tier.label(),
+        overlapSummary(score.overlapPercent(), matchedMeters, row.getOriginLabel()),
+        row.getVehicleColour(),
+        row.getVehicleClassKey(),
+        row.getRatePerKm(),
+        row.getClassBandMin(),
+        row.getClassBandMax(),
+        row.getApprovalMode(),
+        !"ANYONE".equals(row.getGenderPolicy()),
+        row.getVerifiedRidersOnly());
+  }
+
+  /**
+   * P04's one-line explanation. A percentage is a number a rider has to interpret; "8.4 km of your
+   * 9 km trip is on his road" is a claim she can check against the map in front of her.
+   */
+  private String overlapSummary(double overlapPercent, long matchedMeters, String originLabel) {
+    long km = Math.round(matchedMeters / (double) METERS_PER_KM);
+    return km <= 0
+        ? "Shares the start of your route from " + originLabel
+        : km + " km of your trip is on this driver's route (" + Math.round(overlapPercent) + "%)";
   }
 
   private void validateCoordinate(CoordinateRequest coordinate) {
@@ -648,8 +800,13 @@ public class RouteServiceImpl implements RouteService {
           .map(
               s ->
                   new MatchingDefaults(
-                      s.getDefaultSearchRadiusMeters(),
-                      s.getMaxSearchRadiusMeters(),
+                      s.getDefaultTripStartRadiusMeters(),
+                      s.getMaxTripStartRadiusMeters(),
+                      s.getAllowedTripStartRadiiMeters() == null
+                          ? FALLBACK_ALLOWED_RADII_METERS
+                          : java.util.Arrays.stream(s.getAllowedTripStartRadiiMeters())
+                              .boxed()
+                              .toList(),
                       s.getDefaultDepartureWindowMinutes(),
                       s.getMaxDepartureWindowMinutes()))
           .orElseGet(RouteServiceImpl::fallbackMatchingDefaults);
@@ -657,17 +814,21 @@ public class RouteServiceImpl implements RouteService {
     return fallbackMatchingDefaults();
   }
 
+  private static final List<Integer> FALLBACK_ALLOWED_RADII_METERS = List.of(5_000, 10_000, 20_000);
+
   private static MatchingDefaults fallbackMatchingDefaults() {
     return new MatchingDefaults(
-        DEFAULT_SEARCH_RADIUS_METERS,
-        DEFAULT_SEARCH_RADIUS_METERS * 5,
+        DEFAULT_TRIP_START_RADIUS_METERS,
+        DEFAULT_TRIP_START_RADIUS_METERS,
+        FALLBACK_ALLOWED_RADII_METERS,
         DEFAULT_DEPARTURE_WINDOW_MINUTES,
         DEFAULT_DEPARTURE_WINDOW_MINUTES * 6);
   }
 
   private record MatchingDefaults(
-      int defaultSearchRadiusMeters,
-      int maxSearchRadiusMeters,
+      int defaultTripStartRadiusMeters,
+      int maxTripStartRadiusMeters,
+      List<Integer> allowedTripStartRadiiMeters,
       int defaultDepartureWindowMinutes,
       int maxDepartureWindowMinutes) {}
 

@@ -3532,6 +3532,90 @@
           }
         ],
         "operationId": "getDriverRouteOccurrencesByRouteOccurrenceIdShare"
+      },
+      "post": {
+        "tags": [
+          "Trip Operations"
+        ],
+        "parameters": [
+          {
+            "name": "routeOccurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "operationId": "postDriverRouteOccurrenceShare",
+        "summary": "Short link and QR for a published trip (D14)",
+        "x-routeshare-status": "IMPLEMENTED",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripShareCode"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden - body carries {code, message, actionPath}"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Trip Operations"
+        ],
+        "parameters": [
+          {
+            "name": "routeOccurrenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "operationId": "deleteDriverRouteOccurrenceShare",
+        "summary": "Revoke the share code (D14)",
+        "x-routeshare-status": "IMPLEMENTED",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripShareCode"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden - body carries {code, message, actionPath}"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/driver/routes": {
@@ -8356,15 +8440,15 @@
         "tags": [
           "Ride Search"
         ],
-        "summary": "Usual commute and live match count (P02)",
-        "x-routeshare-status": "PLANNED_SLICE_09",
+        "summary": "Saved commute with its live match count (P02)",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/UsualCommute"
                 }
               }
             }
@@ -8373,24 +8457,29 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden - body carries {code, message, actionPath}"
           }
         },
-        "operationId": "getPassengerCommute"
+        "operationId": "getPassengerCommute",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       },
       "put": {
         "tags": [
           "Ride Search"
         ],
-        "summary": "Set or clear the usual commute",
-        "x-routeshare-status": "PLANNED_SLICE_09",
+        "summary": "Save the usual commute (P02)",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/UsualCommute"
                 }
               }
             }
@@ -8399,7 +8488,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden - body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -8407,12 +8496,48 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/UsualCommuteRequest"
               }
             }
           }
         },
-        "operationId": "putPassengerCommute"
+        "operationId": "putPassengerCommute",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Passenger Profile"
+        ],
+        "operationId": "deletePassengerCommute",
+        "summary": "Clear the saved commute",
+        "x-routeshare-status": "IMPLEMENTED",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsualCommute"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden - body carries {code, message, actionPath}"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/directions": {
@@ -9569,15 +9694,15 @@
         "tags": [
           "Pickup Points"
         ],
-        "summary": "Resolve a coordinate to a named landmark",
-        "x-routeshare-status": "PLANNED_SLICE_09",
+        "summary": "Resolve a coordinate to a landmark (P07/P08/P12)",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/PickupPoint"
                 }
               }
             }
@@ -9586,7 +9711,7 @@
             "description": "Unauthenticated"
           },
           "403": {
-            "description": "Forbidden — body carries {code, message, actionPath}"
+            "description": "Forbidden - body carries {code, message, actionPath}"
           }
         },
         "requestBody": {
@@ -9594,12 +9719,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/Coordinate"
               }
             }
           }
         },
-        "operationId": "postPassengerPickupPointsResolve"
+        "operationId": "postPassengerPickupPointsResolve",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/v1/passenger/places/autocomplete": {
@@ -10063,7 +10193,7 @@
         "tags": [
           "Ride Search"
         ],
-        "summary": "Create ride search",
+        "summary": "Search rides by trip-start radius (P03-P05)",
         "operationId": "postPassengerRideSearches",
         "security": [
           {
@@ -10071,54 +10201,27 @@
           }
         ],
         "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RideSearch"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RideSearchResult"
-                  }
+                  "$ref": "#/components/schemas/RideSearchPage"
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden - body carries {code, message, actionPath}"
+          },
+          "400": {
+            "description": "RADIUS_NOT_ALLOWED or RADIUS_EXCEEDS_MAXIMUM"
+          },
+          "429": {
+            "description": "Too many searches - the hottest query in the product is rate limited"
           }
         },
         "requestBody": {
@@ -11886,6 +11989,82 @@
         },
         "operationId": "postPricingEstimateByRoute",
         "description": "Prices the on-route distance between two points on the driver's stored route line, at that vehicle's assessed per-km rate, less the route-match discount. The driver's cut is withheld — this is a passenger surface."
+      }
+    },
+    "/api/v1/public/trip-links/{shortCode}": {
+      "get": {
+        "tags": [
+          "Trip Operations"
+        ],
+        "summary": "Resolve a shared trip code",
+        "description": "Public: the point of a shared link is that it works for somebody who has never installed the app. A revoked or unknown code answers 404 rather than 410 - 410 would confirm the code once existed, which is the one bit an enumerator wants.",
+        "x-routeshare-status": "IMPLEMENTED",
+        "operationId": "getPublicTripLink",
+        "parameters": [
+          {
+            "name": "shortCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripShareCode"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or revoked"
+          }
+        }
+      }
+    },
+    "/api/v1/public/trip-links/{shortCode}/qr.png": {
+      "get": {
+        "tags": [
+          "Trip Operations"
+        ],
+        "summary": "QR image for a shared trip code",
+        "x-routeshare-status": "IMPLEMENTED",
+        "operationId": "getPublicTripLinkQr",
+        "parameters": [
+          {
+            "name": "shortCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PNG",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or revoked"
+          }
+        }
       }
     },
     "/api/v1/public/trip-shares/{token}": {
@@ -15233,6 +15412,46 @@
           }
         }
       },
+      "PickupPoint": {
+        "type": "object",
+        "description": "Where to actually stand. source is returned because it is operationally load-bearing: the cost model depends on CURATED and DERIVED dominating and Places being a last resort, and a hit rate you cannot see is one you cannot defend.",
+        "required": [
+          "label",
+          "latitude",
+          "longitude",
+          "source"
+        ],
+        "properties": {
+          "pickupPointId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sideHint": {
+            "type": "string",
+            "description": "Kerb side, opposite the pharmacy - the half a coordinate cannot carry."
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "CURATED",
+              "DERIVED",
+              "LEARNED"
+            ]
+          }
+        }
+      },
       "PickupWait": {
         "description": "D19 / D19b from the driver's side and P38 / P38b from hers — the same clock.",
         "type": "object",
@@ -15723,69 +15942,123 @@
           }
         }
       },
-      "RideSearch": {
+      "RideSearchPage": {
         "type": "object",
+        "description": "filteredOutByRadius is computed in the same statement as the results. A silently short list reads as 'no drivers', which is a different and much worse message than '6 more drivers start further than 20 km away'.",
+        "required": [
+          "results",
+          "totalMatching",
+          "filteredOutByRadius",
+          "radiusKm",
+          "maxRadiusKm",
+          "page",
+          "size",
+          "hasMore"
+        ],
         "properties": {
-          "id": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RideSearchResult"
+            }
+          },
+          "totalMatching": {
             "type": "integer",
             "format": "int64"
           },
-          "pickup": {
-            "$ref": "#/components/schemas/AddressedLocation"
+          "filteredOutByRadius": {
+            "type": "integer",
+            "format": "int64"
           },
-          "dropoff": {
-            "$ref": "#/components/schemas/AddressedLocation"
-          },
-          "requestedDepartureAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "seatsRequested": {
+          "radiusKm": {
             "type": "integer"
           },
-          "status": {
+          "maxRadiusKm": {
+            "type": "integer"
+          },
+          "radiusOptionsKm": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "sort": {
             "type": "string"
           },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
+          "page": {
+            "type": "integer"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "hasMore": {
+            "type": "boolean"
           }
         }
       },
       "RideSearchRequest": {
         "type": "object",
+        "description": "radiusKm is measured from the driver's trip ORIGIN, not from how close his route passes the rider. Only the offered values are accepted - an unoffered radius is refused rather than clamped, because clamping answers a question the rider did not ask.",
         "required": [
           "pickup",
           "dropoff",
-          "requestedDepartureAt",
-          "seatsRequested"
+          "requestedDepartureTime",
+          "seats"
         ],
         "properties": {
           "pickup": {
-            "$ref": "#/components/schemas/AddressedLocation"
+            "$ref": "#/components/schemas/Coordinate"
           },
           "dropoff": {
-            "$ref": "#/components/schemas/AddressedLocation"
+            "$ref": "#/components/schemas/Coordinate"
           },
-          "requestedDepartureAt": {
+          "requestedDepartureTime": {
             "type": "string",
             "format": "date-time"
           },
-          "seatsRequested": {
+          "seats": {
             "type": "integer",
             "minimum": 1
+          },
+          "radiusKm": {
+            "type": "integer",
+            "enum": [
+              5,
+              10,
+              20
+            ]
+          },
+          "departureWindowMinutes": {
+            "type": "integer"
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "BEST_MATCH",
+              "CHEAPEST",
+              "SOONEST"
+            ]
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
           }
         }
       },
       "RideSearchResult": {
         "type": "object",
-        "description": "A scored ride match. Ride search is stateless; results are returned by POST /ride-searches and carried client-side into ride detail.",
+        "description": "One P04 card, complete. The client does no arithmetic: every figure here is computed once, server-side, from the same inputs that will price the booking. startsKmAway is a distance and originLabel is a place name - the driver's actual origin coordinate is never emitted, because for most drivers it is their home.",
         "properties": {
-          "routePlanId": {
+          "routeOccurrenceId": {
             "type": "integer",
             "format": "int64"
           },
-          "routeOccurrenceId": {
+          "routePlanId": {
             "type": "integer",
             "format": "int64"
           },
@@ -15802,42 +16075,44 @@
           "availableSeats": {
             "type": "integer"
           },
-          "routeLengthMeters": {
+          "startsKmAway": {
             "type": "number"
           },
-          "pickupRouteFraction": {
-            "type": "number"
+          "matchTier": {
+            "type": "string",
+            "enum": [
+              "FULL_ROUTE",
+              "MOST_OF_ROUTE",
+              "PART_OF_ROUTE",
+              "SHORT_HOP"
+            ]
           },
-          "dropoffRouteFraction": {
-            "type": "number"
-          },
-          "pickupDistanceMeters": {
-            "type": "number"
-          },
-          "dropoffDistanceMeters": {
-            "type": "number"
-          },
-          "overlapDistanceMeters": {
-            "type": "number"
+          "matchTierLabel": {
+            "type": "string"
           },
           "overlapPercent": {
             "type": "number"
           },
-          "score": {
-            "type": "number"
-          },
-          "explanation": {
+          "overlapSummary": {
             "type": "string"
-          },
-          "matchedDistanceMeters": {
-            "type": "integer",
-            "format": "int64"
           },
           "estimatedFare": {
             "type": "number"
           },
           "currency": {
             "type": "string"
+          },
+          "fare": {
+            "type": "object"
+          },
+          "ratePerKm": {
+            "type": "number"
+          },
+          "classBandMinRate": {
+            "type": "number"
+          },
+          "classBandMaxRate": {
+            "type": "number"
           },
           "driverName": {
             "type": "string"
@@ -15848,11 +16123,30 @@
           "vehicleModel": {
             "type": "string"
           },
+          "vehicleColour": {
+            "type": "string"
+          },
           "vehicleRegistration": {
             "type": "string"
           },
           "vehicleSeatCount": {
             "type": "integer"
+          },
+          "vehicleClassKey": {
+            "type": "string"
+          },
+          "approvalMode": {
+            "type": "string",
+            "enum": [
+              "INSTANT",
+              "APPROVE_EACH"
+            ]
+          },
+          "womenOnly": {
+            "type": "boolean"
+          },
+          "verifiedRidersOnly": {
+            "type": "boolean"
           }
         }
       },
@@ -16363,6 +16657,34 @@
           }
         }
       },
+      "TripShareCode": {
+        "type": "object",
+        "description": "D14. Ten base32 characters, about fifty bits - unguessable rather than merely unique, because the code is pasted into group chats.",
+        "required": [
+          "routeOccurrenceId",
+          "shortCode"
+        ],
+        "properties": {
+          "routeOccurrenceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "shortCode": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 10
+          },
+          "shortUrl": {
+            "type": "string"
+          },
+          "qrPngUrl": {
+            "type": "string"
+          },
+          "revoked": {
+            "type": "boolean"
+          }
+        }
+      },
       "TripStartCapture": {
         "type": "object",
         "description": "One booking's outcome when the trip started. A declined card does not stop the trip: the driver is at the wheel and the other passengers are in the car.",
@@ -16498,6 +16820,94 @@
             "additionalProperties": {
               "type": "string"
             }
+          }
+        }
+      },
+      "UsualCommute": {
+        "type": "object",
+        "description": "P02. The match count runs the ordinary search over the saved pair, so the number on the dashboard and the list it opens cannot disagree.",
+        "required": [
+          "saved",
+          "liveMatchCount"
+        ],
+        "properties": {
+          "saved": {
+            "type": "boolean"
+          },
+          "originLabel": {
+            "type": "string"
+          },
+          "originLatitude": {
+            "type": "number"
+          },
+          "originLongitude": {
+            "type": "number"
+          },
+          "destinationLabel": {
+            "type": "string"
+          },
+          "destinationLatitude": {
+            "type": "number"
+          },
+          "destinationLongitude": {
+            "type": "number"
+          },
+          "habitualTime": {
+            "type": "string"
+          },
+          "liveMatchCount": {
+            "type": "integer"
+          },
+          "bestMatch": {
+            "type": "object",
+            "properties": {
+              "routeOccurrenceId": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "driverName": {
+                "type": "string"
+              },
+              "matchPercent": {
+                "type": "number"
+              },
+              "matchTier": {
+                "type": "string"
+              },
+              "price": {
+                "type": "number"
+              },
+              "departsAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "UsualCommuteRequest": {
+        "type": "object",
+        "required": [
+          "originLabel",
+          "origin",
+          "destinationLabel",
+          "destination"
+        ],
+        "properties": {
+          "originLabel": {
+            "type": "string"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/Coordinate"
+          },
+          "destinationLabel": {
+            "type": "string"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/Coordinate"
+          },
+          "habitualTime": {
+            "type": "string"
           }
         }
       },

@@ -12,7 +12,8 @@ public record RateLimitProperties(
     Integer sosPerMinute,
     Integer placesAutocompletePerMinute,
     Integer placesDetailsPerMinute,
-    Integer directionsPerMinute) {
+    Integer directionsPerMinute,
+    Integer rideSearchPerMinute) {
   @ConstructorBinding
   public RateLimitProperties {
     enabled = enabled == null || enabled;
@@ -24,6 +25,10 @@ public record RateLimitProperties(
     placesAutocompletePerMinute = positiveOr(placesAutocompletePerMinute, 40);
     placesDetailsPerMinute = positiveOr(placesDetailsPerMinute, 20);
     directionsPerMinute = positiveOr(directionsPerMinute, 20);
+    // Search is the most expensive query in the product and the easiest to abuse: it is a PostGIS
+    // scan over every published corridor. A human refines a search a few times a minute; a loop
+    // does it a few hundred.
+    rideSearchPerMinute = positiveOr(rideSearchPerMinute, 30);
   }
 
   /** Back-compat convenience: pre-maps-limit fields only, maps limits defaulted. */
@@ -39,6 +44,7 @@ public record RateLimitProperties(
         otpVerifyPerHour,
         paymentIntentPerMinute,
         sosPerMinute,
+        null,
         null,
         null,
         null);

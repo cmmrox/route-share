@@ -52,6 +52,8 @@ class BookingServiceTest {
       org.mockito.Mockito.mock(com.routeshare.penalty.facade.PenaltyFacade.class);
   private final com.routeshare.booking.service.SeatHoldService seatHolds =
       org.mockito.Mockito.mock(com.routeshare.booking.service.SeatHoldService.class);
+  private final com.routeshare.routing.service.PickupPointService pickupPoints =
+      org.mockito.Mockito.mock(com.routeshare.routing.service.PickupPointService.class);
   private final com.routeshare.routing.service.EligibilityService eligibility =
       org.mockito.Mockito.mock(com.routeshare.routing.service.EligibilityService.class);
   private final com.routeshare.platform.service.PolicySettingService policy =
@@ -75,6 +77,7 @@ class BookingServiceTest {
           penalties,
           seatHolds,
           eligibility,
+          pickupPoints,
           policy,
           clock);
 

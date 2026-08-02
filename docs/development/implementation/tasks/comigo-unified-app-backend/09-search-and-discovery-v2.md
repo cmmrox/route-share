@@ -146,7 +146,7 @@ New errors: `RADIUS_NOT_ALLOWED`, `RADIUS_EXCEEDS_MAXIMUM`.
 
 ## Database / migration changes
 
-**`V035__search_discovery_v2.sql`**
+**`V036__search_discovery_v2.sql`** — `V035` was taken by slice 08's eligibility work.
 
 - `routing.matching_settings` — replace radius semantics:
   drop `default_search_radius_meters`, `max_search_radius_meters`;
@@ -171,13 +171,30 @@ New errors: `RADIUS_NOT_ALLOWED`, `RADIUS_EXCEEDS_MAXIMUM`.
 - New `routing.route_occurrence_share`:
   `id`, `route_occurrence_id FK UNIQUE`, `short_code TEXT UNIQUE`, `created_at`, `revoked_at`.
   Short code is a 10-character base32 slug; QR is rendered from the short URL.
-- Index `idx_route_plan_origin ON routing.route_plan USING GIST (origin_point)`.
+- Index `idx_route_plan_origin ON routing.route_plan USING GIST ((origin_point::geography))`.
+  **Indexed as geography, not geometry as specified.** A radius in metres means `ST_DWithin` over
+  geography, and a plain geometry index is silently ineligible for it — the planner falls back to a
+  sequential scan over every published route and nothing fails, the query just decays as the table
+  grows. Found by `TripStartRadiusIT`, which asserts the plan against 5,000 rows.
+- A `BEFORE INSERT OR UPDATE OF route_line` trigger keeps `origin_point` in step with the line.
+  **Added during implementation.** Step 1 says "keep it in sync on route creation", which every
+  caller would have had to remember; a route line and an origin point that disagree would mis-file
+  a trip silently and nothing downstream could detect it.
 - Drop the now-unused pickup-radius index if one exists.
 
 ## Configuration / environment changes
 
-- Policy settings: `SEARCH_RADIUS_DEFAULT_KM` (20), `SEARCH_RADIUS_OPTIONS_KM` (`5,10,20`), `SEARCH_RADIUS_MAX_KM` (20), `MATCH_TIER_FULL_PCT` (95), `MATCH_TIER_MOST_PCT` (75), `MATCH_TIER_PART_PCT` (45).
+- **Neither group of policy settings was added, deliberately.** The radius had three candidate
+  homes — `routing.matching_settings` (which already has an admin screen and validation), the
+  `SEARCH_RADIUS_KM` row V029 seeded and nothing ever read, and the three new keys specified here.
+  `matching_settings` wins because it is the only one with an operator surface, and V036 deletes the
+  orphaned policy row. The match-tier thresholds are the same three numbers as
+  `MATCH_DISCOUNT_THRESHOLD_HIGH/MID/LOW`; a second copy is precisely how a rider sees "Full route"
+  beside an 8% discount, so `MatchTier` is derived from `MatchDiscountTier`. That is what this
+  slice's own design note asks for — "one thresholds table, two consumers".
 - `ROUTESHARE_SHORT_LINK_BASE_URL` (default `https://comigo.lk/r/`).
+- `ROUTESHARE_RATE_LIMIT_RIDE_SEARCH_PER_MIN` (default `30`) — search is the hottest query in the
+  product and the easiest to abuse.
 - QR rendering: add `com.google.zxing:core` + `javase`. Rendered server-side and cached; no external service.
 
 ## UI / UX requirements
@@ -214,7 +231,7 @@ Backend slice. The contract must supply:
 - `apps/api/.../passenger/**` — usual commute.
 - `apps/api/.../pricing/**` — tier reuse for discount selection.
 - `apps/api/.../admin/**` — matching settings validation.
-- `apps/api/src/main/resources/db/migration/V035__search_discovery_v2.sql`.
+- `apps/api/src/main/resources/db/migration/V036__search_discovery_v2.sql`.
 - `apps/api/pom.xml` — ZXing.
 - `apps/api/src/test/java/**` — radius predicate tests, filtered-out count tests, tier tests, sort stability tests, eligibility-in-query tests, query plan assertion.
 - `docs/api/mobile-app.openapi.json`, `docs/api/admin-web.openapi.json`, `packages/api-contracts/src/index.ts`.
@@ -257,20 +274,25 @@ sequential scan.
 
 ## Done criteria
 
-- [ ] Radius filters on trip-start distance, at 5/10/20 km, ceiling enforced at 20 km.
-- [ ] `startsKmAway` projected per result; `filteredOutByRadius` computed in the same query.
-- [ ] Match tiers returned and shared with the discount selector.
-- [ ] Result payload supplies every field on P04, P05, P06 and P07 with no client arithmetic.
-- [ ] Eligibility applied inside the query so paging counts are correct.
-- [ ] Three server-side sorts with stable ordering.
-- [ ] Usual commute stored and match count returned for P02.
-- [ ] Short link and QR generated, cached and revocable for D14.
-- [ ] Pickup points resolve to a landmark with a description; curated entries win; derived entries are persisted and reused; bookings carry the resolved point.
-- [ ] The resolution chain is cost-ordered and instrumented; **Places is the last resort, never the first**, and the seeded curated set covers the launch corridors.
-- [ ] Place Details field mask stays at Essentials; a contract test fails the build if a Pro-tier field is added.
-- [ ] Search uses the GIST index; plan captured in QA evidence.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] Radius filters on trip-start distance, at 5/10/20 km, ceiling enforced at 20 km. An
+      unoffered radius is **refused**, not clamped — clamping answers a question the rider did not ask.
+- [x] `startsKmAway` projected per result; `filteredOutByRadius` computed in the same statement.
+- [x] Match tiers returned and derived from the discount band itself, so they cannot diverge.
+- [x] Result payload supplies every P04/P05/P06/P07 field with no client arithmetic.
+- [x] Eligibility applied inside the query so paging counts describe the list the rider sees.
+- [x] Three server-side sorts, every one of them ending on the occurrence id.
+- [x] Usual commute stored; its match count runs the real search rather than a second query.
+- [x] Short link and QR generated, cached and revocable. A revoked code answers **404, not 410**.
+- [x] Pickup points resolve to a landmark with a description; curated wins; derived is persisted
+      and reused; bookings carry the resolved point.
+- [x] The resolution chain is cost-ordered and instrumented per tier; Places is genuinely last.
+- [x] Field mask stays at Essentials — including the new nearby-search call. A landmark *name*
+      lives in `displayName`, which is Pro-tier and would re-price the whole request, so a derived
+      point is labelled by its address and real names come from the curated tier.
+- [x] Search uses the GIST index; `TripStartRadiusIT` asserts the plan against 5,000 rows.
+- [x] `./mvnw spotless:check verify` green — 576 tests, 0 skipped, JaCoCo held.
+- [x] Runtime: `verify-search-v2.sh` 41/41 against a live stack with `V036` applied.
+- [x] Tracking docs updated; focused commit ready.
 
 ## Suggested commit message
 

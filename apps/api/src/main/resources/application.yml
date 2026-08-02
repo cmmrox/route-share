@@ -89,6 +89,10 @@ routeshare:
     # sitting in limbo, and reconciliation surfaces it to operations.
     auth-validity-hours: ${ROUTESHARE_PAYMENT_AUTH_VALIDITY_HOURS:168}
     capture-max-attempts: ${ROUTESHARE_PAYMENT_CAPTURE_MAX_ATTEMPTS:3}
+  short-link:
+    # Where a shared trip code resolves. The code itself is ten base32 characters — unguessable
+    # rather than merely unique, because it is pasted into group chats.
+    base-url: ${ROUTESHARE_SHORT_LINK_BASE_URL:https://comigo.lk/r/}
   verification:
     # How long a rider may wait on an identity decision before operations should be told. Only the
     # alerting threshold lives here; the session TTL and the camera-only switch are policy settings
@@ -141,6 +145,7 @@ routeshare:
     places-autocomplete-per-minute: ${ROUTESHARE_RATE_LIMIT_PLACES_AUTOCOMPLETE_PER_MIN:40}
     places-details-per-minute: ${ROUTESHARE_RATE_LIMIT_PLACES_DETAILS_PER_MIN:20}
     directions-per-minute: ${ROUTESHARE_RATE_LIMIT_DIRECTIONS_PER_MIN:20}
+    ride-search-per-minute: ${ROUTESHARE_RATE_LIMIT_RIDE_SEARCH_PER_MIN:30}
 
   push:
     enabled: ${PUSH_NOTIFICATIONS_ENABLED:false}

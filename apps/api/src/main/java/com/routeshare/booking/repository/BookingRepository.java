@@ -465,6 +465,22 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     java.math.BigDecimal getFareEstimate();
   }
 
+  /** Slice 09: the landmark the rider was told to stand at, kept with the booking that named it. */
+  @Transactional
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE booking.booking
+         SET pickup_point_id = :pickupPointId, dropoff_point_id = :dropoffPointId
+       WHERE booking_id = :bookingId
+      """,
+      nativeQuery = true)
+  int recordPickupPoints(
+      @Param("bookingId") long bookingId,
+      @Param("pickupPointId") Long pickupPointId,
+      @Param("dropoffPointId") Long dropoffPointId);
+
   @Transactional
   @Modifying
   @Query(

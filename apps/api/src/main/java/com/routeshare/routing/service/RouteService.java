@@ -6,14 +6,13 @@ import com.routeshare.routing.dto.request.RoutePublishRequest;
 import com.routeshare.routing.dto.request.RouteSearchRequest;
 import com.routeshare.routing.dto.response.DriverRouteResponse;
 import com.routeshare.routing.dto.response.RecurringRouteResponse;
-import com.routeshare.routing.dto.response.RouteSearchResponse;
 import java.util.List;
 import java.util.Map;
 
 public interface RouteService {
   Map<String, Object> publish(RoutePublishRequest req);
 
-  List<RouteSearchResponse> search(RouteSearchRequest req);
+  com.routeshare.routing.dto.response.RideSearchPageResponse search(RouteSearchRequest req);
 
   void validateCoordinates(List<CoordinateRequest> coordinates);
 

@@ -48,6 +48,21 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
   Optional<Double> reserveSeatsAndReturnRouteLength(
       @Param("routePlanId") long routePlanId, @Param("seats") int seats);
 
+  /**
+   * P04's list, and the count of what the radius removed, in one statement.
+   *
+   * <p>The predicate changed in slice 09 and this is the whole of it: a candidate is kept when the
+   * driver's <b>trip origin</b> is within the radius of the rider's pickup, not when his route line
+   * happens to pass near it. Pickup proximity survives as a scoring input below; it is no longer
+   * what filters.
+   *
+   * <p>{@code filteredOutByRadius} is a windowed count over the same candidate set rather than a
+   * second query, because two round trips against a moving table eventually disagree — and P04
+   * shows both numbers side by side, so a disagreement is visible to the rider.
+   *
+   * <p>Eligibility is applied <em>inside</em> the query rather than as a post-filter, or the page
+   * counts would describe a list the rider is not being shown.
+   */
   @Query(
       value =
           """
@@ -55,7 +70,7 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
         SELECT
           ST_SetSRID(ST_MakePoint(:pickupLng, :pickupLat), 4326) AS pickup,
           ST_SetSRID(ST_MakePoint(:dropoffLng, :dropoffLat), 4326) AS dropoff
-      ), candidate_routes AS (
+      ), corridor AS (
         SELECT
           r.route_plan_id AS "routePlanId",
           o.route_occurrence_id AS "routeOccurrenceId",
@@ -64,16 +79,27 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
           o.scheduled_departure_at AS "departureTime",
           o.available_seats AS "availableSeats",
           r.route_length_m AS "routeLengthMeters",
+          o.approval_mode AS "approvalMode",
+          o.gender_policy AS "genderPolicy",
+          o.verified_riders_only AS "verifiedRidersOnly",
           ST_LineLocatePoint(r.route_line, p.pickup) AS "pickupFraction",
           ST_LineLocatePoint(r.route_line, p.dropoff) AS "dropoffFraction",
           ST_Distance(r.route_line::geography, p.pickup::geography) AS "pickupDistanceMeters",
           ST_Distance(r.route_line::geography, p.dropoff::geography) AS "dropoffDistanceMeters",
+          -- The number the filter turns on, projected as well as tested: P04 prints it on every
+          -- card, and computing it twice is how the card and the list disagree.
+          ST_Distance(r.origin_point::geography, p.pickup::geography) AS "startsMetersAway",
           COALESCE(dp.display_name, dau.display_name, 'Driver') AS "driverName",
           r.vehicle_id AS "vehicleId",
           v.make AS "vehicleMake",
           v.model AS "vehicleModel",
+          v.color AS "vehicleColour",
           v.registration_number AS "vehicleRegistration",
           v.seat_count AS "vehicleSeatCount",
+          v.class_key AS "vehicleClassKey",
+          band.chosen_rate AS "ratePerKm",
+          band.rate_min AS "classBandMin",
+          band.rate_max AS "classBandMax",
           p.pickup AS pickup,
           p.dropoff AS dropoff,
           r.route_line AS "routeLine"
@@ -82,6 +108,7 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
         JOIN driver.driver_profile dp ON dp.driver_profile_id = r.driver_profile_id
         LEFT JOIN identity.app_user dau ON dau.app_user_id = dp.app_user_id
         LEFT JOIN vehicle.vehicle v ON v.vehicle_id = r.vehicle_id
+        LEFT JOIN vehicle.vehicle_rate_band band ON band.vehicle_id = r.vehicle_id
         CROSS JOIN request_points p
         WHERE r.status = 'PUBLISHED'
           AND o.status = 'PUBLISHED'
@@ -94,39 +121,46 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
               AND b.bucket_resolution = :bucketResolution
               AND b.bucket_cell IN (:pickupBucketCell, :dropoffBucketCell)
           )
-          AND ST_DWithin(r.route_line::geography, p.pickup::geography, :pickupRadiusMeters)
-          AND ST_DWithin(r.route_line::geography, p.dropoff::geography, :dropoffRadiusMeters)
-          -- Slice 08. A trip this rider cannot book never leaves the database. P36 promises that
-          -- nobody wastes a request, which only holds if the filter and the booking guard are the
-          -- same rule, and search must not say *why* a trip is absent: an absence is fine, an
-          -- enumerable policy is not.
+          -- Slice 08, applied here rather than afterwards so the counts below describe the list
+          -- the rider actually sees.
           AND (o.gender_policy = 'ANYONE' OR CAST(:riderVerifiedFemale AS BOOLEAN))
           AND (o.verified_riders_only = false OR CAST(:riderVerified AS BOOLEAN))
+      ), scored AS (
+        SELECT
+          corridor.*,
+          ST_Length(ST_LineSubstring("routeLine", "pickupFraction", "dropoffFraction")::geography)
+            AS "overlapDistanceMeters",
+          GREATEST(ST_Distance(pickup::geography, dropoff::geography), 1.0)
+            AS "requestedDistanceMeters"
+        FROM corridor
+        WHERE "pickupFraction" < "dropoffFraction"
+      ), counted AS (
+        SELECT
+          scored.*,
+          ("startsMetersAway" <= :radiusMeters) AS "withinRadius",
+          COUNT(*) OVER () AS "totalMatching",
+          COUNT(*) FILTER (WHERE "startsMetersAway" > :radiusMeters) OVER () AS "filteredOut"
+        FROM scored
       )
       SELECT
-        "routePlanId",
-        "routeOccurrenceId",
-        "originLabel",
-        "destinationLabel",
-        "departureTime",
-        "availableSeats",
-        "routeLengthMeters",
-        "pickupFraction",
-        "dropoffFraction",
-        "pickupDistanceMeters",
-        "dropoffDistanceMeters",
-        "driverName",
-        "vehicleId",
-        "vehicleMake",
-        "vehicleModel",
-        "vehicleRegistration",
-        "vehicleSeatCount",
-        ST_Length(ST_LineSubstring("routeLine", "pickupFraction", "dropoffFraction")::geography) AS "overlapDistanceMeters",
-        GREATEST(ST_Distance(pickup::geography, dropoff::geography), 1.0) AS "requestedDistanceMeters"
-      FROM candidate_routes
-      WHERE "pickupFraction" < "dropoffFraction"
-      ORDER BY "departureTime" ASC, "pickupDistanceMeters" ASC, "dropoffDistanceMeters" ASC
-      LIMIT :limit
+        "routePlanId", "routeOccurrenceId", "originLabel", "destinationLabel", "departureTime",
+        "availableSeats", "routeLengthMeters", "approvalMode", "genderPolicy", "verifiedRidersOnly",
+        "pickupFraction", "dropoffFraction", "pickupDistanceMeters", "dropoffDistanceMeters",
+        "startsMetersAway", "driverName", "vehicleId", "vehicleMake", "vehicleModel",
+        "vehicleColour", "vehicleRegistration", "vehicleSeatCount", "vehicleClassKey",
+        "ratePerKm", "classBandMin", "classBandMax",
+        "overlapDistanceMeters", "requestedDistanceMeters", "totalMatching", "filteredOut"
+      FROM counted
+      WHERE "withinRadius"
+      -- Every ordering ends on the occurrence id. Without a total order two pages of one search can
+      -- repeat a trip and drop another, and a rider who scrolled past a seat cannot find it again.
+      ORDER BY
+        CASE WHEN :sort = 'SOONEST' THEN "departureTime" END ASC,
+        CASE WHEN :sort = 'CHEAPEST' THEN "ratePerKm" END ASC NULLS LAST,
+        CASE WHEN :sort = 'BEST_MATCH'
+             THEN "overlapDistanceMeters" / "requestedDistanceMeters" END DESC,
+        "routeOccurrenceId" ASC
+      OFFSET :offset LIMIT :limit
       """,
       nativeQuery = true)
   List<RouteSearchCandidateRow> findSearchCandidates(
@@ -137,24 +171,25 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
       @Param("windowStart") Instant windowStart,
       @Param("windowEnd") Instant windowEnd,
       @Param("seats") int seats,
-      @Param("pickupRadiusMeters") int pickupRadiusMeters,
-      @Param("dropoffRadiusMeters") int dropoffRadiusMeters,
+      @Param("radiusMeters") int radiusMeters,
       @Param("bucketResolution") int bucketResolution,
       @Param("pickupBucketCell") String pickupBucketCell,
       @Param("dropoffBucketCell") String dropoffBucketCell,
+      @Param("sort") String sort,
+      @Param("offset") int offset,
       @Param("limit") int limit,
       @Param("riderVerified") boolean riderVerified,
       @Param("riderVerifiedFemale") boolean riderVerifiedFemale);
 
   /**
-   * The trips this rider's search just dropped, and which rule dropped each one.
+   * The trips this rider's search just dropped on eligibility, and which rule dropped each one.
    *
-   * <p>Without this there is nothing to count. A rider filtered out of search never makes a
-   * request, so D35's "verified riders only cost you 3 requests last week" has no other source —
-   * the omission is the whole event, and it leaves no trace anywhere else.
+   * <p>Slice 08. Without this there is nothing to count: a rider filtered out of search never makes
+   * a request, so D35's "verified riders only cost you 3 requests last week" has no other source.
    *
-   * <p>Deliberately narrow: the same corridor and window predicates, inverted on eligibility only,
-   * returning ids rather than rows.
+   * <p>Deliberately narrow — the same corridor and window predicates, inverted on eligibility only,
+   * returning ids rather than rows. The radius is not applied: a trip she could not have booked
+   * anyway was not turned away by her driver's setting.
    */
   @Query(
       value =
@@ -170,6 +205,9 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
          AND o.status = 'PUBLISHED'
          AND o.scheduled_departure_at BETWEEN :windowStart AND :windowEnd
          AND o.available_seats >= :seats
+         AND ST_DWithin(r.origin_point::geography,
+                        ST_SetSRID(ST_MakePoint(:pickupLng, :pickupLat), 4326)::geography,
+                        :radiusMeters)
          AND EXISTS (
            SELECT 1
              FROM routing.route_bucket_cell b
@@ -183,9 +221,12 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
       """,
       nativeQuery = true)
   List<EligibilityExclusionRow> findEligibilityExclusions(
+      @Param("pickupLng") double pickupLng,
+      @Param("pickupLat") double pickupLat,
       @Param("windowStart") Instant windowStart,
       @Param("windowEnd") Instant windowEnd,
       @Param("seats") int seats,
+      @Param("radiusMeters") int radiusMeters,
       @Param("bucketResolution") int bucketResolution,
       @Param("pickupBucketCell") String pickupBucketCell,
       @Param("dropoffBucketCell") String dropoffBucketCell,
@@ -407,5 +448,33 @@ public interface RoutePlanRepository extends JpaRepository<RoutePlanEntity, Long
     String getVehicleRegistration();
 
     Integer getVehicleSeatCount();
+
+    // ── slice 09: the fields P04 prints without doing arithmetic ─────────────────────────────────
+
+    /** The distance the radius filtered on, projected so the card and the filter cannot differ. */
+    double getStartsMetersAway();
+
+    String getVehicleColour();
+
+    String getVehicleClassKey();
+
+    /** The driver's chosen point inside his class band — P07 explains his rate from these three. */
+    BigDecimal getRatePerKm();
+
+    BigDecimal getClassBandMin();
+
+    BigDecimal getClassBandMax();
+
+    String getApprovalMode();
+
+    String getGenderPolicy();
+
+    boolean getVerifiedRidersOnly();
+
+    /** Candidates on this corridor before the radius was applied — the same for every row. */
+    long getTotalMatching();
+
+    /** How many the radius removed. P04's card. */
+    long getFilteredOut();
   }
 }

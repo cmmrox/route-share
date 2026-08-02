@@ -174,8 +174,8 @@ export const mobileApiEndpoints = [
   {"method": "POST", "path": "/api/v1/passenger/bookings/{bookingId}/share", "status": "IMPLEMENTED", "operationId": "postPassengerBookingsByBookingIdShare"},
   {"method": "POST", "path": "/api/v1/passenger/bookings/{bookingId}/share-link", "status": "IMPLEMENTED", "operationId": "postPassengerBookingsByBookingIdShareLink"},
   {"method": "DELETE", "path": "/api/v1/passenger/bookings/{bookingId}/share/{token}", "status": "IMPLEMENTED", "operationId": "deletePassengerBookingsByBookingIdShareByToken"},
-  {"method": "GET", "path": "/api/v1/passenger/commute", "status": "PLANNED_SLICE_09", "operationId": "getPassengerCommute"},
-  {"method": "PUT", "path": "/api/v1/passenger/commute", "status": "PLANNED_SLICE_09", "operationId": "putPassengerCommute"},
+  {"method": "GET", "path": "/api/v1/passenger/commute", "status": "IMPLEMENTED", "operationId": "getPassengerCommute"},
+  {"method": "PUT", "path": "/api/v1/passenger/commute", "status": "IMPLEMENTED", "operationId": "putPassengerCommute"},
   {"method": "GET", "path": "/api/v1/passenger/directions", "status": "IMPLEMENTED", "operationId": "getPassengerDirections"},
   {"method": "GET", "path": "/api/v1/passenger/documents", "status": "IMPLEMENTED", "operationId": "getPassengerDocuments"},
   {"method": "POST", "path": "/api/v1/passenger/documents/upload-url", "status": "IMPLEMENTED", "operationId": "postPassengerDocumentsUploadUrl"},
@@ -199,7 +199,7 @@ export const mobileApiEndpoints = [
   {"method": "POST", "path": "/api/v1/passenger/payments/intents", "status": "IMPLEMENTED", "operationId": "postPassengerPaymentsIntents"},
   {"method": "GET", "path": "/api/v1/passenger/penalties", "status": "IMPLEMENTED", "operationId": "getPassengerPenalties"},
   {"method": "POST", "path": "/api/v1/passenger/penalties/{penaltyId}/dispute", "status": "IMPLEMENTED", "operationId": "postPassengerPenaltiesByPenaltyIdDispute"},
-  {"method": "POST", "path": "/api/v1/passenger/pickup-points/resolve", "status": "PLANNED_SLICE_09", "operationId": "postPassengerPickupPointsResolve"},
+  {"method": "POST", "path": "/api/v1/passenger/pickup-points/resolve", "status": "IMPLEMENTED", "operationId": "postPassengerPickupPointsResolve"},
   {"method": "GET", "path": "/api/v1/passenger/places/autocomplete", "status": "IMPLEMENTED", "operationId": "getPassengerPlacesAutocomplete"},
   {"method": "GET", "path": "/api/v1/passenger/places/{placeId}", "status": "IMPLEMENTED", "operationId": "getPassengerPlacesByPlaceId"},
   {"method": "GET", "path": "/api/v1/passenger/profile", "status": "IMPLEMENTED", "operationId": "getPassengerProfile"},
@@ -260,7 +260,11 @@ export const mobileApiEndpoints = [
   {"method": "POST", "path": "/api/v1/passenger/verification/steps/{stepKey}/submit", "status": "IMPLEMENTED", "operationId": "postPassengerVerificationStepSubmit"},
   {"method": "GET", "path": "/api/v1/passenger/profile/photo-visibility", "status": "IMPLEMENTED", "operationId": "getPassengerPhotoVisibility"},
   {"method": "PUT", "path": "/api/v1/passenger/profile/photo-visibility", "status": "IMPLEMENTED", "operationId": "putPassengerPhotoVisibility"},
-  {"method": "PUT", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/eligibility", "status": "IMPLEMENTED", "operationId": "putDriverRouteOccurrenceEligibility"}
+  {"method": "PUT", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/eligibility", "status": "IMPLEMENTED", "operationId": "putDriverRouteOccurrenceEligibility"},
+  {"method": "DELETE", "path": "/api/v1/passenger/commute", "status": "IMPLEMENTED", "operationId": "deletePassengerCommute"},
+  {"method": "DELETE", "path": "/api/v1/driver/route-occurrences/{routeOccurrenceId}/share", "status": "IMPLEMENTED", "operationId": "deleteDriverRouteOccurrenceShare"},
+  {"method": "GET", "path": "/api/v1/public/trip-links/{shortCode}", "status": "IMPLEMENTED", "operationId": "getPublicTripLink"},
+  {"method": "GET", "path": "/api/v1/public/trip-links/{shortCode}/qr.png", "status": "IMPLEMENTED", "operationId": "getPublicTripLinkQr"}
 ] as const satisfies readonly MobileApiEndpoint[];
 
 export const adminApiEndpoints = [
@@ -292,6 +296,8 @@ export const adminApiEndpoints = [
   {"method": "POST", "path": "/api/v1/admin/payments/{paymentIntentId}/refund"},
   {"method": "POST", "path": "/api/v1/admin/payments/{paymentIntentId}/void"},
   {"method": "GET", "path": "/api/v1/admin/penalties"},
+  {"method": "GET", "path": "/api/v1/admin/pickup-points"},
+  {"method": "POST", "path": "/api/v1/admin/pickup-points"},
   {"method": "GET", "path": "/api/v1/admin/passenger-verifications/pending"},
   {"method": "POST", "path": "/api/v1/admin/passenger-verifications/{sessionId}/decide"},
   {"method": "GET", "path": "/api/v1/admin/penalty-disputes"},
@@ -341,7 +347,7 @@ export const mobileApiPlannedEndpoints = mobileApiEndpoints.filter((e) =>
 
 export const apiContractCounts = {
   mobile: mobileApiEndpoints.length,
-  mobileImplemented: 163,
-  mobilePlanned: 61,
+  mobileImplemented: 170,
+  mobilePlanned: 58,
   admin: adminApiEndpoints.length,
 } as const;
