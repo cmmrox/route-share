@@ -42,6 +42,8 @@ class AppContextServiceTest {
   private final BookingService bookings = mock(BookingService.class);
   private final NotificationService notifications = mock(NotificationService.class);
 
+  private final com.routeshare.reliability.facade.ReliabilityFacade reliability =
+      org.mockito.Mockito.mock(com.routeshare.reliability.facade.ReliabilityFacade.class);
   private final AppContextServiceImpl service =
       new AppContextServiceImpl(
           current,
@@ -50,6 +52,7 @@ class AppContextServiceTest {
           drivers,
           bookings,
           notifications,
+          reliability,
           Clock.fixed(NOW, ZoneOffset.UTC));
 
   private CurrentUser token(Set<String> roles) {

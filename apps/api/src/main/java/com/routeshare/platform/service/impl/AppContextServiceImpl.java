@@ -59,6 +59,7 @@ public class AppContextServiceImpl implements AppContextService {
   private final DriverFacade drivers;
   private final BookingService bookings;
   private final NotificationService notifications;
+  private final com.routeshare.reliability.facade.ReliabilityFacade reliability;
   private final Clock clock;
 
   @Override
@@ -79,7 +80,11 @@ public class AppContextServiceImpl implements AppContextService {
         availableModes(token, user.appUserId(), hasPassengerProfile, driverStatus, suspended),
         activeModeDefault(user.appUserId(), suspended),
         driver(user.appUserId(), driverStatus, suspended),
-        new AppContextResponse.Passenger("NONE", "MATCHED", false), // slice 08
+        // Verification level and photo visibility still arrive with slice 08; the prepay flag is
+        // slice 05's, and it is read from the month's counter rather than stored separately so
+        // there is one number and nothing to fall out of step with it.
+        new AppContextResponse.Passenger(
+            "NONE", "MATCHED", reliability.prepayRequired(user.appUserId())),
         account(user, suspended),
         suspended ? null : activeTrip(),
         new AppContextResponse.Money(CURRENCY, BigDecimal.ZERO, BigDecimal.ZERO), // slices 06, 11

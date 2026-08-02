@@ -25,6 +25,7 @@ public class EarlyDropOffServiceImpl implements EarlyDropOffService {
   private final PaymentService payments;
   private final PricingFacade pricing;
   private final com.routeshare.payment.facade.PaymentFacade paymentFacade;
+  private final com.routeshare.reliability.facade.ReliabilityFacade reliability;
 
   @Override
   @Transactional
@@ -49,20 +50,38 @@ public class EarlyDropOffServiceImpl implements EarlyDropOffService {
     double exit = Math.max(pickup, Math.min(dropoff, ctx.getExitFraction()));
     long traveledMeters = Math.round(ctx.getRouteLengthM().doubleValue() * (exit - pickup));
 
-    // Repriced on the distance actually travelled, at the rate and tier the rider booked under.
-    // Slice 05 owns the twice-a-month allowance that decides whether this is allowed at all.
-    BigDecimal finalFare =
-        pricing
-            .repriceForActualDistance(bookingId, BigDecimal.valueOf(traveledMeters))
-            .passengerPays();
+    // Two adjusted drops a calendar month. Spent here, before the reprice, so the decision and the
+    // money cannot disagree: either the allowance was taken and the fare moved, or neither.
+    boolean adjusted = reliability.consumeEarlyDropAllowance(app.appUserId(), bookingId, null);
 
+    // Repriced on the distance actually travelled, at the rate and tier the rider booked under —
+    // but only within the allowance. Beyond it the fare she agreed to stands.
+    BigDecimal finalFare =
+        adjusted
+            ? pricing
+                .repriceForActualDistance(bookingId, BigDecimal.valueOf(traveledMeters))
+                .passengerPays()
+            : ctx.getFareEstimate();
+
+    // The seat is released either way: she is out of the car, and the route she is no longer on
+    // should not keep counting as hers.
     bookings.updateDropoffFraction(bookingId, BigDecimal.valueOf(exit));
     // Captures the lower figure if nothing has been taken yet, refunds the difference if it has.
     paymentFacade.settleRepricedFare(bookingId, finalFare);
     var result = payments.finalizeBookingFare(bookingId, finalFare);
     boolean captured = Boolean.TRUE.equals(result.get("captured"));
 
+    var allowance = reliability.earlyDropAllowance(app.appUserId());
     return new EarlyDropOffResponse(
-        bookingId, traveledMeters, finalFare, "LKR", captured, "FARE_FINALIZED");
+        bookingId,
+        traveledMeters,
+        finalFare,
+        "LKR",
+        captured,
+        adjusted,
+        adjusted ? null : "EARLY_DROP_ALLOWANCE_EXHAUSTED",
+        allowance.used(),
+        allowance.remaining(),
+        "FARE_FINALIZED");
   }
 }

@@ -4,6 +4,7 @@ import com.routeshare.routing.entity.RouteOccurrenceEntity;
 import java.time.Instant;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -38,6 +39,41 @@ public interface RouteOccurrenceRepository extends JpaRepository<RouteOccurrence
       nativeQuery = true)
   Optional<RouteReservationRow> reserveSeatsAndReturnRouteLength(
       @Param("routeOccurrenceId") long routeOccurrenceId, @Param("seats") int seats);
+
+  /**
+   * Returns seats to inventory when a booking stops holding them — a no-show release, today.
+   *
+   * <p>Bounded by the plan's own capacity so a double release can never inflate a car beyond the
+   * seats it has. Offering the freed seat to somebody else is slice 07's problem; this only makes
+   * it available again.
+   */
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE routing.route_occurrence occurrence
+      SET status = 'CANCELLED'
+      FROM routing.route_plan route
+      WHERE occurrence.route_plan_id = route.route_plan_id
+        AND route.driver_profile_id = :driverProfileId
+        AND occurrence.status = 'PUBLISHED'
+        AND occurrence.scheduled_departure_at > now()
+      """,
+      nativeQuery = true)
+  int cancelFutureForDriver(@Param("driverProfileId") long driverProfileId);
+
+  @Modifying
+  @Query(
+      value =
+          """
+      UPDATE routing.route_occurrence occurrence
+      SET available_seats = LEAST(occurrence.available_seats + :seats, route.available_seats)
+      FROM routing.route_plan route
+      WHERE occurrence.route_plan_id = route.route_plan_id
+        AND occurrence.route_occurrence_id = :routeOccurrenceId
+      """,
+      nativeQuery = true)
+  int releaseSeats(@Param("routeOccurrenceId") long routeOccurrenceId, @Param("seats") int seats);
 
   @Query(
       value =

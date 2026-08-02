@@ -551,8 +551,8 @@ rule, and 18 have foundations but no product behaviour. Full register in
 | 01 | Auth unification and mode gates | M | `COMPLETED` 2026-08-02 — runtime smoke 12/12 |
 | 02 | Vehicle classes and rate bands | M | `COMPLETED` 2026-08-02 — runtime smoke 18/18; both V028 triggers fired |
 | 03 | Fare engine rewrite | XL | `COMPLETED` 2026-08-02 — runtime smoke 8/8; both V029 CHECK constraints fired; V029 needed a missing `CREATE SCHEMA platform` |
-| 04 | Charge timing and capture correctness | L | `PARTIALLY_COMPLETED` 2026-08-02 — `CaptureOnTripStartIT` now written and passing; cash smoke 2/2, but the card path has never run against any gateway (Blocker 015) |
-| 05 | Trip timers and reliability | XL | `IN_PROGRESS` 2026-08-02 — merged: V031, the leader-elected scheduler, the start-buffer clock and the reliability event log. Remaining: pickup wait + arrival detection, driver-late grace, early-drop allowance, panels, deactivation trigger, prepay flag, contract |
+| 04 | Charge timing and capture correctness | L | `PARTIALLY_COMPLETED` 2026-08-02 — `CaptureOnTripStartIT` written and passing; cash smoke 2/2. The card path has never run against any gateway (Blocker 015), and its capture checks have been silently skipping because no trip rows existed until slice 05 (Blocker 016) |
+| 05 | Trip timers and reliability | XL | `COMPLETED` 2026-08-02 — all four clocks, panels, deactivation trigger and prepay flag; runtime smoke 42/42. V032 materialises trips at first confirmed booking, without which no clock could ever fire. Void on auto-cancel still mock-only (Blocker 015) |
 | 06 | Penalties, dues and compensation | L | `NOT_STARTED` |
 | 07 | Booking depth: seats, approval modes, expiry | L | `NOT_STARTED` |
 | 08 | Preferences, verification and eligibility | L | `NOT_STARTED` |

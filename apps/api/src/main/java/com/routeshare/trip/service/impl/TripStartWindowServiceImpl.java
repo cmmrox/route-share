@@ -9,6 +9,7 @@ import com.routeshare.reliability.domain.ReliabilityRole;
 import com.routeshare.reliability.service.ReliabilityService;
 import com.routeshare.trip.domain.TripStatus;
 import com.routeshare.trip.dto.response.StartWindowResponse;
+import com.routeshare.trip.entity.TripEntity;
 import com.routeshare.trip.entity.TripStartWindowEntity;
 import com.routeshare.trip.repository.TripRepository;
 import com.routeshare.trip.repository.TripStartWindowRepository;
@@ -133,6 +134,21 @@ public class TripStartWindowServiceImpl implements TripStartWindowService {
       // The row was claimed under a pessimistic write lock, but re-check: a manual start may have
       // committed since the sweep read it, and auto-cancelling a moving trip is unforgivable.
       if (window.isResolved()) {
+        continue;
+      }
+      // The trip itself is the authority on whether it started, not the window. Resolving the
+      // window is one line in the start path and one line is exactly what gets lost in a later
+      // refactor; the cost of that omission is a started trip cancelled under its driver, so the
+      // sweeper refuses to act on a trip that has moved regardless of what the window says.
+      TripStatus tripStatus =
+          trips.findById(window.getTripId()).map(TripEntity::getStatus).orElse(null);
+      if (tripStatus != null && tripStatus != TripStatus.SCHEDULED) {
+        window.resolve(
+            tripStatus == TripStatus.CANCELLED
+                ? TripStartWindowEntity.RESOLUTION_CANCELLED
+                : TripStartWindowEntity.RESOLUTION_STARTED,
+            now);
+        windows.save(window);
         continue;
       }
       autoCancel(window, now);

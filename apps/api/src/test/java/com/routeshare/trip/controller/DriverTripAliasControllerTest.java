@@ -23,10 +23,11 @@ class DriverTripAliasControllerTest {
   @Mock private TripService trips;
   @Mock private BookingService bookings;
   @Mock private TripStartWindowService startWindows;
+  @Mock private com.routeshare.trip.service.PickupWaitService pickupWaits;
 
   @Test
   void driverStartDelegatesToStartedTripTransition() {
-    var controller = new DriverTripController(trips, bookings, startWindows);
+    var controller = new DriverTripController(trips, bookings, startWindows, pickupWaits);
     when(trips.transition(40L, new TripTransitionRequest(TripStatus.STARTED)))
         .thenReturn(Map.of("tripId", 40L, "status", "STARTED"));
 
@@ -39,7 +40,7 @@ class DriverTripAliasControllerTest {
 
   @Test
   void driverPassengerBoardDelegatesToBoardedPassengerState() {
-    var controller = new DriverTripController(trips, bookings, startWindows);
+    var controller = new DriverTripController(trips, bookings, startWindows, pickupWaits);
     when(trips.transitionPassengerState(
             40L,
             30L,

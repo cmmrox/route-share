@@ -6,6 +6,7 @@ import com.routeshare.reliability.entity.MonthlyCounterEntity;
 import com.routeshare.reliability.entity.ReliabilityEventEntity;
 import com.routeshare.reliability.repository.MonthlyCounterRepository;
 import com.routeshare.reliability.repository.ReliabilityEventRepository;
+import com.routeshare.reliability.service.ReliabilityGateService;
 import com.routeshare.reliability.service.ReliabilityService;
 import java.time.Clock;
 import java.time.Instant;
@@ -20,13 +21,18 @@ public class ReliabilityServiceImpl implements ReliabilityService {
 
   private final ReliabilityEventRepository events;
   private final MonthlyCounterRepository counters;
+  private final ReliabilityGateService gates;
   private final Clock clock;
 
   @Autowired
   public ReliabilityServiceImpl(
-      ReliabilityEventRepository events, MonthlyCounterRepository counters, Clock clock) {
+      ReliabilityEventRepository events,
+      MonthlyCounterRepository counters,
+      ReliabilityGateService gates,
+      Clock clock) {
     this.events = events;
     this.counters = counters;
+    this.gates = gates;
     this.clock = clock;
   }
 
@@ -46,15 +52,27 @@ public class ReliabilityServiceImpl implements ReliabilityService {
     MonthlyCounterEntity counter = counter(appUserId, role, period(occurredAt));
     counter.apply(type);
     counter.setUpdatedAt(occurredAt);
-    return counters.save(counter);
+    MonthlyCounterEntity saved = counters.save(counter);
+
+    // The consequences of a counter reaching its limit belong with the counter, not with whichever
+    // caller happened to record the event. A missed start recorded from anywhere must trigger the
+    // same rule, or the rule is only as reliable as the last place somebody remembered it.
+    gates.onCounterChanged(appUserId, role, type, saved);
+    return saved;
   }
 
+  /**
+   * Reading a month that has no events yet must not write one into existence. Every countdown in
+   * this slice renders "no-shows this month" from here inside a read-only transaction, so an {@code
+   * orElseGet(save)} turned the first read by any user into a 500 — and a rider whose driver has
+   * just arrived is not the person to discover that.
+   */
   @Override
-  @Transactional
+  @Transactional(readOnly = true)
   public MonthlyCounterEntity counter(long appUserId, ReliabilityRole role, LocalDate periodMonth) {
     return counters
         .findByAppUserIdAndRoleAndPeriodMonth(appUserId, role, periodMonth)
-        .orElseGet(() -> counters.save(MonthlyCounterEntity.opened(appUserId, role, periodMonth)));
+        .orElseGet(() -> MonthlyCounterEntity.opened(appUserId, role, periodMonth));
   }
 
   @Override

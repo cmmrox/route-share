@@ -46,6 +46,8 @@ class BookingServiceTest {
       org.mockito.Mockito.mock(com.routeshare.pricing.facade.PricingFacade.class);
   private final com.routeshare.payment.facade.PaymentFacade payments =
       org.mockito.Mockito.mock(com.routeshare.payment.facade.PaymentFacade.class);
+  private final com.routeshare.trip.facade.TripLifecycleFacade tripLifecycle =
+      org.mockito.Mockito.mock(com.routeshare.trip.facade.TripLifecycleFacade.class);
   private final BookingServiceImpl service =
       new BookingServiceImpl(
           current,
@@ -57,7 +59,8 @@ class BookingServiceTest {
           notifications,
           objectMapper,
           pricing,
-          payments);
+          payments,
+          tripLifecycle);
 
   private static com.routeshare.pricing.domain.FareQuote quote(String passengerPays) {
     var amount = new java.math.BigDecimal(passengerPays);

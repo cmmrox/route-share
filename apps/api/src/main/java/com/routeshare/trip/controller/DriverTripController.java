@@ -29,12 +29,17 @@ public class DriverTripController {
   private final TripService trips;
   private final BookingService bookings;
   private final TripStartWindowService startWindows;
+  private final com.routeshare.trip.service.PickupWaitService pickupWaits;
 
   public DriverTripController(
-      TripService trips, BookingService bookings, TripStartWindowService startWindows) {
+      TripService trips,
+      BookingService bookings,
+      TripStartWindowService startWindows,
+      com.routeshare.trip.service.PickupWaitService pickupWaits) {
     this.trips = trips;
     this.bookings = bookings;
     this.startWindows = startWindows;
+    this.pickupWaits = pickupWaits;
   }
 
   /** D32 / D32b: the countdown, whether the extension is left, and what happens at zero. */
@@ -47,6 +52,27 @@ public class DriverTripController {
   @PostMapping("/{tripId}/start-extension")
   public ApiResponse<StartWindowResponse> startExtension(@PathVariable long tripId) {
     return ApiResponse.ok(startWindows.extend(tripId));
+  }
+
+  /** D19 / D19b: this passenger's wait, started by GPS arrival and not by anything he taps. */
+  @GetMapping("/{tripId}/passengers/{bookingId}/wait-window")
+  public ApiResponse<com.routeshare.trip.dto.response.PickupWaitResponse> waitWindow(
+      @PathVariable long tripId, @PathVariable long bookingId) {
+    return ApiResponse.ok(pickupWaits.driverWindow(tripId, bookingId));
+  }
+
+  /** D19b: the single 5-minute extension. */
+  @PostMapping("/{tripId}/passengers/{bookingId}/wait-extension")
+  public ApiResponse<com.routeshare.trip.dto.response.PickupWaitResponse> waitExtension(
+      @PathVariable long tripId, @PathVariable long bookingId) {
+    return ApiResponse.ok(pickupWaits.extend(tripId, bookingId));
+  }
+
+  /** D21: release the seat as a no-show. Refused while the clock is still running. */
+  @PostMapping("/{tripId}/passengers/{bookingId}/release-seat")
+  public ApiResponse<com.routeshare.trip.dto.response.PickupWaitResponse> releaseSeat(
+      @PathVariable long tripId, @PathVariable long bookingId) {
+    return ApiResponse.ok(pickupWaits.releaseSeat(tripId, bookingId));
   }
 
   @GetMapping

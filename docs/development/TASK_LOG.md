@@ -6,6 +6,38 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ---
 
+## 2026-08-02
+
+### Task: ComiGo slice 05 — trip timers and reliability (steps 5–13, slice complete)
+
+Status: `COMPLETED`
+
+All four clocks (start buffer, pickup wait with GPS arrival detection, driver-late grace, early-drop
+allowance), the reliability panels, the monthly reset, the deactivation trigger and the prepay flag.
+
+The slice could not have worked as planned: nothing in the application created a `trip.trip` row, so
+no start window was ever opened and the sweeper swept an empty table. Trips are now materialised at
+an occurrence's first confirmed booking (`V032`). Two dead-code bugs and three runtime-only defects
+were found and fixed — see the task file's progress note for the full account.
+
+Files changed: `apps/api/src/main/java/com/routeshare/{trip,reliability,booking,location,routing,driver,platform}/**`,
+`apps/api/src/main/resources/db/migration/V032__materialise_trips_for_booked_occurrences.sql`,
+`apps/api/src/test/java/**`, `docs/api/mobile-app.openapi.json`,
+`packages/api-contracts/src/index.ts`, `scripts/simulation/verify-trip-timers.sh`.
+
+Verification: `./mvnw spotless:check verify` → BUILD SUCCESS, 423 tests, 0 skipped, JaCoCo met.
+`redocly lint docs/api/mobile-app.openapi.json` → valid. `pnpm run typecheck` in
+`packages/api-contracts` → clean. `scripts/simulation/verify-trip-timers.sh` → 42 passed, 0 failed,
+0 skipped against a real database.
+
+Not verified: the void on auto-cancel, which needs a gateway (Blocker 015, OPEN). Blocker 016 opened
+for slice 04's capture checks, which have been skipping since they were written.
+
+Next: slice 06 — penalties, dues and compensation, which consumes `booking.noshow` and
+`booking.driver_late`.
+
+---
+
 ## 2026-07-21
 
 ### Task: Google API cost-optimization + performance slice

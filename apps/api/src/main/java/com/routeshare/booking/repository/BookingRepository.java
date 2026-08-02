@@ -47,6 +47,10 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
       nativeQuery = true)
   Optional<Long> findPassengerAppUserId(@Param("bookingId") long bookingId);
 
+  /** The occurrence a booking sits on — the key the trip behind it is materialised against. */
+  @Query("select b.routeOccurrenceId from BookingEntity b where b.id = :bookingId")
+  Optional<Long> findRouteOccurrenceId(@Param("bookingId") long bookingId);
+
   @Query(
       value =
           """
@@ -127,7 +131,8 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
              COALESCE(b.pickup_route_fraction, 0) AS "pickupFraction",
              COALESCE(b.dropoff_route_fraction, 1) AS "dropoffFraction",
              b.seats AS "seats",
-             b.status AS "status"
+             b.status AS "status",
+             b.fare_estimate AS "fareEstimate"
       FROM booking.booking b
       JOIN routing.route_plan rp ON rp.route_plan_id = b.route_plan_id
       WHERE b.booking_id = :bookingId AND b.passenger_app_user_id = :passengerAppUserId
@@ -159,6 +164,9 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     Integer getSeats();
 
     String getStatus();
+
+    /** The fare she agreed to, which is what stands when the adjusted-drop allowance is spent. */
+    java.math.BigDecimal getFareEstimate();
   }
 
   @Query(

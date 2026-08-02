@@ -32,9 +32,11 @@ class LocationPhase06ServiceTest {
   private final LocationSampleRepository repo = mock(LocationSampleRepository.class);
   private final LocationRealtimePublisher publisher = mock(LocationRealtimePublisher.class);
   private final InMemoryLatestLocationCache cache = new InMemoryLatestLocationCache();
+  private final com.routeshare.trip.facade.TripArrivalFacade arrivals =
+      mock(com.routeshare.trip.facade.TripArrivalFacade.class);
   private final LocationServiceImpl service =
       new LocationServiceImpl(
-          current, identity, repo, cache, publisher, Clock.fixed(NOW, ZoneOffset.UTC));
+          current, identity, repo, cache, publisher, Clock.fixed(NOW, ZoneOffset.UTC), arrivals);
 
   LocationPhase06ServiceTest() {
     when(current.requireCurrentUser())

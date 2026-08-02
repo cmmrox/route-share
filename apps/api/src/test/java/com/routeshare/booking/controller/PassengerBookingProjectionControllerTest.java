@@ -24,7 +24,12 @@ class PassengerBookingProjectionControllerTest {
 
   @Test
   void passengerBookingListDelegatesToProjectionService() {
-    var controller = new PassengerBookingController(bookings, payments, earlyDropOff);
+    var controller =
+        new PassengerBookingController(
+            bookings,
+            payments,
+            earlyDropOff,
+            org.mockito.Mockito.mock(com.routeshare.trip.facade.TripTimerFacade.class));
     var summary =
         new PassengerBookingSummaryResponse(
             1L,

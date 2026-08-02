@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * Append-only. Nothing updates or deletes a row here.
@@ -46,6 +48,7 @@ public class ReliabilityEventEntity {
   @Column(name = "trip_id")
   private Long tripId;
 
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "metadata", columnDefinition = "jsonb")
   private String metadata;
 
