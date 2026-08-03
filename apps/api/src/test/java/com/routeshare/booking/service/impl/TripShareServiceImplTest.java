@@ -74,8 +74,8 @@ class TripShareServiceImplTest {
     when(passengerFacade.findTrustedContacts(5L))
         .thenReturn(
             List.of(
-                new PassengerFacade.TrustedContact("A", "+94771234567"),
-                new PassengerFacade.TrustedContact("B", "+94777654321")));
+                new PassengerFacade.TrustedContact("A", "+94771234567", true),
+                new PassengerFacade.TrustedContact("B", "+94777654321", true)));
     doThrow(new IllegalStateException("sms down"))
         .when(smsGateway)
         .sendText(eq("+94777654321"), anyString());

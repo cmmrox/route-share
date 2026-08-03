@@ -87,6 +87,7 @@ class VerificationNeverBlocksBookingTest {
           eligibility,
           pickupPoints,
           policy,
+          mock(com.routeshare.chat.facade.ChatFacade.class),
           java.time.Clock.systemUTC());
 
   @BeforeEach

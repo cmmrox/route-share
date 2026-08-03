@@ -30,4 +30,7 @@ public class TrustedContactEntity {
   private String name;
   private String phone;
   private String relationship;
+
+  @Column(name = "auto_share_sos", nullable = false)
+  private boolean autoShareSos = true;
 }

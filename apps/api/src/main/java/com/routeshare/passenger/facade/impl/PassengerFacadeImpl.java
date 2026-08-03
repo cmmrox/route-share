@@ -21,7 +21,7 @@ public class PassengerFacadeImpl implements PassengerFacade {
   @Override
   public List<TrustedContact> findTrustedContacts(long appUserId) {
     return trustedContacts.findByAppUserIdOrderByIdDesc(appUserId).stream()
-        .map(c -> new TrustedContact(c.getName(), c.getPhone()))
+        .map(c -> new TrustedContact(c.getName(), c.getPhone(), c.isAutoShareSos()))
         .toList();
   }
 

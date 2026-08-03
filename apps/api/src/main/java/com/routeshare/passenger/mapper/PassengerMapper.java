@@ -23,6 +23,7 @@ public interface PassengerMapper {
   @Mapping(target = "name", source = "request.name")
   @Mapping(target = "phone", source = "request.phone")
   @Mapping(target = "relationship", source = "request.relationship")
+  @Mapping(target = "autoShareSos", constant = "true")
   TrustedContactEntity toTrustedContactEntity(long appUserId, TrustedContactRequest request);
 
   default PassengerProfileResponse toPassengerProfileResponse(

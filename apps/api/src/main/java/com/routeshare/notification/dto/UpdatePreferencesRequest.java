@@ -1,10 +1,11 @@
 package com.routeshare.notification.dto;
 
-/** Partial preference update; null fields are left unchanged. */
-public record UpdatePreferencesRequest(
-    Boolean pushEnabled,
-    Boolean emailEnabled,
-    Boolean bookingUpdates,
-    Boolean tripUpdates,
-    Boolean paymentUpdates,
-    Boolean marketing) {}
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.util.List;
+
+public record UpdatePreferencesRequest(@NotNull List<@Valid Category> categories) {
+  public record Category(
+      @NotBlank String key, boolean enabled, boolean push, boolean sms, boolean inApp) {}
+}

@@ -124,7 +124,7 @@ New errors: `CHAT_CLOSED`, `CHAT_NOT_AVAILABLE`, `ATTACHMENT_TOO_LARGE`, `ATTACH
 
 ## Database / migration changes
 
-**`V036__chat_notifications_safety_support.sql`**
+**`V037__chat_notifications_safety_support.sql`**
 
 - New `chat.chat_thread`:
   `id`, `booking_id FK UNIQUE`, `state TEXT CHECK (state IN ('OPEN','CLOSED'))`,
@@ -198,7 +198,7 @@ Backend slice. The contract must supply:
 - `apps/api/.../support/**` — attachments.
 - `apps/api/.../platform/**` — settings, account requests, `/me/context` additions.
 - `apps/api/.../scheduling/**` — `chat-auto-close`.
-- `apps/api/src/main/resources/db/migration/V036__chat_notifications_safety_support.sql`.
+- `apps/api/src/main/resources/db/migration/V037__chat_notifications_safety_support.sql`.
 - `apps/api/src/test/java/**` — chat lifecycle and authorization tests, close-job test, preference matrix tests, badge rule tests, suppression tests, SOS snapshot test, attachment validation tests.
 - `docs/api/mobile-app.openapi.json`, `docs/api/admin-web.openapi.json`, `packages/api-contracts/src/index.ts`.
 
@@ -239,16 +239,16 @@ push but never stops a safety alert; a passenger notification raised during a li
 
 ## Done criteria
 
-- [ ] Chat opens on confirmation, closes 24 h after drop-off by job, and is readable only by the two participants plus audited admins.
-- [ ] Notification preferences match S23's twelve rows and three channels; safety categories cannot be disabled.
-- [ ] Broadcasts appear as an inbox kind with working filters and mark-all-read.
-- [ ] Badge endpoint implements S14's rules exactly, including which slots are dots and which are counts.
-- [ ] Passenger alerts raised during a live drive are deferred, silent and counted.
-- [ ] SOS snapshots trip, vehicle, plate, role and location, and alerts trusted contacts.
-- [ ] Support tickets accept validated attachments.
-- [ ] Settings persist and surface on `/me/context`; export and deletion requests are queued and visible to admin.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] Chat opens on confirmation, closes 24 h after drop-off by job, and is readable only by the two participants plus audited admins.
+- [x] Notification preferences match S23's twelve rows and three channels; safety categories cannot be disabled.
+- [x] Broadcasts appear as an inbox kind with working filters and mark-all-read.
+- [x] Badge endpoint implements S14's rules exactly, including which slots are dots and which are counts.
+- [x] Passenger alerts raised during a live drive are deferred, silent and counted.
+- [x] SOS snapshots trip, vehicle, plate, role and location, and alerts trusted contacts.
+- [x] Support tickets accept validated attachments.
+- [x] Settings persist and surface on `/me/context`; export and deletion requests are queued and visible to admin.
+- [x] `./mvnw spotless:check verify` green, JaCoCo 80% held.
+- [x] Tracking docs updated; focused commit ready.
 
 ## Suggested commit message
 

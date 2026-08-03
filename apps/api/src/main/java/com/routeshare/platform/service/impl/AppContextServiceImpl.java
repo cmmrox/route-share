@@ -62,6 +62,7 @@ public class AppContextServiceImpl implements AppContextService {
   private final BookingService bookings;
   private final NotificationService notifications;
   private final com.routeshare.reliability.facade.ReliabilityFacade reliability;
+  private final com.routeshare.platform.service.UserSettingsService userSettings;
   private final Clock clock;
 
   @Override
@@ -94,8 +95,13 @@ public class AppContextServiceImpl implements AppContextService {
         suspended ? null : activeTrip(),
         new AppContextResponse.Money(CURRENCY, BigDecimal.ZERO, BigDecimal.ZERO), // slices 06, 11
         badges(suspended),
-        new AppContextResponse.Settings("SYSTEM", "en"), // slice 10
+        settings(user.appUserId()),
         clock.instant());
+  }
+
+  private AppContextResponse.Settings settings(long appUserId) {
+    var saved = userSettings.forAppUser(appUserId);
+    return new AppContextResponse.Settings(saved.theme(), saved.language());
   }
 
   private Set<String> availableModes(

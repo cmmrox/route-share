@@ -32,11 +32,15 @@ class SosServiceImplTest {
       new SosServiceImpl(
           current,
           identityFacade,
+          mock(com.routeshare.passenger.facade.PassengerFacade.class),
+          mock(com.routeshare.location.facade.LocationFacade.class),
           sosEvents,
           events,
           notifications,
+          mock(com.routeshare.identity.provider.SmsGateway.class),
           (action, key, limit, window) -> {},
-          new com.routeshare.common.ratelimit.RateLimitProperties(true, null, null, null, null));
+          new com.routeshare.common.ratelimit.RateLimitProperties(true, null, null, null, null),
+          new io.micrometer.core.instrument.simple.SimpleMeterRegistry());
 
   @BeforeEach
   void setUp() {
@@ -48,7 +52,7 @@ class SosServiceImplTest {
 
   @Test
   void raisePersistsPublishesEventAndConfirms() {
-    when(sosEvents.save(any(SosEventEntity.class)))
+    when(sosEvents.saveAndFlush(any(SosEventEntity.class)))
         .thenAnswer(
             inv -> {
               SosEventEntity e = inv.getArgument(0);
@@ -57,7 +61,8 @@ class SosServiceImplTest {
             });
 
     var res =
-        service.raise("PASSENGER", new RaiseSosRequest(null, 7L, 6.9, 79.8, "Feeling unsafe"));
+        service.raise(
+            "PASSENGER", new RaiseSosRequest("UNSAFE", null, 7L, 6.9, 79.8, "Feeling unsafe"));
 
     assertThat(res.id()).isEqualTo(3L);
     assertThat(res.status()).isEqualTo("RAISED");

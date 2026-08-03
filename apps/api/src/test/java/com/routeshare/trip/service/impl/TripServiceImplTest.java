@@ -52,6 +52,8 @@ class TripServiceImplTest {
           penalties,
           startWindows,
           pickupWaits,
+          org.mockito.Mockito.mock(com.routeshare.chat.facade.ChatFacade.class),
+          org.mockito.Mockito.mock(com.routeshare.platform.service.PolicySettingService.class),
           clock);
 
   @BeforeEach

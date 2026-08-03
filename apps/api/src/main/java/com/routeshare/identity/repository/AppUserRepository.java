@@ -18,6 +18,9 @@ public interface AppUserRepository extends JpaRepository<AppUserEntity, Long> {
 
   java.util.List<AppUserEntity> findAllByOrderByIdDesc(org.springframework.data.domain.Pageable p);
 
+  @Query("select u.id from AppUserEntity u where u.localStatus = 'ACTIVE' order by u.id")
+  java.util.List<Long> findActiveAppUserIds(org.springframework.data.domain.Pageable pageable);
+
   @Transactional
   @Modifying
   @Query(

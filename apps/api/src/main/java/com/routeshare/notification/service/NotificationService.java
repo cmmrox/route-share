@@ -16,13 +16,19 @@ public interface NotificationService {
 
   List<NotificationResponse> listMine(int limit);
 
+  List<NotificationResponse> listMine(String filter, int page, int size);
+
   long unreadCount();
 
   NotificationResponse markRead(long notificationId);
+
+  int markAllRead();
 
   NotificationPreferenceResponse preferences();
 
   NotificationPreferenceResponse savePreferences(UpdatePreferencesRequest req);
 
   void registerPush(RegisterPushRequest req);
+
+  com.routeshare.notification.dto.BadgeSummaryResponse badges();
 }

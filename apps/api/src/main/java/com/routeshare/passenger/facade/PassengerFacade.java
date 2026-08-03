@@ -8,7 +8,7 @@ public interface PassengerFacade {
   /** Trusted contacts (name + phone) for a passenger, used for safety/share notifications. */
   List<TrustedContact> findTrustedContacts(long appUserId);
 
-  record TrustedContact(String name, String phone) {}
+  record TrustedContact(String name, String phone, boolean autoShareSos) {}
 
   /**
    * The two facts eligibility turns on, and nothing else.

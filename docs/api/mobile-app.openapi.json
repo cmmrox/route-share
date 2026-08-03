@@ -339,14 +339,14 @@
           "Notifications"
         ],
         "summary": "Tab badges per board S14",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/BadgeSummary"
                 }
               }
             }
@@ -411,14 +411,14 @@
           "Chat"
         ],
         "summary": "Thread state and close time (P23/D36)",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/ChatThread"
                 }
               }
             }
@@ -449,14 +449,14 @@
           "Chat"
         ],
         "summary": "Messages since a cursor",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/ChatMessages"
                 }
               }
             }
@@ -482,7 +482,9 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
             }
           },
           {
@@ -501,14 +503,14 @@
           "Chat"
         ],
         "summary": "Send a message",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/ChatMessage"
                 }
               }
             }
@@ -543,7 +545,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/ChatMessageRequest"
               }
             }
           }
@@ -557,14 +559,15 @@
           "Chat"
         ],
         "summary": "Mark read up to a message",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "integer",
+                  "description": "Number of messages marked read"
                 }
               }
             }
@@ -584,14 +587,6 @@
             "schema": {
               "type": "integer"
             }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -599,7 +594,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/ChatReadRequest"
               }
             }
           }
@@ -6874,14 +6869,14 @@
           "Settings"
         ],
         "summary": "Request a data export",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/AccountRequest"
                 }
               }
             }
@@ -6891,16 +6886,6 @@
           },
           "403": {
             "description": "Forbidden — body carries {code, message, actionPath}"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
           }
         },
         "operationId": "postMeDataExport"
@@ -6912,14 +6897,14 @@
           "Settings"
         ],
         "summary": "Request account deletion",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/AccountRequest"
                 }
               }
             }
@@ -6929,16 +6914,6 @@
           },
           "403": {
             "description": "Forbidden — body carries {code, message, actionPath}"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
           }
         },
         "operationId": "postMeDeletionRequest"
@@ -7184,14 +7159,14 @@
           "Settings"
         ],
         "summary": "Theme, language, privacy, receipts (S18)",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/UserSettings"
                 }
               }
             }
@@ -7210,14 +7185,14 @@
           "Settings"
         ],
         "summary": "Update settings",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/UserSettings"
                 }
               }
             }
@@ -7234,7 +7209,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/UserSettingsRequest"
               }
             }
           }
@@ -7248,14 +7223,14 @@
           "Notifications"
         ],
         "summary": "Category x channel matrix (S23)",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/NotificationPreferenceMatrix"
                 }
               }
             }
@@ -7274,14 +7249,14 @@
           "Notifications"
         ],
         "summary": "Update the matrix",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/NotificationPreferenceMatrix"
                 }
               }
             }
@@ -7298,7 +7273,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesRequest"
               }
             }
           }
@@ -7312,14 +7287,17 @@
           "Notifications"
         ],
         "summary": "Unified inbox with filters (S22)",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UnifiedNotification"
+                  }
                 }
               }
             }
@@ -7366,14 +7344,15 @@
           "Notifications"
         ],
         "summary": "Mark all read",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "integer",
+                  "description": "Number of notifications marked read"
                 }
               }
             }
@@ -7383,16 +7362,6 @@
           },
           "403": {
             "description": "Forbidden — body carries {code, message, actionPath}"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
           }
         },
         "operationId": "postNotificationsReadAll"
@@ -12317,14 +12286,14 @@
           "Safety"
         ],
         "summary": "Raise SOS with snapshotted context (S27)",
-        "x-routeshare-status": "PLANNED_SLICE_10",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/SosEvent"
                 }
               }
             }
@@ -12341,12 +12310,172 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/RaiseSosRequest"
               }
             }
           }
         },
         "operationId": "postSosEvents"
+      }
+    },
+    "/api/v1/sos-events/{id}": {
+      "get": {
+        "tags": [
+          "Safety"
+        ],
+        "summary": "Read one of the caller's SOS events",
+        "x-routeshare-status": "IMPLEMENTED",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SOS event with context snapshotted at raise time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SosEvent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "404": {
+            "description": "Not found for this caller"
+          }
+        },
+        "operationId": "getSosEventsById"
+      }
+    },
+    "/api/v1/support/tickets/{ticketId}/attachments/upload-url": {
+      "post": {
+        "tags": [
+          "Support"
+        ],
+        "summary": "Reserve a private support attachment and obtain a presigned upload URL",
+        "x-routeshare-status": "IMPLEMENTED",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "filename",
+                  "contentType",
+                  "sizeBytes"
+                ],
+                "properties": {
+                  "filename": {
+                    "type": "string"
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "image/jpeg",
+                      "image/png",
+                      "application/pdf"
+                    ]
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 1,
+                    "maximum": 10485760
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reserved attachment and presigned upload request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportAttachmentUpload"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ticket does not belong to the caller"
+          },
+          "409": {
+            "description": "Attachment metadata is not allowed"
+          }
+        },
+        "operationId": "postSupportTicketAttachmentUploadUrl"
+      }
+    },
+    "/api/v1/support/tickets/{ticketId}/attachments/{attachmentId}/submit": {
+      "post": {
+        "tags": [
+          "Support"
+        ],
+        "summary": "Sniff and submit a previously uploaded private support attachment",
+        "x-routeshare-status": "IMPLEMENTED",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Validated attachment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportAttachment"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ticket does not belong to the caller"
+          },
+          "409": {
+            "description": "Uploaded bytes do not match an allowed type"
+          }
+        },
+        "operationId": "postSupportTicketAttachmentSubmit"
       }
     },
     "/api/v1/trips/{id}/transition": {
@@ -12714,6 +12843,661 @@
           },
           "label": {
             "type": "string"
+          }
+        }
+      },
+      "AccountRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "appUserId",
+          "kind",
+          "status",
+          "requestedAt",
+          "receiptRetentionYears"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "appUserId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DATA_EXPORT",
+              "DELETION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "REJECTED"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receiptRetentionYears": {
+            "type": "integer",
+            "const": 7
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "BadgeSummary": {
+        "$ref": "#/components/schemas/AppContextBadges"
+      },
+      "ChatMessage": {
+        "type": "object",
+        "required": [
+          "id",
+          "senderAppUserId",
+          "body",
+          "sentAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "senderAppUserId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readByCounterpartyAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ChatMessageRequest": {
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "properties": {
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        }
+      },
+      "ChatMessages": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            }
+          },
+          "nextCursor": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ChatParticipant": {
+        "type": "object",
+        "required": [
+          "appUserId",
+          "role"
+        ],
+        "properties": {
+          "appUserId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "firstName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "PASSENGER",
+              "DRIVER"
+            ]
+          }
+        }
+      },
+      "ChatReadRequest": {
+        "type": "object",
+        "required": [
+          "upToMessageId"
+        ],
+        "properties": {
+          "upToMessageId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          }
+        }
+      },
+      "ChatThread": {
+        "type": "object",
+        "required": [
+          "id",
+          "bookingId",
+          "state",
+          "openedAt",
+          "counterparty",
+          "quickReplies",
+          "supportReadable"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bookingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "CLOSED"
+            ]
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closesAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "counterparty": {
+            "$ref": "#/components/schemas/ChatParticipant"
+          },
+          "quickReplies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportReadable": {
+            "type": "boolean",
+            "description": "Always true; tells both participants that support can read the thread."
+          }
+        }
+      },
+      "NotificationPreferenceCategory": {
+        "type": "object",
+        "required": [
+          "key",
+          "group",
+          "label",
+          "enabled",
+          "push",
+          "sms",
+          "inApp",
+          "mandatory"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "push": {
+            "type": "boolean"
+          },
+          "sms": {
+            "type": "boolean"
+          },
+          "inApp": {
+            "type": "boolean"
+          },
+          "mandatory": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NotificationPreferenceMatrix": {
+        "type": "object",
+        "required": [
+          "categories"
+        ],
+        "properties": {
+          "categories": {
+            "type": "array",
+            "minItems": 12,
+            "maxItems": 12,
+            "items": {
+              "$ref": "#/components/schemas/NotificationPreferenceCategory"
+            }
+          }
+        }
+      },
+      "RaiseSosRequest": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 40
+          },
+          "tripId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "bookingId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          }
+        }
+      },
+      "SosEvent": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "role",
+          "contactsAlerted",
+          "contactAlertFailures",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tripId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "bookingId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "latitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "RIDER",
+              "DRIVER"
+            ]
+          },
+          "vehicleRegistration": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "destinationLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "placeLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contactsAlerted": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "contactAlertFailures": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SupportAttachment": {
+        "type": "object",
+        "required": [
+          "id",
+          "filename",
+          "contentType",
+          "sizeBytes",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "SupportAttachmentUpload": {
+        "type": "object",
+        "required": [
+          "attachmentId",
+          "uploadUrl",
+          "httpMethod",
+          "headers",
+          "expiresAt"
+        ],
+        "properties": {
+          "attachmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "httpMethod": {
+            "type": "string",
+            "const": "PUT"
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UnifiedNotification": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "category",
+          "title",
+          "body",
+          "deferred",
+          "read",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "RIDE",
+              "DRIVE",
+              "MONEY",
+              "ACCOUNT",
+              "BROADCAST"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "dataJson": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actionPath": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deferred": {
+            "type": "boolean"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpdateNotificationPreferenceCategory": {
+        "type": "object",
+        "required": [
+          "key",
+          "enabled",
+          "push",
+          "sms",
+          "inApp"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "push": {
+            "type": "boolean"
+          },
+          "sms": {
+            "type": "boolean"
+          },
+          "inApp": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateNotificationPreferencesRequest": {
+        "type": "object",
+        "required": [
+          "categories"
+        ],
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateNotificationPreferenceCategory"
+            }
+          }
+        }
+      },
+      "UserSettings": {
+        "type": "object",
+        "required": [
+          "theme",
+          "language",
+          "shareLiveLocation",
+          "showRatingPublicly",
+          "receiptsByEmail",
+          "updatedAt"
+        ],
+        "properties": {
+          "theme": {
+            "type": "string",
+            "enum": [
+              "SYSTEM",
+              "LIGHT",
+              "DARK"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "si",
+              "ta"
+            ]
+          },
+          "shareLiveLocation": {
+            "type": "boolean"
+          },
+          "showRatingPublicly": {
+            "type": "boolean"
+          },
+          "receiptsByEmail": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserSettingsRequest": {
+        "type": "object",
+        "required": [
+          "theme",
+          "language",
+          "shareLiveLocation",
+          "showRatingPublicly",
+          "receiptsByEmail"
+        ],
+        "properties": {
+          "theme": {
+            "type": "string",
+            "enum": [
+              "SYSTEM",
+              "LIGHT",
+              "DARK"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "si",
+              "ta"
+            ]
+          },
+          "shareLiveLocation": {
+            "type": "boolean"
+          },
+          "showRatingPublicly": {
+            "type": "boolean"
+          },
+          "receiptsByEmail": {
+            "type": "boolean"
           }
         }
       },

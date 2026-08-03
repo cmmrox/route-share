@@ -46,6 +46,8 @@ class AppContextServiceTest {
 
   private final com.routeshare.reliability.facade.ReliabilityFacade reliability =
       org.mockito.Mockito.mock(com.routeshare.reliability.facade.ReliabilityFacade.class);
+  private final com.routeshare.platform.service.UserSettingsService userSettings =
+      mock(com.routeshare.platform.service.UserSettingsService.class);
   private final AppContextServiceImpl service =
       new AppContextServiceImpl(
           current,
@@ -56,10 +58,15 @@ class AppContextServiceTest {
           bookings,
           notifications,
           reliability,
+          userSettings,
           Clock.fixed(NOW, ZoneOffset.UTC));
 
   @org.junit.jupiter.api.BeforeEach
   void riderDefaults() {
+    when(userSettings.forAppUser(anyLong()))
+        .thenReturn(
+            new com.routeshare.platform.dto.response.UserSettingsResponse(
+                "SYSTEM", "en", true, true, true, NOW));
     // A rider who has never saved a profile is unverified with no gender on record — the same
     // answer the facade gives for a missing row.
     when(passengers.riderEligibilityProfile(org.mockito.ArgumentMatchers.anyLong()))

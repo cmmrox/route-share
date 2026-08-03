@@ -1,7 +1,7 @@
 # API Backend Reconciliation — ComiGo Mobile Contract
 
 Generated: 2026-08-01 (slice 00 — repo reset and contract rewrite)
-Last regenerated: 2026-08-02 (slice 06 — penalties, dues and compensation)
+Last regenerated: 2026-08-03 (slice 10 — chat, notifications, safety and support)
 
 Source of truth: `docs/api/mobile-app.openapi.json`. This document is derived from its
 `x-routeshare-status` extension — regenerate it rather than editing by hand.
@@ -20,11 +20,9 @@ resource ownership and gate state.
 
 | Status | Operations | Meaning |
 | --- | --- | --- |
-| `IMPLEMENTED` | 144 | Live in `apps/api` today |
-| `PLANNED_SLICE_07` | 7 | Specified; built in slice 07 |
-| `PLANNED_SLICE_08` | 8 | Specified; built in slice 08 |
-| `PLANNED_SLICE_09` | 4 | Specified; built in slice 09 |
-| `PLANNED_SLICE_10` | 14 | Specified; built in slice 10 |
+| `IMPLEMENTED` | 188 | Live in `apps/api` today |
+| `PLANNED_SLICE_07` | 1 | Remaining alternatives read contract |
+| `PLANNED_SLICE_09` | 1 | Remaining driver share metadata read |
 | `PLANNED_SLICE_11` | 6 | Specified; built in slice 11 |
 | `PLANNED_SLICE_12` | 6 | Specified; built in slice 12 |
 | `PLANNED_SLICE_13` | 8 | Specified; built in slice 13 |
@@ -32,7 +30,7 @@ resource ownership and gate state.
 | `PLANNED_SLICE_15` | 6 | Specified; built in slice 15 |
 | `INTERNAL_NOT_FOR_CLIENTS` | 7 | Implemented, outside the mobile surface |
 | `CUT` | 2 | Deliberately removed from the product |
-| **Total** | **220** | across 185 paths, 119 schemas |
+| **Total** | **233** | across 195 paths, 161 schemas |
 
 ## 3. Screen coverage
 
@@ -96,6 +94,25 @@ its argument names from the contract. Left as-is; the contract names are the bet
 
 ## 5. New in this slice
 
+**Slice 10 — chat, notifications, safety and support.** All fourteen operations originally stamped
+for Slice 10 are now `IMPLEMENTED`, and the reconciliation also adds three live operations omitted
+from the original planned inventory:
+
+- `GET /api/v1/sos-events/{id}`
+- `POST /api/v1/support/tickets/{ticketId}/attachments/upload-url`
+- `POST /api/v1/support/tickets/{ticketId}/attachments/{attachmentId}/submit`
+
+The admin contract adds the reason-required audited chat read and the account-request queue. The
+role-split notification paths remain for one release as deprecated compatibility endpoints; the
+client surface is now `/api/v1/notifications`, `/api/v1/notification-preferences` and
+`/api/v1/badges`.
+
+Both OpenAPI 3.1 documents validate. While touching the admin contract, its eight pre-existing
+OpenAPI 3.0 `nullable` keywords were converted to 3.1 type unions; this changes no runtime shape.
+
+Current inventory: **188 implemented, 2 older planned, 34 planned in slices 11–15, 7 internal and
+2 cut**, for 233 operations total.
+
 **Slice 06 — penalties, dues and compensation.** The five operations planned for this slice are now
 `IMPLEMENTED` and carry real schemas in place of the `{"type": "object"}` placeholders they were
 stamped with in slice 00:
@@ -143,10 +160,8 @@ Two behaviours worth knowing:
 
 | Slice | Ops | Area |
 | --- | --- | --- |
-| 07 | 7 | Booking depth |
-| 08 | 8 | Preferences, verification, eligibility |
-| 09 | 4 | Search v2 and pickup points |
-| 10 | 14 | Chat, notifications, safety, settings |
+| 07 | 1 | Remaining alternatives read |
+| 09 | 1 | Remaining driver share metadata read |
 | 11 | 6 | Referral and rewards |
 | 12 | 6 | Real-time location pipeline |
 | 13 | 8 | Live en-route booking |

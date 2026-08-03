@@ -14,4 +14,10 @@ public interface SupportService {
   SupportTicketResponse getMine(long ticketId);
 
   SupportMessageResponse addMessage(String senderRole, long ticketId, TicketMessageRequest req);
+
+  com.routeshare.support.dto.SupportAttachmentUploadResponse createAttachmentUpload(
+      long ticketId, com.routeshare.support.dto.SupportAttachmentUploadRequest request);
+
+  com.routeshare.support.dto.SupportAttachmentResponse submitAttachment(
+      long ticketId, long attachmentId);
 }

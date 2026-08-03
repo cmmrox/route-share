@@ -1,9 +1,15 @@
 package com.routeshare.notification.dto;
 
-public record NotificationPreferenceResponse(
-    boolean pushEnabled,
-    boolean emailEnabled,
-    boolean bookingUpdates,
-    boolean tripUpdates,
-    boolean paymentUpdates,
-    boolean marketing) {}
+import java.util.List;
+
+public record NotificationPreferenceResponse(List<Category> categories) {
+  public record Category(
+      String key,
+      String group,
+      String label,
+      boolean enabled,
+      boolean push,
+      boolean sms,
+      boolean inApp,
+      boolean mandatory) {}
+}

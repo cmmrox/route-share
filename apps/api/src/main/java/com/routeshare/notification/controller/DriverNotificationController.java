@@ -26,6 +26,7 @@ public class DriverNotificationController {
     this.service = service;
   }
 
+  @Deprecated
   @GetMapping("/api/v1/driver/notifications")
   ApiResponse<List<NotificationResponse>> list(
       @RequestParam(name = "limit", defaultValue = "30") int limit) {
@@ -37,11 +38,13 @@ public class DriverNotificationController {
     return ApiResponse.ok(service.markRead(notificationId));
   }
 
+  @Deprecated
   @GetMapping("/api/v1/driver/notification-preferences")
   ApiResponse<NotificationPreferenceResponse> preferences() {
     return ApiResponse.ok(service.preferences());
   }
 
+  @Deprecated
   @PutMapping("/api/v1/driver/notification-preferences")
   ApiResponse<NotificationPreferenceResponse> updatePreferences(
       @RequestBody UpdatePreferencesRequest req) {

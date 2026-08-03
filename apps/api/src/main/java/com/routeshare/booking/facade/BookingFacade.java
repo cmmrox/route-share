@@ -1,6 +1,7 @@
 package com.routeshare.booking.facade;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Optional;
 
 public interface BookingFacade {
@@ -13,6 +14,9 @@ public interface BookingFacade {
 
   /** Passenger's app_user_id for a booking, used to address lifecycle notifications. */
   Optional<Long> findPassengerAppUserIdForBooking(long bookingId);
+
+  /** Participant and lifecycle facts used by the booking-scoped chat authorization boundary. */
+  Optional<ChatContext> findChatContext(long bookingId);
 
   /**
    * The confirmed bookings a trip start must capture. One start charges every card on the trip, so
@@ -43,4 +47,11 @@ public interface BookingFacade {
   record BookingToCharge(long bookingId, BigDecimal fare) {}
 
   record CancelledBooking(long bookingId, long passengerAppUserId, String previousStatus) {}
+
+  record ChatContext(
+      long bookingId,
+      long passengerAppUserId,
+      long driverAppUserId,
+      String bookingStatus,
+      Instant droppedOffAt) {}
 }
