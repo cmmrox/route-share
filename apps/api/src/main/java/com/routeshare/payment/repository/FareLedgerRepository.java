@@ -15,7 +15,7 @@ public interface FareLedgerRepository extends JpaRepository<FareLedgerEntryEntit
           """
       INSERT INTO payment.fare_ledger_entry(booking_id, entry_type, amount, currency)
       VALUES (:bookingId, :entryType, :amount, :currency)
-      ON CONFLICT (booking_id, entry_type) DO NOTHING
+      ON CONFLICT (booking_id, entry_type, source_key) DO NOTHING
       """,
       nativeQuery = true)
   int insertIfAbsent(
@@ -44,6 +44,22 @@ public interface FareLedgerRepository extends JpaRepository<FareLedgerEntryEntit
       long bookingId, String entryType, BigDecimal amount, String currency) {
     insertIfAbsent(bookingId, amount, currency, entryType);
   }
+
+  @Modifying
+  @Query(
+      value =
+          """
+      INSERT INTO payment.fare_ledger_entry
+          (booking_id, entry_type, amount, currency, source_key)
+      VALUES (:bookingId, 'REFERRAL_PAYOUT', :amount, :currency, :sourceKey)
+      ON CONFLICT (booking_id, entry_type, source_key) DO NOTHING
+      """,
+      nativeQuery = true)
+  int insertReferralPayoutIfAbsent(
+      @Param("bookingId") long bookingId,
+      @Param("amount") BigDecimal amount,
+      @Param("currency") String currency,
+      @Param("sourceKey") String sourceKey);
 
   @Query(
       value =

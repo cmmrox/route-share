@@ -60,6 +60,7 @@ public class BookingServiceImpl implements BookingService {
   private final com.routeshare.routing.service.PickupPointService pickupPoints;
   private final com.routeshare.platform.service.PolicySettingService policy;
   private final com.routeshare.chat.facade.ChatFacade chat;
+  private final com.routeshare.rewards.facade.RewardsFacade rewards;
   private final java.time.Clock clock;
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
       Map.of(
@@ -147,6 +148,7 @@ public class BookingServiceImpl implements BookingService {
     // Stored rather than passed straight through, because an approve-each booking authorises when
     // the driver accepts — by which time the request that named the card is long gone.
     bookings.recordChosenPaymentMethod(bookingId, req.paymentMethodId());
+    bookings.recordRewardsPreference(bookingId, req.useRewardsCredit());
     pricing.persistForBooking(
         bookingId,
         reservation.routeOccurrenceId(),
@@ -195,6 +197,7 @@ public class BookingServiceImpl implements BookingService {
     // not somebody riding: materialising a trip for it would put an unanswered request under the
     // start-buffer sweeper, and authorising for it would hold money on a seat that may never exist.
     var appliedDues = com.routeshare.penalty.dto.response.AppliedDuesResponse.empty();
+    BigDecimal appliedCredit = BigDecimal.ZERO.setScale(2);
     if (confirmed) {
       // The occurrence becomes a trip the moment somebody is actually riding on it, and the
       // start-buffer clock opens with it.
@@ -204,7 +207,14 @@ public class BookingServiceImpl implements BookingService {
       tripLifecycle.openLateGraceForBooking(bookingId);
       // The card is held now and charged when the driver starts. Accepting does not charge;
       // approval does not charge; a trip that never starts costs the passenger nothing.
-      payments.authorizeForBooking(bookingId, req.paymentMethodId(), fareEstimate);
+      appliedCredit =
+          Optional.ofNullable(
+                  rewards.applyRideCredit(
+                      app.appUserId(), bookingId, fareEstimate, req.useRewardsCredit()))
+              .orElse(BigDecimal.ZERO.setScale(2));
+      bookings.recordAppliedCredit(bookingId, appliedCredit);
+      payments.authorizeForBooking(
+          bookingId, req.paymentMethodId(), fareEstimate.subtract(appliedCredit));
       // Fees she could not be charged for at the time ride along to this checkout (P09d). They are
       // added to the total, never a gate on making the booking: refusing a rider over an unpaid
       // LKR 49 turns a small fee into a lost passenger, and P25 shows dues as a line, not a wall.
@@ -220,8 +230,12 @@ public class BookingServiceImpl implements BookingService {
     response.put("status", initialStatus);
     response.put("routeOccurrenceId", reservation.routeOccurrenceId());
     response.put("fareEstimate", fareEstimate);
+    response.put("appliedCredit", appliedCredit);
+    response.put(
+        "rewardsBalance",
+        Optional.ofNullable(rewards.balance(app.appUserId())).orElse(BigDecimal.ZERO.setScale(2)));
     response.put("appliedDues", appliedDues);
-    response.put("totalDue", fareEstimate.add(appliedDues.total()));
+    response.put("totalDue", fareEstimate.subtract(appliedCredit).add(appliedDues.total()));
     response.put("approvalMode", approvalMode.name());
     response.put("seats", heldSeats);
     response.put("pickupPoint", pickupPoint);
@@ -263,6 +277,7 @@ public class BookingServiceImpl implements BookingService {
         penalties.assessPassengerCancelAfterStart(
             bookingId, bookings.findTripId(bookingId).orElse(null));
       } else {
+        rewards.releaseRideCredit(app.appUserId(), bookingId);
         payments.voidForBooking(bookingId, "PASSENGER_CANCELLED");
       }
       // Any fee this booking was carrying rides on to the next one rather than being cleared by a
@@ -361,8 +376,19 @@ public class BookingServiceImpl implements BookingService {
         .findFareAndPaymentMethod(bookingId)
         .ifPresent(
             row -> {
+              BigDecimal appliedCredit =
+                  Optional.ofNullable(
+                          rewards.applyRideCredit(
+                              row.getPassengerAppUserId(),
+                              bookingId,
+                              row.getFareEstimate(),
+                              row.getUseRewardsCredit()))
+                      .orElse(BigDecimal.ZERO.setScale(2));
+              bookings.recordAppliedCredit(bookingId, appliedCredit);
               payments.authorizeForBooking(
-                  bookingId, row.getPaymentMethodId(), row.getFareEstimate());
+                  bookingId,
+                  row.getPaymentMethodId(),
+                  row.getFareEstimate().subtract(appliedCredit));
               var carried = penalties.applyOutstandingDues(row.getPassengerAppUserId(), bookingId);
               if (carried.total().signum() > 0) {
                 bookings.recordAppliedDues(bookingId, carried.total());
@@ -385,6 +411,9 @@ public class BookingServiceImpl implements BookingService {
             .findStatusForUpdateByIdAndDriverAppUserId(bookingId, app.appUserId())
             .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
     updateBookingStatus(bookingId, app.appUserId(), fromStatus, REJECTED, reason);
+    bookings
+        .findPassengerAppUserId(bookingId)
+        .ifPresent(passengerId -> rewards.releaseRideCredit(passengerId, bookingId));
     payments.voidForBooking(bookingId, "DRIVER_DECLINED");
     penalties.releaseDuesForBooking(bookingId);
     seatHolds.release(bookingId);

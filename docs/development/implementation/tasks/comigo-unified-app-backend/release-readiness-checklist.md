@@ -67,7 +67,7 @@ The single most important section. A fare error is a refund; a capture error is 
 
 ## 5. Data and migrations
 
-- [ ] `V027` → `V041` apply cleanly from an empty database in one pass.
+- [ ] `V027` → `V042` apply cleanly from an empty database in one pass.
 - [ ] They also apply cleanly on top of a database at `V026` (the pre-plan state).
 - [ ] `scripts/simulation/seed-demo-route.sh` regenerates a complete demo dataset on the new schema.
 - [ ] Every new table has its ownership/authorization relationship documented and enforced.

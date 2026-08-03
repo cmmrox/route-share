@@ -55,6 +55,7 @@ public class OccurrenceLifecycleServiceImpl implements OccurrenceLifecycleServic
   private final PenaltyFacade penalties;
   private final PaymentFacade payments;
   private final BookingFacade bookings;
+  private final com.routeshare.rewards.facade.RewardsFacade rewards;
   private final com.routeshare.driver.facade.DriverFacade drivers;
   private final NotificationFacade notifications;
   private final DomainEventPublisher events;
@@ -205,6 +206,7 @@ public class OccurrenceLifecycleServiceImpl implements OccurrenceLifecycleServic
     // "cancelled, nothing charged" while an authorisation is still live is the one order that
     // produces a complaint nobody can answer.
     for (var booking : cancelled) {
+      rewards.releaseRideCredit(booking.passengerAppUserId(), booking.bookingId());
       payments.voidForBooking(booking.bookingId(), "OCCURRENCE_CANCELLED");
     }
 

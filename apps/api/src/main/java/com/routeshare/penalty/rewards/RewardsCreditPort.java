@@ -9,8 +9,7 @@ import java.math.BigDecimal;
  * the seam so that neither slice waits for the other: the port is declared here, slice 11 replaces
  * the in-module implementation with the real balance, and nothing in the penalty flow changes.
  *
- * <p>A driver victim is not paid this way — his half is a {@code COMPENSATION} line in the fare
- * ledger, because his money reaches him through payouts (D26) rather than through a rider balance.
+ * <p>The balance is role-neutral: passenger and driver compensation use the same auditable ledger.
  */
 public interface RewardsCreditPort {
 

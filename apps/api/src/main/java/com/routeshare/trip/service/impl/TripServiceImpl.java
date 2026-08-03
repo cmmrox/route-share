@@ -36,6 +36,7 @@ public class TripServiceImpl implements TripService {
   private final TripStartWindowService startWindows;
   private final com.routeshare.trip.service.PickupWaitService pickupWaits;
   private final com.routeshare.chat.facade.ChatFacade chat;
+  private final com.routeshare.rewards.facade.RewardsFacade rewards;
   private final com.routeshare.platform.service.PolicySettingService policy;
   private final java.time.Clock clock;
   private final TripStateMachine stateMachine = new TripStateMachine();
@@ -82,6 +83,10 @@ public class TripServiceImpl implements TripService {
       if (capture.result() == com.routeshare.payment.domain.CaptureOutcome.Result.CAPTURED) {
         penalties.settleDuesForBooking(capture.bookingId());
       }
+    }
+
+    if (req.status() == com.routeshare.trip.domain.TripStatus.COMPLETED) {
+      rewards.accrueCompletedTrip(tripId);
     }
 
     notifyTripStatus(tripId, req.status());

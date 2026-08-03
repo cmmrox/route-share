@@ -6963,14 +6963,14 @@
           "Rewards"
         ],
         "summary": "Code, link and who joined (P32/D37)",
-        "x-routeshare-status": "PLANNED_SLICE_11",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/ReferralResponse"
                 }
               }
             }
@@ -6982,7 +6982,19 @@
             "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
-        "operationId": "getMeReferral"
+        "operationId": "getMeReferral",
+        "parameters": [
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "description": "Install-scoped identifier, hashed before storage, used only for self-referral defence."
+          }
+        ]
       }
     },
     "/api/v1/me/referral/claim": {
@@ -6991,14 +7003,14 @@
           "Rewards"
         ],
         "summary": "Claim a referral code at signup (S05)",
-        "x-routeshare-status": "PLANNED_SLICE_11",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/ReferralResponse"
                 }
               }
             }
@@ -7015,12 +7027,23 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/ReferralClaimRequest"
               }
             }
           }
         },
-        "operationId": "postMeReferralClaim"
+        "operationId": "postMeReferralClaim",
+        "parameters": [
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        ]
       }
     },
     "/api/v1/me/rewards": {
@@ -7029,14 +7052,14 @@
           "Rewards"
         ],
         "summary": "Shared rewards balance and ledger (P33/D38)",
-        "x-routeshare-status": "PLANNED_SLICE_11",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/RewardsResponse"
                 }
               }
             }
@@ -7057,14 +7080,14 @@
           "Rewards"
         ],
         "summary": "Auto-apply ride credit at checkout",
-        "x-routeshare-status": "PLANNED_SLICE_11",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/RewardsResponse"
                 }
               }
             }
@@ -7081,7 +7104,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/RewardsAutoApplyRequest"
               }
             }
           }
@@ -7095,14 +7118,14 @@
           "Rewards"
         ],
         "summary": "Withdraw to bank above the floor",
-        "x-routeshare-status": "PLANNED_SLICE_11",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/RewardsWithdrawal"
                 }
               }
             }
@@ -7114,16 +7137,6 @@
             "description": "Forbidden — body carries {code, message, actionPath}"
           }
         },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
         "operationId": "postMeRewardsWithdrawals"
       },
       "get": {
@@ -7131,14 +7144,17 @@
           "Rewards"
         ],
         "summary": "Withdrawal history",
-        "x-routeshare-status": "PLANNED_SLICE_11",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RewardsWithdrawal"
+                  }
                 }
               }
             }
@@ -13918,6 +13934,16 @@
             "type": "number",
             "description": "What this booking carried over, kept on the booking so a receipt read months later still shows the line"
           },
+          "appliedCredit": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Shared rewards credit applied to this fare; never exceeds estimatedFare."
+          },
+          "rewardsBalance": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Remaining shared rewards balance after this booking."
+          },
           "seats": {
             "type": "array",
             "items": {
@@ -14241,6 +14267,13 @@
               "format": "int64"
             },
             "description": "Chosen slots (P08). Omit to let the server take the lowest free ones."
+          },
+          "useRewardsCredit": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Explicit checkout opt-in/out. Null uses the account auto-apply setting."
           }
         }
       },
@@ -17527,6 +17560,286 @@
           }
         }
       },
+      "ReferralClaimRequest": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Za-z2-9]{6,20}$"
+          }
+        }
+      },
+      "ReferralResponse": {
+        "type": "object",
+        "required": [
+          "code",
+          "link",
+          "invited",
+          "joined",
+          "stillEarning",
+          "totalEarned",
+          "passengerRatePct",
+          "driverRatePct",
+          "windowMonths",
+          "maxTrips",
+          "refereeFirstRideDiscount",
+          "rows"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "format": "uri"
+          },
+          "invited": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "joined": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "stillEarning": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalEarned": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "passengerRatePct": {
+            "type": "number"
+          },
+          "driverRatePct": {
+            "type": "number"
+          },
+          "windowMonths": {
+            "type": "integer"
+          },
+          "maxTrips": {
+            "type": "integer"
+          },
+          "refereeFirstRideDiscount": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReferralRow"
+            }
+          }
+        }
+      },
+      "ReferralRow": {
+        "type": "object",
+        "required": [
+          "who",
+          "role",
+          "joinedAt",
+          "trips",
+          "tripsLeft",
+          "earned",
+          "status"
+        ],
+        "properties": {
+          "who": {
+            "type": "string",
+            "description": "First name plus surname initial only."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "RIDER",
+              "DRIVER"
+            ]
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date"
+          },
+          "trips": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tripsLeft": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "earned": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "EXPIRED_WINDOW",
+              "EXPIRED_TRIPS",
+              "REVOKED"
+            ]
+          }
+        }
+      },
+      "RewardsAutoApplyRequest": {
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RewardsResponse": {
+        "type": "object",
+        "required": [
+          "balance",
+          "bankMinimum",
+          "withdrawable",
+          "shortfall",
+          "autoApply",
+          "referralEarned",
+          "peopleStillEarning",
+          "rows"
+        ],
+        "properties": {
+          "balance": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "bankMinimum": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "withdrawable": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "shortfall": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "autoApply": {
+            "type": "boolean"
+          },
+          "referralEarned": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "peopleStillEarning": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RewardsLedgerRow"
+            }
+          }
+        }
+      },
+      "RewardsLedgerRow": {
+        "type": "object",
+        "required": [
+          "id",
+          "occurredAt",
+          "kind",
+          "label",
+          "amount"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "REFERRAL",
+              "COMPENSATION",
+              "SPEND",
+              "WITHDRAWAL"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "sublabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "multipleOf": 0.01
+          }
+        }
+      },
+      "RewardsWithdrawal": {
+        "type": "object",
+        "required": [
+          "id",
+          "amount",
+          "status",
+          "requestedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "amount": {
+            "type": "number",
+            "multipleOf": 0.01
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "BATCHED",
+              "PAID",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "batchedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "paidAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "failureReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "UpdatePassengerProfileRequest": {
         "type": "object",
         "required": [
@@ -17548,6 +17861,14 @@
           },
           "profilePhotoObjectKey": {
             "type": "string"
+          },
+          "referralCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Za-z2-9]{6,20}$",
+            "description": "One-time immutable referral attribution, accepted only during signup."
           }
         }
       },

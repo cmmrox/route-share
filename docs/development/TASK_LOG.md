@@ -8,6 +8,34 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-08-03
 
+### Task: ComiGo slice 11 — referral and rewards
+
+Status: `COMPLETED`
+
+Added ambiguity-free per-user codes, one-time signup attribution with identity/phone/device
+self-referral guards, and a 12-month/50-trip edge. Completed trips now accrue 1% of passenger fare
+or 2% of driver net from platform commission, with paired accounting rows, commission caps,
+shortfall visibility and idempotency. One signed rewards ledger now serves both roles and receives
+all Slice 06 compensation.
+
+The referee receives a one-time LKR 150 first-ride credit. Credit auto-applies with an opt-out, caps
+at fare, and releases before capture on void/decline. Verified drivers can queue one whole-balance
+bank withdrawal at or above LKR 1,000 for Slice 14's Friday batch. Six `/me` referral/rewards
+operations, booking/profile contract extensions, metrics and the daily expiry job are live.
+
+Files: new `rewards/**`, `V038__referral_and_rewards.sql`, booking/passenger/payment/trip/penalty
+integrations, focused regression classes, OpenAPI/contracts, and
+`scripts/simulation/verify-referral-rewards.sh`.
+
+Verification: `./mvnw spotless:apply spotless:check verify` BUILD SUCCESS with 609 tests,
+0 skipped and JaCoCo 84.33%; OpenAPI valid; contract package type-check green; runtime smoke
+28 passed, 0 failed, 0 skipped on a clean V001→V038 database. Exact prototype figures reproduced:
+LKR 290 → 3 and LKR 1,240 → 25.
+
+Next step: slice 12 — real-time location pipeline.
+
+---
+
 ### Task: ComiGo slice 10 — chat, notifications, safety and support
 
 Status: `COMPLETED`

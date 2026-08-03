@@ -55,6 +55,8 @@ class TripStartWindowSweepTest {
           reliability,
           payments,
           penalties,
+          mock(com.routeshare.booking.facade.BookingFacade.class),
+          mock(com.routeshare.rewards.facade.RewardsFacade.class),
           new SimpleMeterRegistry(),
           Clock.fixed(PAST_DEADLINE, ZoneOffset.UTC));
 

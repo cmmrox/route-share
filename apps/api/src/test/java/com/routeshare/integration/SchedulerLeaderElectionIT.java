@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -71,6 +72,7 @@ class SchedulerLeaderElectionIT {
   void onlyOneInstanceExecutesTheTick() throws Exception {
     int instances = 8;
     CyclicBarrier allAtOnce = new CyclicBarrier(instances);
+    CountDownLatch attemptsFinished = new CountDownLatch(instances);
     AtomicInteger executed = new AtomicInteger();
     AtomicInteger skipped = new AtomicInteger();
 
@@ -81,11 +83,14 @@ class SchedulerLeaderElectionIT {
             LockProvider provider = new JdbcLockProvider(dataSource, LOCK_TABLE);
             allAtOnce.await(30, TimeUnit.SECONDS);
             Optional<SimpleLock> lock = provider.lock(configuration(LOCK_NAME));
+            attemptsFinished.countDown();
             if (lock.isPresent()) {
               executed.incrementAndGet();
-              // Held for the duration of the "sweep" — releasing immediately would let a loser
-              // acquire it and the test would pass for the wrong reason.
-              Thread.sleep(200);
+              // A fixed sleep assumes all eight database calls complete within that duration.
+              // That is false under emulated PostGIS or a busy CI runner, where a late "loser"
+              // can arrive after unlock and become a second winner. Hold the lock until every
+              // contender has actually attempted acquisition.
+              assertThat(attemptsFinished.await(30, TimeUnit.SECONDS)).isTrue();
               lock.get().unlock();
             } else {
               skipped.incrementAndGet();

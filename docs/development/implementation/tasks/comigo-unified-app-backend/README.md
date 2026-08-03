@@ -169,7 +169,7 @@ relay.
 Recommendation: ShedLock on Postgres (already the system of record) — smallest addition that is correct.
 The infrastructure lands in slice 05; later slices register against it.
 
-## 4. Data model plan (Flyway V027 → V041)
+## 4. Data model plan (Flyway V027 → V042)
 
 Existing series ends at `V026`. New series is additive except one deliberate pricing cutover.
 
@@ -179,17 +179,17 @@ Existing series ends at `V026`. New series is additive except one deliberate pri
 | `V028` | 02 | `vehicle.vehicle_class` (seeded), `class_key` on vehicle, `vehicle_rate_band`, band factors, rate-review requests |
 | `V029` | 03 | `platform.policy_setting` + history, `pricing.fare_quote` v2 with money invariants as CHECKs, retire base/per-km/per-min from `finance.fare_policy` |
 | `V030` | 04 | payment `PENDING`/`AUTHORIZED` states, `payment.payment_attempt`, booking payment method/status, cash-commission ledger type |
-| `V031` | 05 | `scheduling.shedlock` + `job_run`, `trip.trip_start_window`, `trip.pickup_wait`, `trip.driver_late_grace`, `reliability.*` |
-| `V032` | 06 | `penalty.penalty_assessment` (split CHECK), `penalty_beneficiary`, `passenger_due`, `penalty_dispute`, new ledger types |
-| `V033` | 07 | `route_occurrence_seat`, `booking_seat` (race guard), approval mode, request expiry, occurrence cancellation, contact-disclosure audit |
-| `V034` | 08 | `driver.driving_preference`, occurrence eligibility columns, passenger verification level/gender/photo visibility, verification sessions + steps |
-| `V035` | 09 | matching-settings radius semantics (5/10/20 km, trip-start basis), `route_plan.origin_point` + GIST, `usual_commute`, occurrence share codes, `routing.pickup_point` |
-| `V036` | 10 | `chat.*`, notification category×channel matrix, SOS context columns, support attachments, `platform.user_setting`, `account_request` |
-| `V037` | 11 | `rewards.referral_code`, `referral_edge`, `rewards_ledger`, `withdrawal`, applied-credit columns |
-| `V038` | 12 | `location.location_sample` refinement columns, `location.trip_progress` (GiST), `location.approach_session`, `location.realtime_channel`, sample partitioning + retention. **No new extension** |
-| `V039` | 13 | `booking.live_request`, `route_occurrence_seat_release`, per-trip live-request mute, booking request type |
-| `V040` | 14 | `payment.driver_ledger_entry`, payout batch cadence/floor/held items, `payment.fare_adjustment` |
-| `V041` | 15 | rating tags/window/release, `review_reply`, `rating_aggregate`, tag vocabulary + counts |
+| `V031` + `V032` | 05 | `scheduling.shedlock` + `job_run`, trip timing/reliability state, and trip materialisation for booked occurrences |
+| `V033` | 06 | `penalty.penalty_assessment` (split CHECK), `penalty_beneficiary`, `passenger_due`, `penalty_dispute`, new ledger types |
+| `V034` | 07 | `route_occurrence_seat`, `booking_seat` (race guard), approval mode, request expiry, occurrence cancellation, contact-disclosure audit |
+| `V035` | 08 | `driver.driving_preference`, occurrence eligibility columns, passenger verification level/gender/photo visibility, verification sessions + steps |
+| `V036` | 09 | matching-settings radius semantics (5/10/20 km, trip-start basis), `route_plan.origin_point` + GIST, `usual_commute`, occurrence share codes, `routing.pickup_point` |
+| `V037` | 10 | `chat.*`, notification category×channel matrix, SOS context columns, support attachments, `platform.user_setting`, `account_request` |
+| `V038` | 11 | `rewards.referral_code`, `referral_edge`, `rewards_ledger`, `withdrawal`, applied-credit columns |
+| `V039` | 12 | `location.location_sample` refinement columns, `location.trip_progress` (GiST), `location.approach_session`, `location.realtime_channel`, sample partitioning + retention. **No new extension** |
+| `V040` | 13 | `booking.live_request`, `route_occurrence_seat_release`, per-trip live-request mute, booking request type |
+| `V041` | 14 | `payment.driver_ledger_entry`, payout batch cadence/floor/held items, `payment.fare_adjustment` |
+| `V042` | 15 | rating tags/window/release, `review_reply`, `rating_aggregate`, tag vocabulary + counts |
 
 Per **D6** the app is unreleased, so `V029` and `V035` change column meaning **in place** — no
 expand/migrate/contract pairs, no backfills, no dual-read window. Dev and QA databases are recreated

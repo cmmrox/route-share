@@ -150,7 +150,7 @@ New errors: `PICKUP_ALREADY_PASSED`, `LIVE_REQUEST_EXPIRED`, `LIVE_REQUESTS_MUTE
 
 ## Database / migration changes
 
-**`V039__live_en_route_booking.sql`**
+**`V040__live_en_route_booking.sql`**
 
 - New `booking.live_request`:
   `id`, `route_occurrence_id FK`, `trip_id FK`, `passenger_app_user_id FK`,
@@ -218,7 +218,7 @@ Backend slice. The contract must supply:
 - `apps/api/.../location/**` — fraction listener.
 - `apps/api/.../payment/**` — capture-on-accept entry point (path already built in slice 04).
 - `apps/api/.../scheduling/**` — the two 5-second jobs.
-- `apps/api/src/main/resources/db/migration/V039__live_en_route_booking.sql`.
+- `apps/api/src/main/resources/db/migration/V040__live_en_route_booking.sql`.
 - `apps/api/src/test/java/**` — behind-pickup tests including loop routes, expiry tests, capture-on-accept tests, partial seat release tests, concurrency tests on accept vs expiry.
 - `docs/api/mobile-app.openapi.json`, `packages/api-contracts/src/index.ts`.
 

@@ -120,7 +120,7 @@ New errors: `PAYOUT_BELOW_MINIMUM`, `BATCH_ALREADY_RUN`, `ADJUSTMENT_ALREADY_DEC
 
 ## Database / migration changes
 
-**`V040__money_operations.sql`**
+**`V041__money_operations.sql`**
 
 - New `payment.driver_ledger_entry` (driver-scoped, distinct from the booking-scoped `fare_ledger_entry`):
   `id`, `driver_profile_id FK`, `kind TEXT CHECK (kind IN ('FARE','FEE','ADJUSTMENT','PENALTY','COMPENSATION','PAYOUT'))`,
@@ -182,7 +182,7 @@ Backend slice. The contract must supply:
 - `apps/api/.../rewards/**` — withdrawal handoff into the batch (interface already defined in slice 11).
 - `apps/api/.../scheduling/**` — the weekly job.
 - `apps/api/.../admin/**` — adjustment decisions, batch run/mark-paid, reconciliation.
-- `apps/api/src/main/resources/db/migration/V040__money_operations.sql`.
+- `apps/api/src/main/resources/db/migration/V041__money_operations.sql`.
 - `apps/api/src/test/java/**` — ledger convention tests, balance projection tests, batch idempotency and floor tests, netting order tests, adjustment lifecycle and dispute-window tests, reconciliation tests.
 - `docs/api/mobile-app.openapi.json`, `docs/api/admin-web.openapi.json`, `packages/api-contracts/src/index.ts`.
 

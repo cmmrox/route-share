@@ -109,7 +109,7 @@ New errors: `REFERRAL_CODE_INVALID`, `REFERRAL_SELF_NOT_ALLOWED`, `REFERRAL_ALRE
 
 ## Database / migration changes
 
-**`V037__referral_and_rewards.sql`**
+**`V038__referral_and_rewards.sql`**
 
 - New `rewards.referral_code`:
   `app_user_id PK FK`, `code TEXT UNIQUE NOT NULL`, `created_at`. Code generated from the display name plus entropy, uppercase, ambiguity-free alphabet.
@@ -173,7 +173,7 @@ Backend slice. The contract must supply:
 - `apps/api/.../payment/**` — `REFERRAL_PAYOUT` ledger entries and commission capping.
 - `apps/api/.../passenger/**` — referral code at signup, `rewards_auto_apply`.
 - `apps/api/.../scheduling/**` — window expiry job.
-- `apps/api/src/main/resources/db/migration/V037__referral_and_rewards.sql`.
+- `apps/api/src/main/resources/db/migration/V038__referral_and_rewards.sql`.
 - `apps/api/src/test/java/**` — accrual rate tests, window/trip bound tests, self-referral tests, idempotency tests, credit application and release tests, commission-cap test.
 - `docs/api/mobile-app.openapi.json`, `packages/api-contracts/src/index.ts`.
 
@@ -213,17 +213,31 @@ an edge past 12 months accrues nothing; a withdrawal below LKR 1000 is refused.
 
 ## Done criteria
 
-- [ ] Codes generated, links returned, attribution one-time and immutable, self-referral impossible.
-- [ ] Accrual fires on completed trips at 1% for a referee's rides and 2% of net for their drives.
-- [ ] Both window bounds enforced at accrual, and expired edges closed by the daily job.
-- [ ] Referral cost is booked against commission and capped so no trip goes loss-making.
-- [ ] One shared ledger serves both roles; slice 06's compensation writes into it.
-- [ ] Ride credit auto-applies with an opt-out, caps at the fare, and releases on void.
-- [ ] Withdrawals respect the LKR 1000 floor, allow one open request, and queue for the Friday batch.
-- [ ] Referee first-ride discount granted once and visible.
-- [ ] Every prototype figure for P32/P33/D37/D38/D38b reproduces exactly.
-- [ ] `./mvnw spotless:check verify` green, JaCoCo 80% held.
-- [ ] Tracking docs updated; focused commit ready.
+- [x] Codes generated, links returned, attribution one-time and immutable, self-referral impossible.
+- [x] Accrual fires on completed trips at 1% for a referee's rides and 2% of net for their drives.
+- [x] Both window bounds enforced at accrual, and expired edges closed by the daily job.
+- [x] Referral cost is booked against commission and capped so no trip goes loss-making.
+- [x] One shared ledger serves both roles; slice 06's compensation writes into it.
+- [x] Ride credit auto-applies with an opt-out, caps at the fare, and releases on void.
+- [x] Withdrawals respect the LKR 1000 floor, allow one open request, and queue for the Friday batch.
+- [x] Referee first-ride discount granted once and visible.
+- [x] Every prototype figure for P32/P33/D37/D38/D38b reproduces exactly.
+- [x] `./mvnw spotless:check verify` green, JaCoCo 80% held.
+- [x] Tracking docs updated; focused commit ready.
+
+## Implementation evidence — 2026-08-03
+
+Slice 10 already occupied V037, so this implementation uses
+`V038__referral_and_rewards.sql`. A clean local database and Testcontainers both migrated from
+V001 through V038.
+
+- Focused Slice 11 tests and the penalty-compensation regression are green.
+- Full Maven verification is green with 609 tests, 0 skipped, and 84.33% instruction coverage.
+- OpenAPI validation and `@routeshare/api-contracts` type-checking are green.
+- `verify-referral-rewards.sh` passed 28/28 checks on the live local stack. It reproduced LKR 3
+  from a rider fare of LKR 290 and LKR 25 from driver net of LKR 1,240; it also proved
+  first-ride credit, both edge bounds, idempotency, commission-side accounting, the withdrawal
+  floor, one-open-withdrawal rule, and the schema self-referral guard.
 
 ## Suggested commit message
 

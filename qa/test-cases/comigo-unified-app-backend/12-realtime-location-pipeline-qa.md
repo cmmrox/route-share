@@ -16,7 +16,7 @@ the architecture doc.
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V038`.
+- Migration series applied through `V039`.
 - PostGIS only — **no additional Postgres extension is required** (Decision 017).
 - **Recorded GPS trace fixtures** committed as test resources — this is the core of the suite:
   - `trace-clear-sky.json` — good signal along a known route

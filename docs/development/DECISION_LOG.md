@@ -604,7 +604,7 @@ Consequence:
 ## Decision 020 — A driver victim is paid through the ledger; a passenger victim through ride credit
 
 Date: 2026-08-02
-Status: `ADOPTED`
+Status: `SUPERSEDED` by Decision 022 on 2026-08-03
 
 Decision:
 
@@ -627,6 +627,33 @@ Consequence:
   `penalty.penalty_beneficiary`, so the real balance can be built from history rather than migrated.
 - A driver is never billed for his own penalty: it is a negative `PENALTY_DEDUCTION` row netted from
   the next completed trip (D24, D31).
+
+## Decision 022 — Penalty compensation and referral earnings use one role-neutral rewards ledger
+
+Date: 2026-08-03
+Status: `ADOPTED`
+
+Decision:
+
+All victim compensation enters `rewards.rewards_ledger` as `COMPENSATION`, regardless of whether
+the victim was acting as a passenger or driver. Referral earnings enter the same balance. A user
+may spend that balance on rides or, when driver-bank eligibility and the floor are satisfied,
+withdraw it.
+
+Reason:
+
+Slice 11's specification is explicit that there is one balance across both roles and that Slice
+06 compensation writes into it. Splitting compensation by the role held during one trip would make
+the same person own two incompatible balances and contradict the shared account screens.
+
+Consequence:
+
+- `RewardsCreditPort` remains the Slice 06 boundary but its implementation now writes the real
+  shared ledger for every beneficiary.
+- Historical `penalty_beneficiary` credits are replayed into the rewards ledger by V038 using stable
+  idempotency keys.
+- Driver earnings remain untouched by referral cost or victim compensation. A driver's own penalty
+  is still a `PENALTY_DEDUCTION` from future earnings.
 
 ## Decision 021 — A reversed penalty returns the payer's fee but does not claw back the victim's half
 
@@ -726,4 +753,3 @@ Consequence:
 - Volume per reader is monitored and alerted; number harvesting is the abuse this design invites.
 - Emergency numbers travel with the response and are outside these rules entirely — a passenger who
   cannot reach her driver must never also be unable to reach help.
-

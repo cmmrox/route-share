@@ -195,6 +195,29 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
   @Modifying
   @Query(
+      value =
+          """
+          UPDATE booking.booking
+             SET use_rewards_credit = :useRewardsCredit
+           WHERE booking_id = :bookingId
+          """,
+      nativeQuery = true)
+  int recordRewardsPreference(
+      @Param("bookingId") long bookingId, @Param("useRewardsCredit") Boolean useRewardsCredit);
+
+  @Modifying
+  @Query(
+      value =
+          """
+          UPDATE booking.booking
+             SET applied_credit_amount = :amount
+           WHERE booking_id = :bookingId
+          """,
+      nativeQuery = true)
+  int recordAppliedCredit(@Param("bookingId") long bookingId, @Param("amount") BigDecimal amount);
+
+  @Modifying
+  @Query(
       value = "UPDATE booking.booking SET expires_at = NULL WHERE booking_id = :bookingId",
       nativeQuery = true)
   int clearExpiry(@Param("bookingId") long bookingId);
@@ -218,7 +241,8 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
           """
       SELECT fare_estimate AS "fareEstimate",
              payment_method_id AS "paymentMethodId",
-             passenger_app_user_id AS "passengerAppUserId"
+             passenger_app_user_id AS "passengerAppUserId",
+             use_rewards_credit AS "useRewardsCredit"
       FROM booking.booking
       WHERE booking_id = :bookingId
       """,
@@ -231,6 +255,8 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     Long getPaymentMethodId();
 
     Long getPassengerAppUserId();
+
+    Boolean getUseRewardsCredit();
   }
 
   /** Open bookings on an occurrence — everyone a driver's cancellation would strand. */

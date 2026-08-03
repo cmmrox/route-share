@@ -169,6 +169,9 @@ routeshare:
     attachment-max-bytes: ${ROUTESHARE_SUPPORT_ATTACHMENT_MAX_BYTES:10485760}
     attachment-allowed-types: ${ROUTESHARE_SUPPORT_ATTACHMENT_ALLOWED_TYPES:image/jpeg,image/png,application/pdf}
 
+  rewards:
+    referral-link-base-url: ${ROUTESHARE_REFERRAL_LINK_BASE_URL:https://comigo.lk/j/}
+
   events:
     # When false, domain events are still written to common.event_outbox but the relay
     # logs instead of publishing to Kafka. Enable once a broker is reachable.

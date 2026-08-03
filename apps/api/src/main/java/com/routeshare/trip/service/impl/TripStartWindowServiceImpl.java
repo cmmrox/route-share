@@ -37,6 +37,8 @@ public class TripStartWindowServiceImpl implements TripStartWindowService {
   private final ReliabilityService reliability;
   private final PaymentFacade payments;
   private final com.routeshare.penalty.facade.PenaltyFacade penalties;
+  private final com.routeshare.booking.facade.BookingFacade bookings;
+  private final com.routeshare.rewards.facade.RewardsFacade rewards;
   private final MeterRegistry meters;
   private final Clock clock;
 
@@ -48,6 +50,8 @@ public class TripStartWindowServiceImpl implements TripStartWindowService {
       ReliabilityService reliability,
       PaymentFacade payments,
       com.routeshare.penalty.facade.PenaltyFacade penalties,
+      com.routeshare.booking.facade.BookingFacade bookings,
+      com.routeshare.rewards.facade.RewardsFacade rewards,
       MeterRegistry meters,
       Clock clock) {
     this.windows = windows;
@@ -56,6 +60,8 @@ public class TripStartWindowServiceImpl implements TripStartWindowService {
     this.reliability = reliability;
     this.payments = payments;
     this.penalties = penalties;
+    this.bookings = bookings;
+    this.rewards = rewards;
     this.meters = meters;
     this.clock = clock;
   }
@@ -167,6 +173,9 @@ public class TripStartWindowServiceImpl implements TripStartWindowService {
   private void autoCancel(TripStartWindowEntity window, Instant now) {
     long tripId = window.getTripId();
     for (Long bookingId : windows.findLiveBookingIds(tripId)) {
+      bookings
+          .findPassengerAppUserIdForBooking(bookingId)
+          .ifPresent(passengerId -> rewards.releaseRideCredit(passengerId, bookingId));
       payments.voidForBooking(bookingId, "TRIP_AUTO_CANCELLED");
     }
 

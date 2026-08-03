@@ -31,6 +31,9 @@ public class FareLedgerEntryEntity {
   private BigDecimal amount;
   private String currency;
 
+  @Column(name = "source_key")
+  private String sourceKey;
+
   @Column(name = "created_at")
   private Instant createdAt;
 }

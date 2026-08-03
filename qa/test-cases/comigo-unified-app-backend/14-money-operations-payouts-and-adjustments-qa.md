@@ -13,7 +13,7 @@ The driver ledger with all six kinds, the wallet projection, the weekly Friday b
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V040`.
+- Migration series applied through `V041`.
 - Seeded drivers: one above the floor, one below, one with penalties and compensation, one with a queued rewards withdrawal.
 
 ## Automated test coverage

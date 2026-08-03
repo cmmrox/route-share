@@ -34,7 +34,8 @@ class PassengerProfileServiceImplTest {
           new ObjectMapper(),
           org.mapstruct.factory.Mappers.getMapper(
               com.routeshare.passenger.mapper.PassengerMapper.class),
-          profileSync);
+          profileSync,
+          org.mockito.Mockito.mock(com.routeshare.rewards.facade.RewardsFacade.class));
 
   @Test
   void upsertSyncsSavedPassengerProfileFieldsBackToKeycloak() {
