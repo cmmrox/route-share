@@ -66,6 +66,10 @@ bash ./seed-demo-route.sh >/dev/null 2>&1 || sim_log "seed script reported an is
 OCCURRENCE_ID="$(sim_psql "SELECT route_occurrence_id FROM routing.route_occurrence
   WHERE status = 'PUBLISHED' ORDER BY route_occurrence_id DESC LIMIT 1")"
 [ -n "$OCCURRENCE_ID" ] || sim_fail "no published trip to book"
+# Charge timing is about a confirmed booking. The shared seed route may inherit APPROVE_EACH from a
+# previous preference smoke, which would leave the booking REQUESTED with no authorization or trip.
+sim_psql "UPDATE routing.route_occurrence SET approval_mode = 'INSTANT'
+  WHERE route_occurrence_id = $OCCURRENCE_ID" >/dev/null
 
 book() { # book <paymentMethodIdOrNull> -> bookingId
   local method="$1"
@@ -97,12 +101,17 @@ else
   sim_log "SKIP: cash booking could not be created"
 fi
 
-# A card booking needs a stored instrument; with Cybersource disabled the fallback still exercises
-# the full state machine, which is the point of testing it this way.
-PAYMENT_METHOD_ID="$(sim_psql "SELECT payment_method_id FROM payment.payment_method
-  WHERE status = 'ACTIVE' ORDER BY payment_method_id DESC LIMIT 1")"
+# A card booking needs a stored instrument. The explicitly enabled local QA gateway accepts an
+# opaque transient token and exercises the complete state machine without pretending a provider
+# was contacted. A production-style cash-only stack still reports the provider gate as a skip.
+PAYMENT_METHOD_ID=""
+ADD_METHOD="$(call POST /api/v1/passenger/payment-methods "$TOKEN" \
+  '{"transientToken":"local-runtime-qa-token","makeDefault":true}')"
+if [ "$(status_of "$ADD_METHOD")" = "200" ]; then
+  PAYMENT_METHOD_ID="$(data "$ADD_METHOD" id)"
+fi
 if [ -z "$PAYMENT_METHOD_ID" ]; then
-  sim_log "SKIP: no stored card on this stack; card-path checks not run"
+  sim_log "SKIP: no local fake or real card provider is enabled; card-path checks not run"
   sim_log "passed: $PASS   failed: $FAIL"
   [ "$FAIL" -eq 0 ] || exit 1
   exit 0
@@ -131,6 +140,21 @@ equals "approval does not capture" \
   "$(sim_psql "SELECT status FROM payment.payment_intent WHERE booking_id = $CARD_BOOKING")" \
   "AUTHORIZED"
 
+# 5 — cancelling before the start charges nothing. This must happen before the shared occurrence
+# is started below; otherwise the scenario is an after-start cancellation and deliberately follows
+# the penalty path instead of releasing the hold.
+CANCEL_BOOKING="$(book "$PAYMENT_METHOD_ID")"
+if [ -n "$CANCEL_BOOKING" ]; then
+  call POST "/api/v1/passenger/bookings/$CANCEL_BOOKING/cancel" "$TOKEN" \
+    '{"reason":"QA"}' >/dev/null
+  equals "cancelling before the start releases the hold" \
+    "$(sim_psql "SELECT status FROM payment.payment_intent WHERE booking_id = $CANCEL_BOOKING")" \
+    "VOIDED"
+  equals "and charges nothing" \
+    "$(sim_psql "SELECT coalesce(sum(amount),0) FROM payment.fare_ledger_entry
+       WHERE booking_id = $CANCEL_BOOKING AND entry_type = 'PAYMENT_CAPTURED'")" "0"
+fi
+
 # 3 + 4 — start captures once; a repeat captures nothing further.
 if [ -n "$TRIP_ID" ]; then
   call POST "/api/v1/driver/trips/$TRIP_ID/start" "$ADMIN_TOKEN" '{}' >/dev/null
@@ -145,19 +169,6 @@ if [ -n "$TRIP_ID" ]; then
        WHERE booking_id = $CARD_BOOKING AND operation = 'CAPTURE'")" "$CAPTURES_BEFORE"
 else
   sim_fail "no trip row for the booked route; capture checks could not run"
-fi
-
-# 5 — cancelling before the start charges nothing.
-CANCEL_BOOKING="$(book "$PAYMENT_METHOD_ID")"
-if [ -n "$CANCEL_BOOKING" ]; then
-  call POST "/api/v1/passenger/bookings/$CANCEL_BOOKING/transitions" "$TOKEN" \
-    '{"status":"CANCELLED","reason":"QA"}' >/dev/null
-  equals "cancelling before the start releases the hold" \
-    "$(sim_psql "SELECT status FROM payment.payment_intent WHERE booking_id = $CANCEL_BOOKING")" \
-    "VOIDED"
-  equals "and charges nothing" \
-    "$(sim_psql "SELECT coalesce(sum(amount),0) FROM payment.fare_ledger_entry
-       WHERE booking_id = $CANCEL_BOOKING AND entry_type = 'PAYMENT_CAPTURED'")" "0"
 fi
 
 # 7 — every call left a record, written before it was made.

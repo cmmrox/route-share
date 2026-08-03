@@ -58,6 +58,7 @@ public class BookingServiceImpl implements BookingService {
   private final com.routeshare.booking.service.SeatHoldService seatHolds;
   private final com.routeshare.routing.service.EligibilityService eligibility;
   private final com.routeshare.routing.service.PickupPointService pickupPoints;
+  private final com.routeshare.routing.service.OccurrenceLifecycleService occurrenceLifecycle;
   private final com.routeshare.platform.service.PolicySettingService policy;
   private final com.routeshare.chat.facade.ChatFacade chat;
   private final com.routeshare.rewards.facade.RewardsFacade rewards;
@@ -344,6 +345,20 @@ public class BookingServiceImpl implements BookingService {
     return bookings.findDriverBookingRequests(app.appUserId(), tripId).stream()
         .map(this::toDriverBookingRequest)
         .toList();
+  }
+
+  @Override
+  @Transactional
+  public List<com.routeshare.routing.dto.response.AlternativeTripResponse> alternatives(
+      long bookingId) {
+    var app = identityFacade.upsertFromToken(current.requireCurrentUser());
+    // Resolve the occurrence through a passenger-scoped query. Looking it up by booking id alone
+    // would turn this convenience endpoint into a cross-account corridor oracle.
+    long routeOccurrenceId =
+        bookings
+            .findRouteOccurrenceIdForPassengerBooking(bookingId, app.appUserId())
+            .orElseThrow(() -> new java.util.NoSuchElementException("Booking not found"));
+    return occurrenceLifecycle.alternatives(routeOccurrenceId);
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.routeshare.booking.dto.request.BookingStatusTransitionRequest;
 import com.routeshare.booking.dto.response.DriverBookingRequestResponse;
 import com.routeshare.booking.dto.response.PassengerBookingDetailResponse;
 import com.routeshare.booking.dto.response.PassengerBookingSummaryResponse;
+import com.routeshare.routing.dto.response.AlternativeTripResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +18,8 @@ public interface BookingService {
   List<PassengerBookingSummaryResponse> listPassengerBookings();
 
   PassengerBookingDetailResponse getPassengerBooking(long bookingId);
+
+  List<AlternativeTripResponse> alternatives(long bookingId);
 
   Optional<PassengerBookingDetailResponse> getCurrentPassengerTrip();
 

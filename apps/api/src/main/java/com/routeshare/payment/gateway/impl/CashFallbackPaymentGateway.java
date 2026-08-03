@@ -4,7 +4,7 @@ import com.routeshare.payment.gateway.PaymentGatewayPort;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,12 +15,15 @@ import org.springframework.web.server.ResponseStatusException;
  * operation so the system never pretends a real card was charged.
  */
 @Component
-@ConditionalOnProperty(
-    prefix = "routeshare.cybersource",
-    name = "enabled",
-    havingValue = "false",
-    matchIfMissing = true)
+@ConditionalOnExpression(
+    "'${routeshare.cybersource.enabled:false}' == 'false' &&"
+        + " '${routeshare.payment.local-fake-enabled:false}' == 'false'")
 public class CashFallbackPaymentGateway implements PaymentGatewayPort {
+
+  @Override
+  public String providerCode() {
+    return "CASH_FALLBACK";
+  }
 
   @Override
   public boolean cardPaymentsEnabled() {

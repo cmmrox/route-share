@@ -11,6 +11,7 @@ import com.routeshare.booking.service.EarlyDropOffService;
 import com.routeshare.common.web.ApiResponse;
 import com.routeshare.payment.dto.response.ReceiptResponse;
 import com.routeshare.payment.service.PaymentService;
+import com.routeshare.routing.dto.response.AlternativeTripResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,11 @@ public class PassengerBookingController {
   @GetMapping("/{bookingId}")
   ApiResponse<PassengerBookingDetailResponse> get(@PathVariable long bookingId) {
     return ApiResponse.ok(bookings.getPassengerBooking(bookingId));
+  }
+
+  @GetMapping("/{bookingId}/alternatives")
+  ApiResponse<List<AlternativeTripResponse>> alternatives(@PathVariable long bookingId) {
+    return ApiResponse.ok(bookings.alternatives(bookingId));
   }
 
   @GetMapping("/{bookingId}/receipt")

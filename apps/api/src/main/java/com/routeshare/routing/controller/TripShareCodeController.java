@@ -23,6 +23,12 @@ public class TripShareCodeController {
 
   private final TripShareCodeService shares;
 
+  @GetMapping("/driver/route-occurrences/{routeOccurrenceId}/share")
+  @PreAuthorize("hasAnyRole('DRIVER','ADMIN','SUPER_ADMIN')")
+  ApiResponse<TripShareCodeResponse> getShare(@PathVariable long routeOccurrenceId) {
+    return ApiResponse.ok(shares.getFor(routeOccurrenceId));
+  }
+
   @PostMapping("/driver/route-occurrences/{routeOccurrenceId}/share")
   @PreAuthorize("hasAnyRole('DRIVER','ADMIN','SUPER_ADMIN')")
   ApiResponse<TripShareCodeResponse> share(@PathVariable long routeOccurrenceId) {

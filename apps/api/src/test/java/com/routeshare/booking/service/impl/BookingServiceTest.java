@@ -56,6 +56,8 @@ class BookingServiceTest {
       org.mockito.Mockito.mock(com.routeshare.routing.service.PickupPointService.class);
   private final com.routeshare.routing.service.EligibilityService eligibility =
       org.mockito.Mockito.mock(com.routeshare.routing.service.EligibilityService.class);
+  private final com.routeshare.routing.service.OccurrenceLifecycleService occurrenceLifecycle =
+      org.mockito.Mockito.mock(com.routeshare.routing.service.OccurrenceLifecycleService.class);
   private final com.routeshare.platform.service.PolicySettingService policy =
       org.mockito.Mockito.mock(com.routeshare.platform.service.PolicySettingService.class);
   private final java.time.Clock clock =
@@ -78,6 +80,7 @@ class BookingServiceTest {
           seatHolds,
           eligibility,
           pickupPoints,
+          occurrenceLifecycle,
           policy,
           org.mockito.Mockito.mock(com.routeshare.chat.facade.ChatFacade.class),
           org.mockito.Mockito.mock(com.routeshare.rewards.facade.RewardsFacade.class),
@@ -167,6 +170,36 @@ class BookingServiceTest {
     assertThat(response).containsEntry("routeOccurrenceId", 44L);
     // The stored estimate mirrors what the quote said the passenger pays.
     verify(bookings).create(7L, request, 12L, new BigDecimal("267.00"));
+  }
+
+  @Test
+  void alternativesResolveOnlyThroughTheCurrentPassengersBooking() {
+    var alternative =
+        new com.routeshare.routing.dto.response.AlternativeTripResponse(
+            55L,
+            "Nimal",
+            "Fort",
+            "Nugegoda",
+            java.time.Instant.parse("2026-08-02T10:00:00Z"),
+            2,
+            new BigDecimal("50.00"),
+            new BigDecimal("91.00"));
+    when(bookings.findRouteOccurrenceIdForPassengerBooking(99L, 7L))
+        .thenReturn(java.util.Optional.of(44L));
+    when(occurrenceLifecycle.alternatives(44L)).thenReturn(java.util.List.of(alternative));
+
+    assertThat(service.alternatives(99L)).containsExactly(alternative);
+    verify(bookings).findRouteOccurrenceIdForPassengerBooking(99L, 7L);
+  }
+
+  @Test
+  void alternativesDoNotRevealAnotherPassengersCorridor() {
+    when(bookings.findRouteOccurrenceIdForPassengerBooking(99L, 7L))
+        .thenReturn(java.util.Optional.empty());
+
+    assertThatThrownBy(() -> service.alternatives(99L))
+        .isInstanceOf(java.util.NoSuchElementException.class);
+    verify(occurrenceLifecycle, never()).alternatives(any(Long.class));
   }
 
   @Test

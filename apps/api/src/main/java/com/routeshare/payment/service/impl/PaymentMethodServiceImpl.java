@@ -50,7 +50,7 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
         repository.save(
             PaymentMethodEntity.active(
                 appUserId,
-                gateway.cardPaymentsEnabled() ? "CYBERSOURCE" : "TEST",
+                gateway.providerCode(),
                 tokenized.token(),
                 tokenized.brand(),
                 tokenized.last4(),

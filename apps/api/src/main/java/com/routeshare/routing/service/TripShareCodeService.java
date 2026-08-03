@@ -8,6 +8,9 @@ public interface TripShareCodeService {
   /** Idempotent: asking twice returns the same code, so a link already shared keeps working. */
   TripShareCodeResponse shareFor(long routeOccurrenceId);
 
+  /** Returns the current share metadata without creating a code. */
+  TripShareCodeResponse getFor(long routeOccurrenceId);
+
   /** Stops the code resolving. The row stays, so the history of the share survives. */
   TripShareCodeResponse revoke(long routeOccurrenceId);
 

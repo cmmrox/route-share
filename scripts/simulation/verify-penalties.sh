@@ -104,6 +104,11 @@ next_occurrence() {
               ORDER BY rp.route_plan_id DESC LIMIT 1" >/dev/null
     found="$(free_occurrence)"
   fi
+  # Penalty scenarios require an immediately confirmed booking so a trip exists. The shared demo
+  # seed may inherit APPROVE_EACH from preference tests, which would leave this scenario at
+  # REQUESTED and make the missing trip look like a penalty implementation failure.
+  sim_psql "UPDATE routing.route_occurrence SET approval_mode = 'INSTANT'
+            WHERE route_occurrence_id = $found" >/dev/null
   printf '%s' "$found"
 }
 
@@ -211,10 +216,11 @@ equals "the beneficiary rows total the victim half exactly" \
        FROM penalty.penalty_beneficiary b WHERE b.penalty_id = p.penalty_id)
        AND p.victim_share > 0")" "0"
 
-# 3 — compensation is a distinct kind. Folding it into fares would overstate what he earned driving.
+# 3 — compensation is a distinct rewards-ledger kind. Folding it into fares would overstate what
+# he earned driving; Slice 11 moved role-neutral compensation into the shared rewards balance.
 equals "the driver's half reached him as COMPENSATION, not as a fare" \
-  "$(sim_psql "SELECT coalesce(amount::text,'') FROM payment.fare_ledger_entry
-     WHERE booking_id = $BOOKING AND entry_type = 'COMPENSATION'")" "25.00"
+  "$(sim_psql "SELECT coalesce(amount::text,'') FROM rewards.rewards_ledger
+     WHERE source_booking_id = $BOOKING AND kind = 'COMPENSATION'")" "25.00"
 
 # 4 — a cash passenger has no card, so the fee rides along (P25).
 equals "a cash passenger's fee is recorded as dues" \
@@ -415,10 +421,12 @@ equals "no penalty was collected from a driver's card" \
   "$(sim_psql "SELECT count(*) FROM penalty.penalty_assessment
      WHERE payer_role = 'DRIVER' AND collection_method IN ('NETTED','CARD_CHARGE')")" "0"
 
-# The card paths need a gateway, and Blocker 015 keeps that unresolved.
-skip "netted collection (card passenger, capture exists) — no gateway on this stack (Blocker 015)"
-skip "card-charge collection (card passenger, no capture) — no gateway on this stack (Blocker 015)"
-skip "dues settled on capture — needs a captured card booking (Blocker 015)"
+# These provider-backed penalty scenarios require separate card bookings and remain an explicit
+# external-runtime matrix. PaymentFacadeImplTest covers all three state branches, while
+# verify-charge-timing.sh proves the selected local/real adapter can authorize, capture and void.
+skip "netted collection — covered by facade regression; real-provider runtime certification pending"
+skip "card-charge collection — covered by facade regression; real-provider runtime certification pending"
+skip "dues settled on capture — covered by facade regression; real-provider runtime certification pending"
 
 sim_log "passed: $PASS   failed: $FAIL   skipped: $SKIP"
 [ "$FAIL" -eq 0 ] || exit 1

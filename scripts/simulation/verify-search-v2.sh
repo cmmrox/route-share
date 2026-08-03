@@ -304,6 +304,9 @@ if [ "$(status_of "$R")" = "200" ]; then
   R2="$(call POST "/api/v1/driver/route-occurrences/$OCC_2/share" "$ADMIN_TOKEN")"
   equals "sharing twice returns the same code, so a link already sent keeps working" \
     "$(data "$R2" shortCode)" "$SHORT_CODE"
+  R2="$(call GET "/api/v1/driver/route-occurrences/$OCC_2/share" "$ADMIN_TOKEN")"
+  equals "09-15: the driver can read the current share metadata" "$(status_of "$R2")" "200"
+  equals "and the read returns the same code" "$(data "$R2" shortCode)" "$SHORT_CODE"
 
   R="$(curl -s -o /dev/null -w '%{http_code}' "$SIM_API_BASE/api/v1/public/trip-links/$SHORT_CODE")"
   equals "09-15: the code resolves without a token" "$R" "200"

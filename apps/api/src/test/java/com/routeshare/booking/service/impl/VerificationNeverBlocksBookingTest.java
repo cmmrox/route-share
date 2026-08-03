@@ -86,6 +86,7 @@ class VerificationNeverBlocksBookingTest {
           seatHolds,
           eligibility,
           pickupPoints,
+          mock(com.routeshare.routing.service.OccurrenceLifecycleService.class),
           policy,
           mock(com.routeshare.chat.facade.ChatFacade.class),
           mock(com.routeshare.rewards.facade.RewardsFacade.class),

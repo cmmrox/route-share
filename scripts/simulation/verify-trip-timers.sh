@@ -90,6 +90,10 @@ OCCURRENCE_ID="$(sim_psql "SELECT route_occurrence_id FROM routing.route_occurre
 book() { book_on "$OCCURRENCE_ID"; }
 book_on() { # book_on <routeOccurrenceId> -> bookingId
   local occurrence="$1" response
+  # Timer scenarios need a confirmed booking and materialised trip. Preference smoke tests may
+  # leave shared seed occurrences in APPROVE_EACH, which would only create a pending request.
+  sim_psql "UPDATE routing.route_occurrence SET approval_mode = 'INSTANT'
+            WHERE route_occurrence_id = $occurrence" >/dev/null
   response="$(curl -s -X POST "$SIM_API_BASE/api/v1/passenger/bookings" \
     -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
     -H "Idempotency-Key: sim-timer-$RANDOM-$RANDOM" \

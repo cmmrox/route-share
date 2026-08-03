@@ -19,7 +19,7 @@ sim_require_tools
 sim_require_api
 
 sim_log "provisioning Keycloak demo driver '$DRIVER_USERNAME' with DRIVER role (local realm)"
-DRIVER_TOKEN="$(sim_keycloak_login_with_roles "$DRIVER_USERNAME" "$DRIVER_PASSWORD" "PASSENGER,DRIVER" driver-mobile)"
+DRIVER_TOKEN="$(sim_keycloak_login_with_roles "$DRIVER_USERNAME" "$DRIVER_PASSWORD" "PASSENGER,DRIVER" comigo-mobile)"
 
 sim_log "submitting driver application"
 sim_api "$DRIVER_TOKEN" POST /api/v1/driver/application '{"displayName":"Saman Fernando"}' >/dev/null || true

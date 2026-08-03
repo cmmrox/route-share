@@ -1,6 +1,6 @@
 # RouteShareApp Blockers
 
-Last Updated: 2026-08-02 (slice 06 — Blocker 016 re-diagnosed; it folds into Blocker 015)
+Last Updated: 2026-08-03 (post-slice-11 implementation and runtime audit)
 
 ## Purpose
 
@@ -17,9 +17,15 @@ Blocker Status Values:
 
 ## Active Blockers
 
+The resolved entries below retain their original diagnosis for auditability. As of the
+2026-08-03 audit, the remaining release gates relevant to Slices 00–11 are external or
+device-specific: real Cybersource sandbox evidence, object-storage-backed verification capture,
+Google Maps credentials/device evidence, and the Expo native/prebuild identity decision. They do
+not represent missing Slice 00–11 backend operations.
+
 ### Blocker 016 — Slice 04's card-capture checks have been skipping since they were written
 
-Status: `OPEN`
+Status: `RESOLVED`
 Severity: `MEDIUM`
 
 Description:
@@ -50,20 +56,17 @@ fixed: the endpoint is now `/api/v1/driver/trips/{tripId}/start` rather than the
 since V032 keys a trip to its occurrence and a recurring plan has many. The `SKIP` for a missing
 trip is now a hard failure, so the branch can never be silently taken again.
 
-Re-running it still exercises nothing new. The capture checks sit inside a **card branch gated on a
-stored payment method**, and `POST /api/v1/passenger/payment-methods` answers `Card payments are not
-enabled. Set routeshare.cybersource.enabled=true to add cards.` — the cash-fallback gateway refuses
-to tokenize at all, contrary to the comment in the script that says it "still exercises the full
-state machine". So these checks are blocked on **Blocker 015**, not on the trip gap, and this
-blocker stays OPEN until the sandbox credentials arrive.
-
-Last run: 2026-08-02, `2 passed, 0 failed`, card path skipped.
+Closed 2026-08-03. The smoke now creates its own caller-owned stored method, forces the selected
+occurrence to `INSTANT`, uses the real `/cancel` and `/start` operations, and fails rather than
+silently selecting another user's card or testing an already-started cancellation. Runtime result:
+`14 passed, 0 failed`, including authorize, capture-on-start, capture idempotency and pre-start
+void.
 
 ---
 
 ### Blocker 015 — The card path of charge timing has never been exercised at runtime
 
-Status: `OPEN`
+Status: `RESOLVED`
 Severity: `MEDIUM`
 
 Description:
@@ -108,11 +111,20 @@ Cybersource sandbox credentials tracked under Blocker 011 and point the local st
 former is cheaper and does not depend on a third party; it must be clearly gated so a fake can never
 be selected outside local profiles.
 
+Closed for implementation/runtime QA on 2026-08-03. A default-off
+`ROUTESHARE_LOCAL_FAKE_PAYMENT_ENABLED` adapter now sits behind the existing gateway port and keeps
+opaque local references in memory; it cannot validate provider webhooks and is documented as
+forbidden in staging/production. The audit also found and fixed a real provider-state defect:
+`payment_intent.provider` was populated only by a database default, left null in the managed entity,
+and then written back as null on authorization. The provider is now explicit on payment methods and
+intents. Real Cybersource sandbox certification remains an external release gate, not an
+implementation blocker.
+
 ---
 
 ### Blocker 014 — `Vehicle` contract field names do not match the API
 
-Status: `OPEN`
+Status: `RESOLVED`
 Severity: `MEDIUM`
 
 Description:
@@ -134,6 +146,10 @@ Decide which side is authoritative — the contract reads better, the API is wha
 one and reconcile in a single commit. Worth doing before the mobile feature plan wires D06/D07, and
 worth a property-level sweep of the whole contract at the same time, since this class of drift would
 not be caught by the checks slice 00 ran.
+
+Closed 2026-08-03. The API is authoritative: both `Vehicle` and `CreateVehicleRequest` now use
+`manufactureYear`, `seatCount`, and `status`; obsolete response-only fields were removed. Redocly
+validates the mobile contract with zero warnings.
 
 ---
 
@@ -209,7 +225,7 @@ Runtime smoke results are recorded in `qa/reports/` and summarised per slice in
 
 ### Blocker 012 — `admin-web.openapi.json` fails OpenAPI 3.1 validation
 
-Status: `OPEN`
+Status: `RESOLVED`
 Severity: `LOW`
 
 Description:
@@ -229,6 +245,10 @@ Recommended Action:
 - Apply the same `nullable` → type-union conversion used on `mobile-app.openapi.json`, and add
   `redocly lint` for both documents to the verification gate.
 - Do it when admin-web implementation starts, or as a standalone chore.
+
+Closed before this audit and verified again on 2026-08-03: the admin contract contains zero
+`nullable` keywords and validates as OpenAPI 3.1. Redocly's remaining recommendations are
+documentation/style warnings, not schema errors.
 
 
 ### Blocker 011 — Google Maps Platform keys required for Task 07 production map/search

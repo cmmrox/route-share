@@ -8,6 +8,30 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ## 2026-08-03
 
+### Task: Full ComiGo backend audit through Slice 11
+
+Status: `COMPLETED`
+
+Compared all Slice 00–11 task records, controllers, services, migrations, OpenAPI operations,
+generated inventory, simulation suites, and current local runtime. Implemented the two older
+planned reads (passenger booking alternatives and driver occurrence share metadata), added their
+ownership boundaries, aligned vehicle schemas, unified the Keycloak mobile client, and repaired the
+stored-payment provider lifecycle exposed by a new default-off local fake gateway.
+
+The audit also repaired simulation drift: shared seed preference state no longer turns confirmed
+trip scenarios into pending requests; eligibility uses the real Keycloak demo driver and the
+paginated search response; compensation assertions read the Slice 11 rewards ledger; charge timing
+uses caller-owned methods and the real cancel endpoint.
+
+Verification: focused backend tests 59/59; full backend verify 618 tests with 0 failures/errors/
+skips and JaCoCo 84.15%; contract typecheck, mobile lint/typecheck and 86 mobile tests green;
+mobile OpenAPI validates with zero warnings. Runtime Slice 01–11 suites are green except the
+explicitly external object-storage/Cybersource certification scenarios.
+
+Next step: Slice 12, while separately obtaining provider credentials and real Android/iOS evidence.
+
+---
+
 ### Task: ComiGo slice 11 — referral and rewards
 
 Status: `COMPLETED`

@@ -72,7 +72,7 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntentEnti
    */
   default PaymentIntentView create(
       long bookingId, String providerReference, BigDecimal amount, String currency) {
-    var entity = PaymentIntentEntity.pending(bookingId, amount, currency, null);
+    var entity = PaymentIntentEntity.pending(bookingId, amount, currency, null, "CYBERSOURCE");
     entity.authorize(providerReference, java.time.Instant.now());
     return toView(save(entity));
   }

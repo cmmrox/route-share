@@ -212,7 +212,10 @@ Release rule:
 Current repo evidence:
 
 - Backend Phase 05 has payment intent, capture, void, refund, cash collection, fare ledger, receipts, driver earnings and settlement read models.
-- `docs/development/BLOCKERS.md` says provider-specific payment gateway integration remains deferred.
+- `CybersourcePaymentGateway` implements tokenization, authorization, capture, void, refund and
+  signed webhook handling behind the provider port.
+- A default-off `LocalFakePaymentGateway` exists only to exercise the same lifecycle in local QA.
+  It is not a provider emulator or production readiness evidence.
 
 Why needed:
 
@@ -622,6 +625,7 @@ integration goes live by flipping its flag and supplying credentials. See
 | Notify.lk SMS/OTP | `NotifyLkSmsGateway` (pre-existing) + Redis OTP rate limiting | `NOTIFY_LK_ENABLED` |
 | Google Maps | `RouteMetricsAdapter` (Distance Matrix → fare/ETA) + `GooglePlaceSearchServiceImpl` | `GOOGLE_MAPS_ENABLED` |
 | Cybersource | `CybersourcePaymentGateway` (authorize/capture/void/refund/tokenize + webhook) | `CYBERSOURCE_ENABLED` |
+| Local payment QA only | `LocalFakePaymentGateway` (opaque in-memory lifecycle; never staging/production) | `ROUTESHARE_LOCAL_FAKE_PAYMENT_ENABLED` |
 | Firebase FCM | `FcmPushAdapter` + notification domain | `PUSH_NOTIFICATIONS_ENABLED` |
 | Object storage | `S3ObjectStorageAdapter` (presigned KYC/doc lifecycle) | `OBJECT_STORAGE_ENABLED` |
 | Sentry | Spring Boot starter (backend) | `SENTRY_DSN_BACKEND` |

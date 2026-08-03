@@ -3497,14 +3497,14 @@
           "Ride Search"
         ],
         "summary": "Short link and QR (D14)",
-        "x-routeshare-status": "PLANNED_SLICE_09",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/TripShareCode"
                 }
               }
             }
@@ -7623,14 +7623,17 @@
           "Bookings"
         ],
         "summary": "Other drivers on this corridor (P13/P22/P24)",
-        "x-routeshare-status": "PLANNED_SLICE_07",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlternativeTrip"
+                  }
                 }
               }
             }
@@ -14408,10 +14411,10 @@
         "required": [
           "make",
           "model",
-          "year",
+          "manufactureYear",
           "color",
           "registrationNumber",
-          "passengerSeatCapacity",
+          "seatCount",
           "vehicleClass"
         ],
         "properties": {
@@ -14421,7 +14424,7 @@
           "model": {
             "type": "string"
           },
-          "year": {
+          "manufactureYear": {
             "type": "integer"
           },
           "color": {
@@ -14430,15 +14433,8 @@
           "registrationNumber": {
             "type": "string"
           },
-          "vehicleType": {
-            "type": "string"
-          },
-          "passengerSeatCapacity": {
+          "seatCount": {
             "type": "integer"
-          },
-          "features": {
-            "type": "object",
-            "additionalProperties": true
           },
           "vehicleClass": {
             "type": "string",
@@ -18029,7 +18025,7 @@
           "model": {
             "type": "string"
           },
-          "year": {
+          "manufactureYear": {
             "type": "integer"
           },
           "color": {
@@ -18038,21 +18034,11 @@
           "registrationNumber": {
             "type": "string"
           },
-          "passengerSeatCapacity": {
+          "seatCount": {
             "type": "integer"
           },
-          "features": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "verificationStatus": {
+          "status": {
             "type": "string"
-          },
-          "activeStatus": {
-            "type": "string"
-          },
-          "isPrimary": {
-            "type": "boolean"
           },
           "classKey": {
             "type": "string",

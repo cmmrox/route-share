@@ -1,7 +1,7 @@
 # API Backend Reconciliation — ComiGo Mobile Contract
 
 Generated: 2026-08-01 (slice 00 — repo reset and contract rewrite)
-Last regenerated: 2026-08-03 (slice 11 — referral and rewards)
+Last regenerated: 2026-08-03 (post-slice-11 implementation audit)
 
 Source of truth: `docs/api/mobile-app.openapi.json`. This document is derived from its
 `x-routeshare-status` extension — regenerate it rather than editing by hand.
@@ -20,9 +20,7 @@ resource ownership and gate state.
 
 | Status | Operations | Meaning |
 | --- | --- | --- |
-| `IMPLEMENTED` | 194 | Live in `apps/api` today |
-| `PLANNED_SLICE_07` | 1 | Remaining alternatives read contract |
-| `PLANNED_SLICE_09` | 1 | Remaining driver share metadata read |
+| `IMPLEMENTED` | 196 | Live in `apps/api` today |
 | `PLANNED_SLICE_12` | 6 | Specified; built in slice 12 |
 | `PLANNED_SLICE_13` | 8 | Specified; built in slice 13 |
 | `PLANNED_SLICE_14` | 8 | Specified; built in slice 14 |
@@ -93,6 +91,16 @@ its argument names from the contract. Left as-is; the contract names are the bet
 
 ## 5. New in this slice
 
+**Post-Slice-11 audit closure.** The two older planned reads are now implemented and ownership
+scoped:
+
+- `GET /api/v1/passenger/bookings/{bookingId}/alternatives`
+- `GET /api/v1/driver/route-occurrences/{routeOccurrenceId}/share`
+
+The `Vehicle` and `CreateVehicleRequest` schemas now use the API-authoritative
+`manufactureYear`, `seatCount`, and `status` fields. The generated TypeScript inventory and mobile
+OpenAPI status stamps agree exactly.
+
 **Slice 11 — referral and rewards.** All six operations stamped for Slice 11 are now
 `IMPLEMENTED` with concrete request/response schemas. The booking contract now carries
 `useRewardsCredit`, `appliedCredit`, and the remaining shared balance; profile setup accepts the
@@ -105,7 +113,7 @@ one-time `referralCode`. The six live operations are:
 - `GET /api/v1/me/rewards/withdrawals`
 - `POST /api/v1/me/rewards/withdrawals`
 
-Current inventory: **194 implemented, 2 older planned, 28 planned in slices 12–15, 7 internal and
+Current inventory: **196 implemented, 28 planned in slices 12–15, 7 internal and
 2 cut**, for 233 operations total.
 
 **Slice 10 — chat, notifications, safety and support.** All fourteen operations originally stamped
@@ -174,9 +182,6 @@ Two behaviours worth knowing:
 
 | Slice | Ops | Area |
 | --- | --- | --- |
-| 07 | 1 | Remaining alternatives read |
-| 09 | 1 | Remaining driver share metadata read |
-| 11 | 6 | Referral and rewards |
 | 12 | 6 | Real-time location pipeline |
 | 13 | 8 | Live en-route booking |
 | 14 | 8 | Money operations |

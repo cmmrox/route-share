@@ -1,6 +1,45 @@
 # RouteShareApp Development Status
 
-2026-08-03 (slice 11 complete — immutable attribution, commission-funded rewards, one balance)
+2026-08-03 (post-slice-11 audit complete — backend operations closed; external/mobile gates remain)
+
+## 2026-08-03 — Full Slice 00–11 implementation audit and closure
+
+The status headline was ahead of two contract operations and one critical runtime path. The audit
+closed all three:
+
+- implemented the passenger-scoped booking alternatives read and owner/admin-scoped current share
+  metadata read, including cross-account denial;
+- aligned vehicle request/response schemas with the live API (`manufactureYear`, `seatCount`,
+  `status`) and reconciled every OpenAPI status with the TypeScript inventory;
+- added a default-off local fake gateway so authorize/capture/void can be exercised without
+  misrepresenting provider certification, then fixed the runtime defect it exposed:
+  `payment_intent.provider` could be written back as null after the database default populated it.
+
+The unified Keycloak public client is now `comigo-mobile` in the realm import, mobile configuration,
+tests, and local simulation scripts. The charge smoke also stopped borrowing another user's stored
+method and now tests a genuine pre-start cancellation through `/cancel`.
+
+Runtime evidence on a fresh V001→V038 database:
+
+- mode gates 12/12; rate bands 18/18; fare engine 8/8;
+- charge timing 14/14; trip timers 42/42; booking depth 52/52;
+- eligibility 48/48 with two expected object-storage skips; search v2 43/43;
+  chat/notifications 33/33; referral/rewards 28/28.
+
+Final gate: `./mvnw spotless:check verify` → **BUILD SUCCESS, 618 tests, 0 failures,
+0 errors, 0 skipped; JaCoCo 84.15% and all coverage checks met**. Mobile lint and typecheck pass;
+18 mobile test files / 86 tests pass; the contract package typechecks; mobile OpenAPI validates
+with zero warnings.
+
+The accumulated historical `routeshare_comigo` database remains untouched because its V027
+checksum differs from the current migration source. Audit runtime used the separate
+`routeshare_slice11_audit` database.
+
+Boundary: **Slices 00–11 of the ComiGo backend plan are implemented. The whole RouteShare product
+is not finished.** Slices 12–15 remain not started; real Google Maps/object storage/Cybersource
+credentials and Android/iOS evidence remain release gates; the task-mapped ComiGo mobile feature
+screens and admin web are separate delivery scopes. Local fake payment evidence is never provider
+certification.
 
 ## 2026-08-03 — Slice 11 complete: one referral edge, one accountable cost, one balance
 

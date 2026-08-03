@@ -12,6 +12,11 @@ import java.util.Map;
  */
 public interface PaymentGatewayPort {
 
+  /** Stable provider code persisted with methods and intents for reconciliation. */
+  default String providerCode() {
+    return "CYBERSOURCE";
+  }
+
   /** True when a real card provider is configured; false for the cash-only fallback. */
   boolean cardPaymentsEnabled();
 

@@ -61,7 +61,7 @@ sim_require_api
 PASSENGER_TOKEN="$(sim_login "$PASSENGER_PHONE")"
 STRANGER_TOKEN="$(sim_login "$STRANGER_PHONE")"
 DRIVER_TOKEN="$(sim_keycloak_login_with_roles \
-  "$DRIVER_USERNAME" "$DRIVER_PASSWORD" "PASSENGER,DRIVER" driver-mobile)"
+  "$DRIVER_USERNAME" "$DRIVER_PASSWORD" "PASSENGER,DRIVER" comigo-mobile)"
 ADMIN_TOKEN="$(sim_keycloak_login_with_roles \
   "$ADMIN_USERNAME" "$ADMIN_PASSWORD" "ADMIN" admin-web)"
 

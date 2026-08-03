@@ -753,3 +753,29 @@ Consequence:
 - Volume per reader is monitored and alerted; number harvesting is the abuse this design invites.
 - Emergency numbers travel with the response and are outside these rules entirely — a passenger who
   cannot reach her driver must never also be unable to reach help.
+
+## Decision 025 — Local payment QA uses an explicit provider, never the cash fallback
+
+Date: 2026-08-03
+Status: `ADOPTED`
+
+Decision:
+
+A default-off local fake implements the existing payment gateway port for lifecycle QA. Payment
+methods and intents always persist the gateway's explicit provider code; no managed entity relies
+on a database default to learn which adapter owns it. Cash remains a separate no-intent path.
+
+Reason:
+
+Mocks and database constraints proved branching and idempotency but never exercised
+authorize → capture/void through the running API. Reusing the cash fallback would falsely label a
+no-provider run as card evidence. Relying on the database's `CYBERSOURCE` default also left the
+managed entity null and caused the next save to violate its own not-null constraint.
+
+Consequence:
+
+- `ROUTESHARE_LOCAL_FAKE_PAYMENT_ENABLED` is false by default and forbidden in staging/production.
+- Fake references and tokens are opaque and memory-only; the adapter cannot validate a provider
+  webhook and is never evidence that Cybersource is certified.
+- Real Cybersource sandbox authorization, capture, void, refund, webhook and reconciliation remain
+  release gates even though the application lifecycle is now runnable locally.

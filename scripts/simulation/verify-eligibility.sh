@@ -30,6 +30,8 @@ source ./lib.sh
 
 ADMIN_USERNAME="${ROUTESHARE_SIM_ADMIN_USERNAME:-sim-admin}"
 ADMIN_PASSWORD="${ROUTESHARE_SIM_ADMIN_PASSWORD:-SimAdmin#12345}"
+DRIVER_USERNAME="${ROUTESHARE_SIM_DRIVER_USERNAME:-sim-driver}"
+DRIVER_PASSWORD="${ROUTESHARE_SIM_DRIVER_PASSWORD:-SimDriver#12345}"
 PHONE_UNVERIFIED="${ROUTESHARE_SIM_ELIG_PHONE_U:-+9477$(printf '%07d' $((RANDOM % 10000000)))}"
 PHONE_MALE="${ROUTESHARE_SIM_ELIG_PHONE_M:-+9477$(printf '%07d' $((RANDOM % 10000000)))}"
 PHONE_FEMALE="${ROUTESHARE_SIM_ELIG_PHONE_F:-+9477$(printf '%07d' $((RANDOM % 10000000)))}"
@@ -74,7 +76,8 @@ except Exception:
 contains_occurrence() { python3 -c "
 import json,sys
 try:
-    rows = json.loads(sys.argv[1])['data']
+    data = json.loads(sys.argv[1])['data']
+    rows = data.get('results', []) if isinstance(data, dict) else data
     print(str(any(str(r.get('routeOccurrenceId')) == sys.argv[2] for r in rows)).lower())
 except Exception:
     print('error')
@@ -181,16 +184,20 @@ book() { # book <token> <occurrence> -> "<status> <body>"
   printf '%s %s' "$(curl "${args[@]}")" "$(cat /tmp/elig-body)"
 }
 
+DRIVER_TOKEN="$(sim_keycloak_login_with_roles \
+  "$DRIVER_USERNAME" "$DRIVER_PASSWORD" "PASSENGER,DRIVER" comigo-mobile)"
+DRIVER_SUBJECT="$(python3 -c "
+import base64,json,sys
+part=sys.argv[1].split('.')[1]
+part += '=' * (-len(part) % 4)
+print(json.loads(base64.urlsafe_b64decode(part))['sub'])
+" "$DRIVER_TOKEN")"
 DRIVER_PROFILE="$(sim_psql "SELECT d.driver_profile_id FROM driver.driver_profile d
-                            ORDER BY d.driver_profile_id DESC LIMIT 1")"
-DRIVER_TOKEN_PHONE="$(sim_psql "SELECT u.phone FROM identity.app_user u
-                                JOIN driver.driver_profile d ON d.app_user_id = u.app_user_id
-                                WHERE d.driver_profile_id = $DRIVER_PROFILE")"
+  JOIN identity.app_user u ON u.app_user_id = d.app_user_id
+  WHERE u.keycloak_subject = '$DRIVER_SUBJECT'")"
 
 # ── 1-2: the set gate ────────────────────────────────────────────────────────────────────────────
-if [ -n "$DRIVER_TOKEN_PHONE" ]; then
-  DRIVER_TOKEN="$(sim_login "$DRIVER_TOKEN_PHONE")"
-
+if [ -n "$DRIVER_PROFILE" ]; then
   sim_psql "UPDATE driver.driver_profile SET gender = NULL
             WHERE driver_profile_id = $DRIVER_PROFILE" >/dev/null
   R="$(call PUT /api/v1/driver/preferences "$DRIVER_TOKEN" \

@@ -52,6 +52,15 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
   Optional<Long> findRouteOccurrenceId(@Param("bookingId") long bookingId);
 
   @Query(
+      """
+      select b.routeOccurrenceId
+      from BookingEntity b
+      where b.id = :bookingId and b.passengerAppUserId = :passengerAppUserId
+      """)
+  Optional<Long> findRouteOccurrenceIdForPassengerBooking(
+      @Param("bookingId") long bookingId, @Param("passengerAppUserId") long passengerAppUserId);
+
+  @Query(
       value =
           """
       SELECT t.trip_id

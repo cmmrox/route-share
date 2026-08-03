@@ -30,7 +30,7 @@ sim_require_api
 # Keycloak password grant instead of phone OTP: repeat QA runs must not consume the
 # (intentionally strict) OTP request quota.
 sim_log "provisioning Keycloak demo passenger '$PASSENGER_USERNAME'"
-TOKEN="$(sim_keycloak_login_with_roles "$PASSENGER_USERNAME" "$PASSENGER_PASSWORD" "PASSENGER" passenger-mobile)"
+TOKEN="$(sim_keycloak_login_with_roles "$PASSENGER_USERNAME" "$PASSENGER_PASSWORD" "PASSENGER" comigo-mobile)"
 SESSION="sim-$(date +%s)-$RANDOM"
 
 # --- 1+2: autocomplete + details cache ---------------------------------------------------------

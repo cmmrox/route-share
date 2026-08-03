@@ -18,6 +18,7 @@ import com.routeshare.payment.domain.CaptureOutcome;
 import com.routeshare.payment.entity.PaymentAttemptEntity;
 import com.routeshare.payment.entity.PaymentIntentEntity;
 import com.routeshare.payment.entity.PaymentMethodEntity;
+import com.routeshare.payment.facade.PaymentFacade;
 import com.routeshare.payment.gateway.PaymentGatewayPort;
 import com.routeshare.payment.repository.FareLedgerRepository;
 import com.routeshare.payment.repository.PaymentAttemptRepository;
@@ -265,5 +266,46 @@ class PaymentFacadeImplTest {
     facade.settleRepricedFare(BOOKING_ID, new BigDecimal("180.00"));
 
     verify(gateway).refund(anyString(), eq(new BigDecimal("87.00")), anyString());
+  }
+
+  // ── passenger penalties use the state of the same payment ───────────────────────────────────
+
+  @Test
+  void aPenaltyAfterFareCaptureNetsTheFeeAndRefundsTheRest() {
+    var captured = authorizedIntent();
+    captured.capture(NOW);
+    when(intents.findLatestForBooking(BOOKING_ID)).thenReturn(Optional.of(captured));
+
+    var result = facade.collectPassengerPenalty(BOOKING_ID, new BigDecimal("49.00"));
+
+    assertThat(result).isEqualTo(PaymentFacade.PenaltyCollection.NETTED);
+    verify(gateway).refund("auth_ref", new BigDecimal("218.00"), "LKR");
+    verify(fareLedger)
+        .recordPaymentLifecycleIfAbsent(
+            BOOKING_ID, "PENALTY_CHARGE", new BigDecimal("49.00"), "LKR");
+  }
+
+  @Test
+  void anAuthorizedUncapturedBookingCapturesOnlyThePenalty() {
+    when(intents.findLatestForBooking(BOOKING_ID)).thenReturn(Optional.of(authorizedIntent()));
+
+    var result = facade.collectPassengerPenalty(BOOKING_ID, new BigDecimal("49.00"));
+
+    assertThat(result).isEqualTo(PaymentFacade.PenaltyCollection.CARD_CHARGE);
+    verify(gateway).capture("auth_ref", new BigDecimal("49.00"), "LKR");
+    verify(fareLedger)
+        .recordPaymentLifecycleIfAbsent(
+            BOOKING_ID, "PENALTY_CHARGE", new BigDecimal("49.00"), "LKR");
+  }
+
+  @Test
+  void aCashPassengerPenaltyBecomesDuesWithoutAProviderCall() {
+    when(intents.findLatestForBooking(BOOKING_ID)).thenReturn(Optional.empty());
+
+    var result = facade.collectPassengerPenalty(BOOKING_ID, new BigDecimal("49.00"));
+
+    assertThat(result).isEqualTo(PaymentFacade.PenaltyCollection.DUES);
+    verify(gateway, never()).capture(anyString(), any(), anyString());
+    verify(gateway, never()).refund(anyString(), any(), anyString());
   }
 }

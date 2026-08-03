@@ -76,6 +76,7 @@ class OpenRequestLimitTest {
         seatHolds,
         mock(com.routeshare.routing.service.EligibilityService.class),
         mock(com.routeshare.routing.service.PickupPointService.class),
+        mock(com.routeshare.routing.service.OccurrenceLifecycleService.class),
         policy,
         mock(com.routeshare.chat.facade.ChatFacade.class),
         mock(com.routeshare.rewards.facade.RewardsFacade.class),

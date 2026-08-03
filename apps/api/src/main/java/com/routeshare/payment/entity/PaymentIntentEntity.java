@@ -37,7 +37,7 @@ public class PaymentIntentEntity {
   @Column(name = "booking_id")
   private Long bookingId;
 
-  @Column(insertable = false)
+  @Column(nullable = false)
   private String provider;
 
   @Column(name = "provider_reference")
@@ -80,8 +80,14 @@ public class PaymentIntentEntity {
    */
   public static PaymentIntentEntity pending(
       long bookingId, BigDecimal amount, String currency, Long paymentMethodId) {
+    return pending(bookingId, amount, currency, paymentMethodId, "CYBERSOURCE");
+  }
+
+  public static PaymentIntentEntity pending(
+      long bookingId, BigDecimal amount, String currency, Long paymentMethodId, String provider) {
     var entity = new PaymentIntentEntity();
     entity.bookingId = bookingId;
+    entity.provider = provider;
     entity.amount = amount;
     entity.currency = currency;
     entity.paymentMethodId = paymentMethodId;

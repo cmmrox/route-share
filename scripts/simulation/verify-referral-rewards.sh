@@ -62,7 +62,7 @@ REFERRER_TOKEN="$(sim_login "$REFERRER_PHONE")"
 RIDER_TOKEN="$(sim_login "$RIDER_PHONE")"
 OTHER_TOKEN="$(sim_login "$OTHER_PHONE")"
 DRIVER_TOKEN="$(sim_keycloak_login_with_roles \
-  "$DRIVER_USERNAME" "$DRIVER_PASSWORD" "PASSENGER,DRIVER" driver-mobile)"
+  "$DRIVER_USERNAME" "$DRIVER_PASSWORD" "PASSENGER,DRIVER" comigo-mobile)"
 
 equals "referrer profile creates a code" \
   "$(status_of "$(profile "$REFERRER_TOKEN" "Maya Perera" "")")" "200"

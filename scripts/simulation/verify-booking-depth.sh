@@ -79,6 +79,10 @@ ADMIN_TOKEN="$(sim_keycloak_login_with_roles "$ADMIN_USERNAME" "$ADMIN_PASSWORD"
 
 sim_log "seeding a demo route (idempotent)"
 bash ./seed-demo-route.sh >/dev/null 2>&1 || sim_log "seed script reported an issue; continuing"
+# verify-trip-timers deliberately deactivates the shared demo driver. This suite is independently
+# runnable, so restore that local fixture before asking it to publish and cancel fresh occurrences.
+sim_psql "DELETE FROM driver.driver_reinstatement_request" >/dev/null
+sim_psql "DELETE FROM driver.driver_deactivation" >/dev/null
 sim_psql "UPDATE routing.route_occurrence SET status = 'PUBLISHED'
           WHERE status = 'CANCELLED' AND scheduled_departure_at > now()" >/dev/null
 
@@ -95,6 +99,14 @@ sim_psql "UPDATE identity.app_user u
 free_occurrence() {
   sim_psql "SELECT ro.route_occurrence_id FROM routing.route_occurrence ro
     WHERE ro.status = 'PUBLISHED' AND ro.scheduled_departure_at > now()
+      AND EXISTS (SELECT 1 FROM routing.route_occurrence_seat s
+                   WHERE s.route_occurrence_id = ro.route_occurrence_id)
+      AND NOT EXISTS (
+        SELECT 1 FROM routing.route_occurrence_seat s
+        JOIN booking.booking_seat bs
+          ON bs.route_occurrence_seat_id = s.route_occurrence_seat_id
+         AND bs.released_at IS NULL
+        WHERE s.route_occurrence_id = ro.route_occurrence_id)
       AND NOT EXISTS (SELECT 1 FROM booking.booking b
                        WHERE b.route_occurrence_id = ro.route_occurrence_id
                          AND b.status IN ('REQUESTED','CONFIRMED'))
@@ -103,10 +115,19 @@ free_occurrence() {
 next_occurrence() {
   local found; found="$(free_occurrence)"
   if [ -z "$found" ]; then
-    sim_psql "INSERT INTO routing.route_occurrence(route_plan_id, scheduled_departure_at,
-                available_seats, status)
+    sim_psql "WITH created AS (
+                INSERT INTO routing.route_occurrence(route_plan_id, scheduled_departure_at,
+                  available_seats, status)
               SELECT rp.route_plan_id, now() + interval '20 hours', 3, 'PUBLISHED'
-              FROM routing.route_plan rp ORDER BY rp.route_plan_id DESC LIMIT 1" >/dev/null
+                FROM routing.route_plan rp ORDER BY rp.route_plan_id DESC LIMIT 1
+                RETURNING route_occurrence_id
+              )
+              INSERT INTO routing.route_occurrence_seat
+                (route_occurrence_id, slot_index, label, sub_label)
+              SELECT route_occurrence_id, slot_index,
+                     CASE slot_index WHEN 1 THEN 'Front seat' ELSE 'Back seat ' || (slot_index - 1) END,
+                     CASE slot_index WHEN 1 THEN 'Beside the driver' ELSE 'Rear row' END
+                FROM created CROSS JOIN generate_series(1, 3) AS slot_index" >/dev/null
     found="$(free_occurrence)"
   fi
   printf '%s' "$found"
@@ -124,7 +145,8 @@ book() { # book <token> <occurrence> [seatSlotIdsJson] -> "<status> <body>"
   printf '%s %s' "$(curl "${args[@]}")" "$(cat /tmp/depth-body)"
 }
 book_id() { data "$1" bookingId; }
-set_mode() { sim_psql "UPDATE routing.route_occurrence SET approval_mode = '$2'
+set_mode() { sim_psql "UPDATE routing.route_occurrence SET approval_mode = '$2',
+                         gender_policy = 'ANYONE', verified_riders_only = false
                        WHERE route_occurrence_id = $1" >/dev/null; }
 
 # ── 1: the seat map ──────────────────────────────────────────────────────────────────────────────
@@ -167,6 +189,11 @@ equals "07-4: instant-book confirms immediately" \
   "$(sim_psql "SELECT status FROM booking.booking WHERE booking_id = $FRONT_BOOKING")" "CONFIRMED"
 equals "and it materialised the trip" \
   "$(sim_psql "SELECT count(*) FROM trip.trip WHERE route_occurrence_id = $OCCURRENCE")" "1"
+R="$(call GET "/api/v1/passenger/bookings/$FRONT_BOOKING/alternatives" "$TOKEN_A")"
+equals "07-alternatives: the passenger can read alternatives for her booking" \
+  "$(status_of "$R")" "200"
+R="$(call GET "/api/v1/passenger/bookings/$FRONT_BOOKING/alternatives" "$TOKEN_B")"
+equals "and another passenger cannot use it as a corridor oracle" "$(status_of "$R")" "404"
 
 # ── 7: the freeze rule ───────────────────────────────────────────────────────────────────────────
 R="$(call GET "/api/v1/driver/route-occurrences/$OCCURRENCE/editability" "$ADMIN_TOKEN")"
@@ -177,6 +204,7 @@ equals "and its approval mode can no longer be changed" "$(status_of "$R")" "409
 equals "with TRIP_FROZEN" "$(error_code "$R")" "TRIP_FROZEN"
 
 EMPTY_OCCURRENCE="$(next_occurrence)"
+set_mode "$EMPTY_OCCURRENCE" INSTANT
 R="$(call GET "/api/v1/driver/route-occurrences/$EMPTY_OCCURRENCE/editability" "$ADMIN_TOKEN")"
 equals "07-9: an occurrence nobody has booked is still editable" "$(data "$R" editable)" "True"
 R="$(call PUT "/api/v1/driver/route-occurrences/$EMPTY_OCCURRENCE/approval-mode" "$ADMIN_TOKEN" \
@@ -185,6 +213,9 @@ equals "and its approval mode can be set" "$(status_of "$R")" "200"
 
 # ── 5: approve-each, and the lapse ───────────────────────────────────────────────────────────────
 R="$(book "$TOKEN_A" "$EMPTY_OCCURRENCE")"
+if [ "$(status_of "$R")" != "200" ]; then
+  sim_fail "approve-each fixture booking failed: $(status_of "$R") $(body_of "$R")"
+fi
 equals "07-5: approve-each creates a request, not a booking" "$(data "$R" status)" "REQUESTED"
 REQUEST_BOOKING="$(book_id "$R")"
 check "07-6: the request carries a deadline" \

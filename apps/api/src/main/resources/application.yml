@@ -89,6 +89,8 @@ routeshare:
     # sitting in limbo, and reconciliation surfaces it to operations.
     auth-validity-hours: ${ROUTESHARE_PAYMENT_AUTH_VALIDITY_HOURS:168}
     capture-max-attempts: ${ROUTESHARE_PAYMENT_CAPTURE_MAX_ATTEMPTS:3}
+    # Local runtime QA only. Never enable in staging/production: no provider is contacted.
+    local-fake-enabled: ${ROUTESHARE_LOCAL_FAKE_PAYMENT_ENABLED:false}
   short-link:
     # Where a shared trip code resolves. The code itself is ten base32 characters — unguessable
     # rather than merely unique, because it is pasted into group chats.

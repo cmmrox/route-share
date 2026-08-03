@@ -88,7 +88,9 @@ public class PaymentFacadeImpl implements PaymentFacade {
     }
 
     PaymentIntentEntity intent =
-        intents.save(PaymentIntentEntity.pending(bookingId, amount, CURRENCY, paymentMethodId));
+        intents.save(
+            PaymentIntentEntity.pending(
+                bookingId, amount, CURRENCY, paymentMethodId, method.getProvider()));
     String key = "authorize:booking:" + bookingId;
 
     attempt(
