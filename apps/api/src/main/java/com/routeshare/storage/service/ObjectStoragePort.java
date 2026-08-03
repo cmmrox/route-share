@@ -30,6 +30,9 @@ public interface ObjectStoragePort {
    */
   boolean exists(String storageKey);
 
+  /** Reads only the first bytes needed for server-side file signature validation. */
+  byte[] readPrefix(String storageKey, int maxBytes);
+
   /** Deletes an object (e.g. when a document is replaced or a record is purged). */
   void delete(String storageKey);
 }

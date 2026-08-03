@@ -1,6 +1,48 @@
 # RouteShareApp Development Status
 
-2026-08-03 (slice 09 complete — the radius is about where a driver *starts*)
+2026-08-03 (slice 10 complete — scoped conversations, quiet delivery, contextual safety)
+
+## 2026-08-03 — Slice 10 complete: the conversation exists only because the booking does
+
+Booking confirmation now opens one participant-only chat thread, drop-off schedules its closure
+exactly 24 hours later, and the registered `chat-auto-close` job enforces that deadline. Messages
+are cursor-polled, idempotent, length- and rate-limited; support reads require a reason and leave an
+audit row. A runtime-discovered read-only transaction defect that turned a correct third-party
+refusal into HTTP 500 was fixed before closure.
+
+The inbox is unified across rider and driver modes. Its twelve S23 preference rows carry push, SMS
+and in-app switches, while mandatory safety and trip-critical rows cannot be disabled. Broadcasts
+now fan out to all active accounts, not only accounts that happened to register a push token.
+Driving mode stores passenger-side alerts as quiet `deferred` inbox items; SOS and trip-critical
+driver alerts bypass suppression. `/api/v1/badges` preserves S14's asymmetric types: Home and
+Account are dots, Trips and Inbox are counts, and there is no action badge.
+
+SOS snapshots the trip, booking, role, vehicle registration, destination and latest known location
+at raise time. Configured auto-share contacts are attempted through the existing SMS provider, with
+success/failure counts and failure metrics retained; the local runtime correctly recorded the
+disabled-provider failure, while the focused gateway test proves two configured contacts are sent.
+Support attachments use a private presigned lifecycle with size checks and server-side JPEG/PNG/PDF
+magic-byte sniffing. Theme, language and privacy settings persist and surface through `/me/context`;
+data-export and deletion requests queue for the admin surface, including the seven-year receipt
+retention statement.
+
+Migration: task planning had assigned V036, but Slice 09 already owns it. Slice 10 therefore lands
+as `V037__chat_notifications_safety_support.sql`; clean Testcontainers databases and the live
+`routeshare_slice10_final` QA database both reached V037. The older `routeshare_comigo` database
+was preserved untouched after Flyway detected its historical V027 checksum mismatch.
+
+Gate: `./mvnw spotless:apply spotless:check verify` → **BUILD SUCCESS, 605 tests, 0 skipped,
+JaCoCo 84%**.
+Focused Slice 10 classes are green. Both OpenAPI documents validate; the contract inventory
+type-checks. Runtime: `verify-chat-and-notifications.sh` → **33 passed, 0 failed, 0 skipped** on API
+8088 / PostgreSQL 5434 against `routeshare_slice10_final`.
+
+Blocker 015 remains unchanged: real Notify.lk/Cybersource provider delivery is still credential
+gated. This slice records trusted-contact delivery failures and alerts on them; no provider result
+was invented.
+
+Next: slice 11 — referral and rewards. Slice 12 may also proceed and remains the prerequisite for
+slice 13.
 
 ## 2026-08-03 — Slice 09 complete: a different predicate, and a landmark to stand at
 
@@ -805,11 +847,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_09_SEARCH_ON_WHERE_THE_TRIP_STARTS`
-- Current Active Task: `Slices 00–09 complete and runtime-verified; slice 10 — chat, notifications, safety and support — next`
+- Current Milestone: `MILESTONE_SLICE_10_CHAT_NOTIFICATIONS_SAFETY_SUPPORT`
+- Current Active Task: `Slices 00–10 complete and runtime-verified; slice 11 — referral and rewards — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_09_THE_RADIUS_IS_ABOUT_WHERE_A_DRIVER_STARTS`
-- Repository Git Status: `Slices 00–09 merged to main; migrations V027–V036 added`
+- Status: `SLICE_10_SCOPED_CHAT_QUIET_DELIVERY_CONTEXTUAL_SAFETY`
+- Repository Git Status: `Slices 00–10 merged to main; migrations V027–V037 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

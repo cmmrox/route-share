@@ -76,6 +76,21 @@ public class S3ObjectStorageAdapter implements ObjectStoragePort {
   }
 
   @Override
+  public byte[] readPrefix(String storageKey, int maxBytes) {
+    if (maxBytes <= 0) {
+      return new byte[0];
+    }
+    return s3Client
+        .getObjectAsBytes(
+            GetObjectRequest.builder()
+                .bucket(props.bucket())
+                .key(storageKey)
+                .range("bytes=0-" + (maxBytes - 1))
+                .build())
+        .asByteArray();
+  }
+
+  @Override
   public void delete(String storageKey) {
     s3Client.deleteObject(
         DeleteObjectRequest.builder().bucket(props.bucket()).key(storageKey).build());

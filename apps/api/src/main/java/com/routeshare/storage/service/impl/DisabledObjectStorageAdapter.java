@@ -42,6 +42,11 @@ public class DisabledObjectStorageAdapter implements ObjectStoragePort {
   }
 
   @Override
+  public byte[] readPrefix(String storageKey, int maxBytes) {
+    throw notConfigured();
+  }
+
+  @Override
   public void delete(String storageKey) {
     throw notConfigured();
   }

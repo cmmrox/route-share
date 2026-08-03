@@ -65,6 +65,111 @@
     }
   ],
   "paths": {
+    "/api/v1/admin/account-requests": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List queued data export and account deletion requests",
+        "operationId": "AdminListAccountRequests",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+      "200": {
+        "description": "Account requests visible to authorised operations staff",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AdminAccountRequest"
+              }
+            }
+          }
+        }
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/bookings/{bookingId}/chat/messages": {
+      "get": {
+        "tags": [
+          "Support"
+        ],
+        "summary": "Read a booking chat through the audited support path",
+        "operationId": "AdminReadBookingChat",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 500
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+      "200": {
+        "description": "Messages returned and an admin-read audit row recorded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AdminChatMessages"
+            }
+          }
+        }
+          },
+          "400": {
+            "description": "A valid audit reason is required"
+          },
+          "403": {
+            "description": "Support chat access required"
+          }
+        }
+      }
+    },
     "/api/v1/admin/audit/actions": {
       "get": {
         "tags": [
@@ -5479,8 +5584,114 @@
             "$ref": "#/components/schemas/Coordinate"
           },
           "placeProviderId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AdminAccountRequest": {
+        "type": "object",
+        "required": [
+          "id",
+          "appUserId",
+          "kind",
+          "status",
+          "requestedAt",
+          "receiptRetentionYears"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "appUserId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
             "type": "string",
-            "nullable": true
+            "enum": [
+              "DATA_EXPORT",
+              "DELETION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "REJECTED"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receiptRetentionYears": {
+            "type": "integer",
+            "const": 7
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AdminChatMessage": {
+        "type": "object",
+        "required": [
+          "id",
+          "senderAppUserId",
+          "body",
+          "sentAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "senderAppUserId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readByCounterpartyAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "AdminChatMessages": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminChatMessage"
+            }
+          },
+          "nextCursor": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -6456,8 +6667,10 @@
             "type": "boolean"
           },
           "driverVerificationStatus": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "availableModes": {
             "type": "array",
@@ -6534,9 +6747,11 @@
             "format": "date-time"
           },
           "effectiveTo": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           },
           "active": {
             "type": "boolean"
@@ -6571,9 +6786,11 @@
             "format": "date-time"
           },
           "effectiveTo": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           },
           "active": {
             "type": "boolean"
@@ -6646,14 +6863,18 @@
             "type": "string"
           },
           "tripId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           },
           "bookingId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -6869,9 +7090,11 @@
             "format": "date-time"
           },
           "readAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -7058,9 +7281,11 @@
             "format": "date-time"
           },
           "paidAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       },

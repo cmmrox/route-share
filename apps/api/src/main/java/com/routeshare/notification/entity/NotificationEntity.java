@@ -37,6 +37,15 @@ public class NotificationEntity {
   @Column(name = "data_json")
   private String dataJson;
 
+  @Column(nullable = false)
+  private String category;
+
+  @Column(nullable = false)
+  private boolean deferred;
+
+  @Column(name = "action_path")
+  private String actionPath;
+
   @Column(name = "read_at")
   private Instant readAt;
 
@@ -44,13 +53,23 @@ public class NotificationEntity {
   private Instant createdAt;
 
   public static NotificationEntity create(
-      long appUserId, String type, String title, String body, String dataJson) {
+      long appUserId,
+      String type,
+      String category,
+      String title,
+      String body,
+      String dataJson,
+      String actionPath,
+      boolean deferred) {
     var e = new NotificationEntity();
     e.appUserId = appUserId;
     e.type = type;
+    e.category = category;
     e.title = title;
     e.body = body;
     e.dataJson = dataJson;
+    e.actionPath = actionPath;
+    e.deferred = deferred;
     return e;
   }
 }

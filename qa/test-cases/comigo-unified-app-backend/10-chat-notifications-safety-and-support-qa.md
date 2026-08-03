@@ -13,7 +13,7 @@ attachments, and user settings.
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V036`.
+- Migration series applied through `V037`.
 - At least one confirmed booking with two distinct participants, plus a third unrelated account.
 - A user with a live trip in driver mode, for the suppression cases.
 
@@ -82,6 +82,15 @@ owned by the mobile feature plan and must link back to this QA file.
 Pass when: chat is reachable only by the two participants within its window; safety categories cannot be
 disabled; badges follow S14 exactly; passenger alerts defer during a live drive while SOS does not; and
 SOS carries full context and alerts configured contacts.
+
+## Execution evidence — 2026-08-03
+
+- Focused test command: all eight named Slice 10 classes passed.
+- Full backend gate: `spotless:apply spotless:check verify` passed 605 tests with JaCoCo at 84%.
+- Runtime: `verify-chat-and-notifications.sh` passed 33, failed 0, skipped 0 against API 8088,
+  PostgreSQL 5434 and fresh `routeshare_slice10_final` schema V037.
+- Local Notify.lk was intentionally disabled: the runtime proved delivery-failure accounting and
+  alerting; `SosContextSnapshotTest` proved two configured contacts are sent through `SmsGateway`.
 
 Fail on: any third-party chat access, any disableable safety alert, an SOS that interrupts nothing or
 alerts nobody, or an attachment accepted on a client-declared content type.

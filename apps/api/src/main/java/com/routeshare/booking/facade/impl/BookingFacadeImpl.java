@@ -38,6 +38,20 @@ public class BookingFacadeImpl implements BookingFacade {
   }
 
   @Override
+  public Optional<ChatContext> findChatContext(long bookingId) {
+    return bookings
+        .findContactContext(bookingId)
+        .map(
+            row ->
+                new ChatContext(
+                    row.getBookingId(),
+                    row.getPassengerAppUserId(),
+                    row.getDriverAppUserId(),
+                    row.getBookingStatus(),
+                    row.getDroppedOffAt()));
+  }
+
+  @Override
   public java.util.List<BookingToCharge> findConfirmedBookingsForTrip(long tripId) {
     return bookings.findConfirmedBookingsForTrip(tripId).stream()
         .map(row -> new BookingToCharge(row.getBookingId(), row.getFareEstimate()))

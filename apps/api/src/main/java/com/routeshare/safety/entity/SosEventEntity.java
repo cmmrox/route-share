@@ -43,6 +43,23 @@ public class SosEventEntity {
   private Double longitude;
   private String note;
 
+  @Column(name = "vehicle_registration")
+  private String vehicleRegistration;
+
+  @Column(name = "snapshot_place_label")
+  private String snapshotPlaceLabel;
+
+  private String role;
+
+  @Column(name = "destination_label")
+  private String destinationLabel;
+
+  @Column(name = "contacts_alerted")
+  private int contactsAlerted;
+
+  @Column(name = "contact_alert_failures")
+  private int contactAlertFailures;
+
   @Column(nullable = false)
   private String status = RAISED;
 

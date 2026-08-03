@@ -35,6 +35,8 @@ public class TripServiceImpl implements TripService {
   private final com.routeshare.penalty.facade.PenaltyFacade penalties;
   private final TripStartWindowService startWindows;
   private final com.routeshare.trip.service.PickupWaitService pickupWaits;
+  private final com.routeshare.chat.facade.ChatFacade chat;
+  private final com.routeshare.platform.service.PolicySettingService policy;
   private final java.time.Clock clock;
   private final TripStateMachine stateMachine = new TripStateMachine();
   private final PassengerTripStateMachine passengerStateMachine = new PassengerTripStateMachine();
@@ -111,6 +113,16 @@ public class TripServiceImpl implements TripService {
     // no-show against a passenger the driver has already picked up.
     if (req.status() == PassengerTripStatus.BOARDED) {
       pickupWaits.resolveBoarded(tripId, bookingId);
+    } else if (req.status() == PassengerTripStatus.DROPPED_OFF) {
+      chat.scheduleClose(
+          bookingId,
+          clock
+              .instant()
+              .plus(
+                  java.time.Duration.ofHours(
+                      policy.integer(
+                          com.routeshare.platform.domain.PolicyKey
+                              .CHAT_CLOSE_HOURS_AFTER_DROPOFF))));
     }
     return Map.of("tripId", tripId, "bookingId", bookingId, "status", req.status().name());
   }

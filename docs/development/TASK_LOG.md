@@ -6,6 +6,40 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ---
 
+## 2026-08-03
+
+### Task: ComiGo slice 10 — chat, notifications, safety and support
+
+Status: `COMPLETED`
+
+Added confirmed-booking chat with participant authorization, idempotent cursor-based messages,
+audited support access and scheduler-enforced closure 24 hours after drop-off. Replaced role-split
+notification reads with a unified inbox, twelve-row channel matrix, broadcasts to all active users,
+S14 badges and live-driving deferral with safety/trip-critical bypass. SOS now snapshots trip,
+vehicle, destination, role and location and accounts for trusted-contact delivery. Support gained
+private, magic-byte-validated attachments; user settings and export/deletion requests are durable
+and admin-visible.
+
+Files: new `chat/**`, expanded `notification/**`, `safety/**`, `support/**` and `platform/**`,
+`V037__chat_notifications_safety_support.sql`, focused regression classes, both OpenAPI contracts,
+the TypeScript inventory and `scripts/simulation/verify-chat-and-notifications.sh`.
+
+Verification: focused Slice 10 test command green; `./mvnw spotless:check verify` BUILD SUCCESS with
+605 tests, 0 skipped and JaCoCo 84%; OpenAPI validation and contract typecheck green; runtime smoke
+33 passed, 0 failed, 0 skipped on fresh `routeshare_slice10_final` at V037. The older
+`routeshare_comigo` QA database was preserved after Flyway reported a historical V027 checksum
+mismatch.
+
+Runtime findings fixed: a read-only identity upsert turned third-party chat refusal into HTTP 500;
+broadcasts reached only users with push registrations; and the first simulation fixture did not
+materialise a passenger-state row before drop-off. Provider-disabled trusted-contact SMS is
+recorded as a failed delivery rather than reported as sent; the focused test proves the successful
+two-contact path through the gateway port.
+
+Next step: slice 11 — referral and rewards; slice 12 may proceed in parallel.
+
+---
+
 ## 2026-08-02
 
 ### Task: ComiGo slice 07 — booking depth: seats, approval modes and expiry

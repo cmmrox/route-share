@@ -24,6 +24,20 @@ public interface TripRepository extends JpaRepository<TripEntity, Long> {
       nativeQuery = true)
   boolean isOwnedByDriverAppUser(@Param("tripId") long tripId, @Param("appUserId") long appUserId);
 
+  @Query(
+      value =
+          """
+          SELECT EXISTS(
+            SELECT 1
+            FROM trip.trip t
+            JOIN routing.route_plan r ON r.route_plan_id = t.route_plan_id
+            JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+            WHERE d.app_user_id = :appUserId
+              AND t.status IN ('STARTED', 'ARRIVED_PICKUP', 'PASSENGER_ONBOARD'))
+          """,
+      nativeQuery = true)
+  boolean hasActiveDriverTrip(@Param("appUserId") long appUserId);
+
   @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
   @Query("select t.status from TripEntity t where t.id = :tripId")
   Optional<TripStatus> lockAndFindStatus(@Param("tripId") long tripId);

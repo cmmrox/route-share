@@ -18,7 +18,7 @@ public interface TrustedContactRepository extends JpaRepository<TrustedContactEn
     return toResponse(
         save(
             new TrustedContactEntity(
-                null, appUserId, request.name(), request.phone(), request.relationship())));
+                null, appUserId, request.name(), request.phone(), request.relationship(), true)));
   }
 
   default List<TrustedContactResponse> list(long appUserId) {

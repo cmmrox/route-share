@@ -31,7 +31,18 @@ class SupportServiceImplTest {
   private final SupportTicketRepository tickets = mock(SupportTicketRepository.class);
   private final SupportMessageRepository messages = mock(SupportMessageRepository.class);
   private final SupportServiceImpl service =
-      new SupportServiceImpl(current, identityFacade, tickets, messages);
+      new SupportServiceImpl(
+          current,
+          identityFacade,
+          tickets,
+          messages,
+          mock(com.routeshare.support.repository.SupportAttachmentRepository.class),
+          mock(com.routeshare.storage.service.ObjectStoragePort.class),
+          new com.routeshare.storage.config.ObjectStorageProperties(
+              false, null, null, "test", null, null, true, 900),
+          java.time.Clock.systemUTC(),
+          10_485_760L,
+          "image/jpeg,image/png,application/pdf");
 
   @BeforeEach
   void setUp() {

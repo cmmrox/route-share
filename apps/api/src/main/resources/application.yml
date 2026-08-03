@@ -162,6 +162,13 @@ routeshare:
     path-style: ${OBJECT_STORAGE_PATH_STYLE:true}
     presign-ttl-seconds: ${OBJECT_STORAGE_PRESIGN_TTL_SECONDS:900}
 
+  chat:
+    message-rate-limit-per-minute: ${ROUTESHARE_CHAT_MESSAGE_RATE_LIMIT_PER_MINUTE:20}
+
+  support:
+    attachment-max-bytes: ${ROUTESHARE_SUPPORT_ATTACHMENT_MAX_BYTES:10485760}
+    attachment-allowed-types: ${ROUTESHARE_SUPPORT_ATTACHMENT_ALLOWED_TYPES:image/jpeg,image/png,application/pdf}
+
   events:
     # When false, domain events are still written to common.event_outbox but the relay
     # logs instead of publishing to Kafka. Enable once a broker is reachable.

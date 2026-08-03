@@ -59,6 +59,7 @@ public class BookingServiceImpl implements BookingService {
   private final com.routeshare.routing.service.EligibilityService eligibility;
   private final com.routeshare.routing.service.PickupPointService pickupPoints;
   private final com.routeshare.platform.service.PolicySettingService policy;
+  private final com.routeshare.chat.facade.ChatFacade chat;
   private final java.time.Clock clock;
   private static final Map<String, Set<String>> ALLOWED_TRANSITIONS =
       Map.of(
@@ -211,6 +212,7 @@ public class BookingServiceImpl implements BookingService {
       if (appliedDues.total().signum() > 0) {
         bookings.recordAppliedDues(bookingId, appliedDues.total());
       }
+      chat.openForConfirmedBooking(bookingId);
     }
 
     Map<String, Object> response = new java.util.LinkedHashMap<>();
@@ -354,6 +356,7 @@ public class BookingServiceImpl implements BookingService {
         .findRouteOccurrenceId(bookingId)
         .ifPresent(tripLifecycle::ensureTripForBookedOccurrence);
     tripLifecycle.openLateGraceForBooking(bookingId);
+    chat.openForConfirmedBooking(bookingId);
     bookings
         .findFareAndPaymentMethod(bookingId)
         .ifPresent(
