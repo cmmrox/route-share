@@ -66,6 +66,12 @@ public class PaymentFacadeImpl implements PaymentFacade {
   @Override
   @Transactional
   public void authorizeForBooking(long bookingId, Long paymentMethodId, BigDecimal amount) {
+    if (amount != null && amount.signum() == 0) {
+      // Rewards covered the fare exactly. There is no provider operation to perform and no
+      // zero-value intent to reconcile.
+      bookings.recordPaymentState(bookingId, null, "REWARDS_PAID", clock.instant());
+      return;
+    }
     if (paymentMethodId == null) {
       // Cash: no card, no hold, no intent. A placeholder row here would be a lie the reconciliation
       // job would later have to chase.
@@ -278,20 +284,24 @@ public class PaymentFacadeImpl implements PaymentFacade {
 
   @Override
   @Transactional
-  public void creditDriverCompensation(long bookingId, BigDecimal amount) {
-    if (amount == null || amount.signum() <= 0) {
-      return;
-    }
-    fareLedger.recordPaymentLifecycleIfAbsent(bookingId, "COMPENSATION", amount, CURRENCY);
-  }
-
-  @Override
-  @Transactional
   public void recordDuesSettlement(long bookingId, BigDecimal amount) {
     if (amount == null || amount.signum() <= 0) {
       return;
     }
     fareLedger.recordPaymentLifecycleIfAbsent(bookingId, "DUES_SETTLEMENT", amount, CURRENCY);
+  }
+
+  @Override
+  @Transactional
+  public void recordReferralPayout(
+      long bookingId, String sourceKey, BigDecimal amount, BigDecimal tripCommission) {
+    if (amount == null || amount.signum() <= 0) {
+      return;
+    }
+    if (tripCommission == null || amount.compareTo(tripCommission) > 0) {
+      throw new IllegalArgumentException("Referral payout cannot exceed trip commission");
+    }
+    fareLedger.insertReferralPayoutIfAbsent(bookingId, amount, CURRENCY, sourceKey);
   }
 
   @Override

@@ -66,17 +66,12 @@ public interface PaymentFacade {
    */
   void recordDriverPenaltyDeduction(long bookingId, BigDecimal amount);
 
-  /**
-   * A driver's half of somebody else's penalty, as a positive line of its own kind.
-   *
-   * <p>D26 gives it a separate icon because folding it into fares would overstate what he earned
-   * from driving. A passenger victim is not paid this way — her half is ride credit (P22), which is
-   * the rewards balance, not this ledger.
-   */
-  void creditDriverCompensation(long bookingId, BigDecimal amount);
-
   /** Records that a checkout cleared carried-over dues, for the receipt that shows the line. */
   void recordDuesSettlement(long bookingId, BigDecimal amount);
+
+  /** Records a referral promotion cost against this trip's platform commission. */
+  void recordReferralPayout(
+      long bookingId, String sourceKey, BigDecimal amount, BigDecimal tripCommission);
 
   /** A reversed passenger penalty: the fee goes back to her card, and the ledger says so. */
   void reversePassengerPenalty(long bookingId, BigDecimal amount);

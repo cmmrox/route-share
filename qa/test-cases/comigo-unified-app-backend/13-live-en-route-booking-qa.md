@@ -12,7 +12,7 @@ pickup-passed invalidation, per-trip mute, and mid-trip seat resale for the rema
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V039`.
+- Migration series applied through `V040`.
 - A running trip with injectable location samples along a known route, including a looping section.
 - Injected `Clock` for the 45-second expiry cases.
 

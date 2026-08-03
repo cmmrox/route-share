@@ -31,12 +31,17 @@ public class PassengerProfileServiceImpl implements PassengerProfileService {
   private final ObjectMapper mapper;
   private final PassengerMapper passengerMapper;
   private final PassengerIdentityProfileSyncService profileSyncService;
+  private final com.routeshare.rewards.facade.RewardsFacade rewards;
 
   @Transactional
   public PassengerProfileResponse upsert(PassengerProfileRequest req) {
     var app = identityFacade.upsertFromToken(current.requireCurrentUser());
     var preferences = req.preferences() == null ? Map.<String, Object>of() : req.preferences();
     profiles.upsert(app.appUserId(), req.fullName(), req.photoUrl(), json(preferences));
+    rewards.ensureReferralCode(app.appUserId(), req.fullName());
+    if (req.referralCode() != null && !req.referralCode().isBlank()) {
+      rewards.claimAtSignup(app.appUserId(), app.phone(), req.fullName(), req.referralCode(), null);
+    }
     try {
       profileSyncService.syncPassengerProfile(
           app.keycloakSubject(), req.fullName(), req.photoUrl(), preferences);

@@ -558,7 +558,7 @@ rule, and 18 have foundations but no product behaviour. Full register in
 | 08 | Preferences, verification and eligibility | L | `COMPLETED` 2026-08-02 — six driving preferences inherited by every trip, women-only gated twice, verified-only enforced in the search query and at the booking guard by one service, four camera-only captures under a human reviewer, photo visibility with the driver asymmetry, verified-first request ranking and a real `eligibility-impact` count; runtime smoke 50/50. V035. Verification is provably never a booking gate |
 | 09 | Search and discovery v2 | M | `COMPLETED` 2026-08-03 — the radius now filters on where the driver's trip *starts*, at 5/10/20 km with a 20 km ceiling; filtered-out count in the same statement; tiers derived from the discount band; enriched cards needing no client arithmetic; three stable sorts; commuter dashboard; short link and server-rendered QR; three-tier pickup points with a cost-ordered chain. Runtime smoke 41/41. V036. Found and fixed: the specified GIST index was on the geometry while the query filters over geography, so it was silently ineligible |
 | 10 | Chat, notifications, safety and support | L | `COMPLETED` 2026-08-03 — booking-scoped audited chat with a 24-hour post-drop-off close job; unified inbox, twelve-row channel matrix, broadcasts, truthful S14 badges and driving deferral; contextual SOS with trusted-contact delivery accounting; validated support attachments; persisted settings and account requests. Runtime smoke 33/33. V037 |
-| 11 | Referral and rewards | L | `NOT_STARTED` |
+| 11 | Referral and rewards | L | `COMPLETED` 2026-08-03 — immutable signup attribution; role-per-trip 1%/2% accrual bounded by 12 months or 50 trips; commission-capped paired accounting; shared compensation/rewards balance; first-ride credit, auto-apply/release and bank-floor withdrawal queue. Runtime smoke 28/28. V038 |
 | 12 | Real-time location pipeline | L | `NOT_STARTED` |
 | 13 | Live (en-route) booking | XL | `NOT_STARTED` |
 | 14 | Money operations: payouts, ledger, adjustments | M | `NOT_STARTED` |
@@ -569,7 +569,7 @@ moment for the right amount. Slices 08–15 can parallelise across two workstrea
 that 13 cannot start before 12.
 
 New backend modules: `penalty`, `rewards`, `chat`, `reliability`, `scheduling`; `location` is rewritten.
-Migrations: `V027`–`V041` (Decision 015 permits in-place semantic changes until launch).
+Migrations: `V027`–`V042` (Decision 015 permits in-place semantic changes until launch).
 Live-booking architecture (Decisions 016 + 017): `docs/architecture/REALTIME-LOCATION-AND-LIVE-MATCHING.md`.
 Target scale: 500 trips/day, ~200 concurrent, 300 ceiling — H3, Kafka and sharding declined with recorded
 revisit thresholds; PostGIS is the only spatial dependency.

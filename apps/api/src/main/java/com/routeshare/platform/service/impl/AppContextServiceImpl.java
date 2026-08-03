@@ -63,6 +63,7 @@ public class AppContextServiceImpl implements AppContextService {
   private final NotificationService notifications;
   private final com.routeshare.reliability.facade.ReliabilityFacade reliability;
   private final com.routeshare.platform.service.UserSettingsService userSettings;
+  private final com.routeshare.rewards.facade.RewardsFacade rewards;
   private final Clock clock;
 
   @Override
@@ -93,7 +94,7 @@ public class AppContextServiceImpl implements AppContextService {
             reliability.prepayRequired(user.appUserId())),
         account(user, suspended),
         suspended ? null : activeTrip(),
-        new AppContextResponse.Money(CURRENCY, BigDecimal.ZERO, BigDecimal.ZERO), // slices 06, 11
+        new AppContextResponse.Money(CURRENCY, BigDecimal.ZERO, rewards.balance(user.appUserId())),
         badges(suspended),
         settings(user.appUserId()),
         clock.instant());

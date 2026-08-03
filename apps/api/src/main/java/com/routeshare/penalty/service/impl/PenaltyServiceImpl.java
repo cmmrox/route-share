@@ -326,9 +326,9 @@ public class PenaltyServiceImpl implements PenaltyService {
   }
 
   /**
-   * A driver's half is a ledger line, because his money reaches him through payouts (D26). A
-   * passenger's half is ride credit (P22), which is the rewards balance — two people, two ways of
-   * being paid, and folding either into the other would put money where its owner cannot see it.
+   * Every victim's half lands in the shared rewards balance. Slice 11 deliberately makes that
+   * balance role-neutral, so a person keeps the same credit when switching between passenger and
+   * driver roles and every compensation remains visible through one ledger.
    */
   private void creditVictims(
       PenaltyAssessmentEntity assessment, PenaltyKind kind, List<PenaltyBeneficiaryEntity> rows) {
@@ -338,18 +338,14 @@ public class PenaltyServiceImpl implements PenaltyService {
         continue;
       }
       String reference = "penalty:" + assessment.getId();
-      if (kind.victimRole() == PenaltyRole.DRIVER && row.getBookingId() != null) {
-        payments.creditDriverCompensation(row.getBookingId(), row.getAmount());
-      } else {
-        rewards.credit(
-            row.getBeneficiaryAppUserId(),
-            row.getAmount(),
-            reference,
-            "Your "
-                + victimPercent()
-                + "% share of a penalty on "
-                + label(kind).toLowerCase(java.util.Locale.ROOT));
-      }
+      rewards.credit(
+          row.getBeneficiaryAppUserId(),
+          row.getAmount(),
+          reference,
+          "Your "
+              + victimPercent()
+              + "% share of a penalty on "
+              + label(kind).toLowerCase(java.util.Locale.ROOT));
       row.credited(now, reference);
     }
     beneficiaries.saveAll(rows);

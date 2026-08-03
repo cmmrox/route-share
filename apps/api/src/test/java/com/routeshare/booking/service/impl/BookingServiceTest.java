@@ -80,6 +80,7 @@ class BookingServiceTest {
           pickupPoints,
           policy,
           org.mockito.Mockito.mock(com.routeshare.chat.facade.ChatFacade.class),
+          org.mockito.Mockito.mock(com.routeshare.rewards.facade.RewardsFacade.class),
           clock);
 
   private static com.routeshare.pricing.domain.FareQuote quote(String passengerPays) {

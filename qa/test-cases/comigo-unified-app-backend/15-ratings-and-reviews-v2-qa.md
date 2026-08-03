@@ -12,7 +12,7 @@ histograms with derived averages, the passenger aggregate, and the `showRatingPu
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V041`.
+- Migration series applied through `V042`.
 - A completed trip with one driver and two passengers, and an injected `Clock` for window-close cases.
 
 ## Automated test coverage

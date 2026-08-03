@@ -97,7 +97,7 @@ New errors: `RATING_ALREADY_SUBMITTED`, `RATING_WINDOW_CLOSED`, `REPLY_ALREADY_G
 
 ## Database / migration changes
 
-**`V041__ratings_and_reviews_v2.sql`**
+**`V042__ratings_and_reviews_v2.sql`**
 
 - `rating.rating` — add `tags TEXT[] NOT NULL DEFAULT '{}'`,
   `released_at TIMESTAMPTZ NULL`, `window_closes_at TIMESTAMPTZ NOT NULL`,
@@ -157,7 +157,7 @@ Backend slice. The contract must supply:
 - `apps/api/.../routing/**` — search enrichment honouring the visibility setting.
 - `apps/api/.../booking/**` — request-list rating display.
 - `apps/api/.../scheduling/**` — the release job.
-- `apps/api/src/main/resources/db/migration/V041__ratings_and_reviews_v2.sql`.
+- `apps/api/src/main/resources/db/migration/V042__ratings_and_reviews_v2.sql`.
 - `apps/api/src/test/java/**` — release gating tests, average-from-histogram property test, reply uniqueness concurrency test, tag validation tests, visibility tests, aggregate reconciliation test.
 - `docs/api/mobile-app.openapi.json`, `packages/api-contracts/src/index.ts`.
 

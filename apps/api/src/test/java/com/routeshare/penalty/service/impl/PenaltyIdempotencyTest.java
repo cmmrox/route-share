@@ -165,10 +165,10 @@ class PenaltyIdempotencyTest {
   }
 
   @Test
-  @DisplayName("A driver victim is paid through the ledger; a passenger victim through ride credit")
-  void compensationGoesWhereItsOwnerCanSeeIt() {
+  @DisplayName("Passenger and driver victims share one rewards ledger")
+  void compensationUsesTheSharedRewardsBalance() {
     service.assessPassengerNoShow(BOOKING, TRIP);
-    verify(payments).creditDriverCompensation(BOOKING, money("25"));
+    verify(rewards).credit(eq(DRIVER), eq(money("25")), any(), any());
 
     service.assessDriverLate(BOOKING);
     verify(rewards).credit(eq(PASSENGER), eq(money("25")), any(), any());

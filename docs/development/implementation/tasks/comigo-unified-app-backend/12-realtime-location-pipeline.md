@@ -155,7 +155,7 @@ New errors: `TRIP_NOT_RUNNING`, `LOCATION_SAMPLE_REJECTED`, `REALTIME_TOKEN_EXPI
 
 ## Database / migration changes
 
-**`V038__realtime_location_pipeline.sql`**
+**`V039__realtime_location_pipeline.sql`**
 
 No Postgres extension is required — PostGIS is already installed.
 
@@ -235,7 +235,7 @@ Backend slice. The contract must supply:
 - `apps/api/.../booking/**` — rider approach-position endpoint, scoped to the booking.
 - `apps/api/.../notification/**` — `RealtimeDeliveryService` and FCM priority selection.
 - `apps/api/.../scheduling/**` — staleness sweep, retention job.
-- `apps/api/src/main/resources/db/migration/V038__realtime_location_pipeline.sql`.
+- `apps/api/src/main/resources/db/migration/V039__realtime_location_pipeline.sql`.
 - `apps/api/pom.xml` — WebSocket enablement only.
 - `apps/api/src/test/java/**` — filter chain, trace replay, loop disambiguation, extrapolation, staleness, approach lifecycle, `ST_DWithin` candidate query, realtime delivery selection, load test at 300 concurrent trips.
 - `docs/api/mobile-app.openapi.json`, `packages/api-contracts/src/index.ts`.

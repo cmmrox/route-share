@@ -24,4 +24,30 @@ public record BookingRequest(
      * lowest free ones — a client that has never heard of seats keeps working, and nobody is left
      * unable to book because they did not pick.
      */
-    java.util.List<Long> seatSlotIds) {}
+    java.util.List<Long> seatSlotIds,
+    Boolean useRewardsCredit) {
+  public BookingRequest(
+      Long routeOccurrenceId,
+      int seats,
+      Double pickupLat,
+      Double pickupLng,
+      Double dropLat,
+      Double dropLng,
+      Double pickupRouteFraction,
+      Double dropoffRouteFraction,
+      Long paymentMethodId,
+      java.util.List<Long> seatSlotIds) {
+    this(
+        routeOccurrenceId,
+        seats,
+        pickupLat,
+        pickupLng,
+        dropLat,
+        dropLng,
+        pickupRouteFraction,
+        dropoffRouteFraction,
+        paymentMethodId,
+        seatSlotIds,
+        null);
+  }
+}

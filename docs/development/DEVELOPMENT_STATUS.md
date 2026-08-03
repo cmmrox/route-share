@@ -1,6 +1,40 @@
 # RouteShareApp Development Status
 
-2026-08-03 (slice 10 complete — scoped conversations, quiet delivery, contextual safety)
+2026-08-03 (slice 11 complete — immutable attribution, commission-funded rewards, one balance)
+
+## 2026-08-03 — Slice 11 complete: one referral edge, one accountable cost, one balance
+
+Profile creation now issues an ambiguity-free referral code and can claim another user's code
+during the 24-hour/pre-first-booking signup window. Attribution is immutable. The service rejects
+self-referral by identity, verified phone and known device, while the database independently blocks
+self-edges and second claims.
+
+A completed trip accrues from the referee's role in that trip: 1% of passenger fare or 2% of driver
+net. The 12-calendar-month and 50-trip bounds are enforced in the accrual transaction and closed by
+the registered `referral-window-expiry` job. Each credit has a paired `REFERRAL_PAYOUT` platform
+ledger entry, is capped at commission, records shortfall, and is protected by a stable idempotency
+key. The runtime proof reproduced the prototype exactly: LKR 290 → LKR 3 and LKR 1,240 → LKR 25.
+
+Rewards are one role-neutral signed ledger. Slice 06 penalty compensation now lands there for both
+passenger and driver victims. The LKR 150 referee first-ride credit auto-applies at booking unless
+opted out, never exceeds the fare, and is released before capture on cancellation or decline.
+Drivers with a verified approved bank profile can queue the whole available balance at LKR 1,000
+or above; a partial unique index permits only one queued/batched withdrawal until Slice 14 picks it
+up.
+
+Migration: Slice 10 already occupied V037, so referral and rewards lands as
+`V038__referral_and_rewards.sql`. Clean local and Testcontainers databases both migrated through
+V038.
+
+Gate: `./mvnw spotless:apply spotless:check verify` → **BUILD SUCCESS, 609 tests, 0 skipped,
+JaCoCo 84.33%**. OpenAPI validates and the TypeScript contract package type-checks. Runtime:
+`verify-referral-rewards.sh` → **28 passed, 0 failed, 0 skipped** against the clean local V038
+database.
+
+Blocker 015 remains unchanged. Slice 11 queues bank withdrawals but does not claim the provider or
+Friday-batch execution owned by Slice 14.
+
+Next: slice 12 — real-time location pipeline.
 
 ## 2026-08-03 — Slice 10 complete: the conversation exists only because the booking does
 
@@ -831,7 +865,7 @@ Estimated steady state at 500 trips/day: **~$132/month, inside the $200 credit**
 ~$112, Distance Matrix misses ~$12, Directions on new routes ~$5, pickup points ~$3, location pipeline $0.
 Cost gates are hard items on the release checklist, not advisories.
 
-Plan status: **FINAL.** Sixteen slices, migrations `V027`–`V041`, thirteen scheduled jobs, five new
+Plan status: **FINAL.** Sixteen slices, migrations `V027`–`V042`, thirteen scheduled jobs, five new
 modules plus a rewritten `location`. Former slices 12/13/14 renumbered to 13/14/15. Every task file has its
 matching QA file; all cross-references, links and migration numbers validated.
 
@@ -847,11 +881,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_10_CHAT_NOTIFICATIONS_SAFETY_SUPPORT`
-- Current Active Task: `Slices 00–10 complete and runtime-verified; slice 11 — referral and rewards — next`
-- Plan Validation: `16 slices, acyclic dependency graph, V027–V041 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_10_SCOPED_CHAT_QUIET_DELIVERY_CONTEXTUAL_SAFETY`
-- Repository Git Status: `Slices 00–10 merged to main; migrations V027–V037 added`
+- Current Milestone: `MILESTONE_SLICE_11_REFERRAL_AND_REWARDS`
+- Current Active Task: `Slices 00–11 complete and runtime-verified; slice 12 — real-time location pipeline — next`
+- Plan Validation: `16 slices, acyclic dependency graph, V027–V042 contiguous, all task/QA cross-links verified both directions, zero broken links`
+- Status: `SLICE_11_IMMUTABLE_ATTRIBUTION_COMMISSION_FUNDED_SHARED_REWARDS`
+- Repository Git Status: `Slices 00–11 merged to main; migrations V027–V038 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

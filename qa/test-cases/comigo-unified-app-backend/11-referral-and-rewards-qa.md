@@ -12,7 +12,7 @@ window, the shared rewards ledger, ride credit at checkout, and bank withdrawals
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V037`.
+- Migration series applied through `V038`.
 - Accounts: a referrer, a referee who rides, a referee who drives, and an unrelated account.
 
 ## Automated test coverage
@@ -79,3 +79,16 @@ releases on void; and the withdrawal floor and single-open-request rule hold.
 
 Fail on: any double accrual, any accrual after a bound, any credit producing a negative payable, or a
 driver's earnings reduced by someone else's referral.
+
+## Execution result — 2026-08-03
+
+Status: **PASS**
+
+- Focused Slice 11 suite: pass.
+- Repository gate: 609 tests, 0 skipped, JaCoCo instruction coverage 84.33%.
+- Contract gate: OpenAPI valid; TypeScript contract inventory type-checks.
+- Runtime smoke on a clean V001→V038 database: 28 passed, 0 failed, 0 skipped.
+- Exact figures observed: LKR 290 rider fare → LKR 3 referral accrual; LKR 1,240 driver net →
+  LKR 25 accrual.
+- The live run reconciled two `REFERRAL_PAYOUT` rows with the two rewards credits and confirmed
+  that driver earnings were unchanged.

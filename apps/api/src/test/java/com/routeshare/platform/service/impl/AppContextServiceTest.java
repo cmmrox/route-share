@@ -48,6 +48,8 @@ class AppContextServiceTest {
       org.mockito.Mockito.mock(com.routeshare.reliability.facade.ReliabilityFacade.class);
   private final com.routeshare.platform.service.UserSettingsService userSettings =
       mock(com.routeshare.platform.service.UserSettingsService.class);
+  private final com.routeshare.rewards.facade.RewardsFacade rewards =
+      mock(com.routeshare.rewards.facade.RewardsFacade.class);
   private final AppContextServiceImpl service =
       new AppContextServiceImpl(
           current,
@@ -59,6 +61,7 @@ class AppContextServiceTest {
           notifications,
           reliability,
           userSettings,
+          rewards,
           Clock.fixed(NOW, ZoneOffset.UTC));
 
   @org.junit.jupiter.api.BeforeEach
@@ -73,6 +76,7 @@ class AppContextServiceTest {
         .thenReturn(PassengerFacade.RiderEligibilityProfile.unknown());
     when(passengers.photoVisibilityOf(org.mockito.ArgumentMatchers.anyLong()))
         .thenReturn("MATCHED");
+    when(rewards.balance(anyLong())).thenReturn(java.math.BigDecimal.ZERO.setScale(2));
   }
 
   private CurrentUser token(Set<String> roles) {

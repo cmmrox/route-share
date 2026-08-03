@@ -1,7 +1,7 @@
 # API Backend Reconciliation — ComiGo Mobile Contract
 
 Generated: 2026-08-01 (slice 00 — repo reset and contract rewrite)
-Last regenerated: 2026-08-03 (slice 10 — chat, notifications, safety and support)
+Last regenerated: 2026-08-03 (slice 11 — referral and rewards)
 
 Source of truth: `docs/api/mobile-app.openapi.json`. This document is derived from its
 `x-routeshare-status` extension — regenerate it rather than editing by hand.
@@ -20,17 +20,16 @@ resource ownership and gate state.
 
 | Status | Operations | Meaning |
 | --- | --- | --- |
-| `IMPLEMENTED` | 188 | Live in `apps/api` today |
+| `IMPLEMENTED` | 194 | Live in `apps/api` today |
 | `PLANNED_SLICE_07` | 1 | Remaining alternatives read contract |
 | `PLANNED_SLICE_09` | 1 | Remaining driver share metadata read |
-| `PLANNED_SLICE_11` | 6 | Specified; built in slice 11 |
 | `PLANNED_SLICE_12` | 6 | Specified; built in slice 12 |
 | `PLANNED_SLICE_13` | 8 | Specified; built in slice 13 |
 | `PLANNED_SLICE_14` | 8 | Specified; built in slice 14 |
 | `PLANNED_SLICE_15` | 6 | Specified; built in slice 15 |
 | `INTERNAL_NOT_FOR_CLIENTS` | 7 | Implemented, outside the mobile surface |
 | `CUT` | 2 | Deliberately removed from the product |
-| **Total** | **233** | across 195 paths, 161 schemas |
+| **Total** | **233** | across 195 paths, 168 schemas |
 
 ## 3. Screen coverage
 
@@ -93,6 +92,21 @@ and `{ruleId}`. Harmless at runtime — path parameters are positional — but a
 its argument names from the contract. Left as-is; the contract names are the better ones.
 
 ## 5. New in this slice
+
+**Slice 11 — referral and rewards.** All six operations stamped for Slice 11 are now
+`IMPLEMENTED` with concrete request/response schemas. The booking contract now carries
+`useRewardsCredit`, `appliedCredit`, and the remaining shared balance; profile setup accepts the
+one-time `referralCode`. The six live operations are:
+
+- `GET /api/v1/me/referral`
+- `POST /api/v1/me/referral/claim`
+- `GET /api/v1/me/rewards`
+- `PUT /api/v1/me/rewards/auto-apply`
+- `GET /api/v1/me/rewards/withdrawals`
+- `POST /api/v1/me/rewards/withdrawals`
+
+Current inventory: **194 implemented, 2 older planned, 28 planned in slices 12–15, 7 internal and
+2 cut**, for 233 operations total.
 
 **Slice 10 — chat, notifications, safety and support.** All fourteen operations originally stamped
 for Slice 10 are now `IMPLEMENTED`, and the reconciliation also adds three live operations omitted

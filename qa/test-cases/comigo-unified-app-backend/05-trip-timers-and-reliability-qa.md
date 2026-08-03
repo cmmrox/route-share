@@ -13,7 +13,7 @@ flag. Out of scope: the penalty amounts these clocks trigger (slice 06).
 ## Preconditions
 
 - Common preconditions from `README.md` in this folder.
-- Migration series applied through `V031`.
+- Migration series applied through `V032` (`V031` timing/reliability plus the materialisation repair).
 - Injected `Clock` available for time travel; **no test may sleep in real time**.
 - Two API instances running for the leader-election case.
 
