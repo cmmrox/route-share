@@ -5,6 +5,14 @@ release_standard: production-ready-per-task
 
 # Task 12 — Real-Time Location Pipeline
 
+**Status:** `COMPLETED` — 2026-08-04
+
+**Completion evidence:** V039 migrates cleanly from V001 and the preserved Slice 11 audit database;
+full Maven verification passes 635 tests with zero failures/errors/skips and JaCoCo 85.55%;
+`verify-location-pipeline.sh` passes 8/8 with six recorded trace families, GiST use, no H3 or
+Google-cache growth, and a 300-live-row candidate-query p95 of 0.397 ms. Mobile OpenAPI lint and
+the TypeScript contract check are clean. Maestro is not applicable to this backend-only slice.
+
 **Goal:** Turn noisy phone GPS into a trustworthy answer to two questions — how far along his own published route is this driver, and can these two people actually find each other at the kerb.
 
 **Depends on:** 04, 05, 09 (named pickup points).

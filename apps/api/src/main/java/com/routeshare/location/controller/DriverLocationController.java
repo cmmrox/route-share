@@ -2,9 +2,9 @@ package com.routeshare.location.controller;
 
 import com.routeshare.common.security.DriverAccess;
 import com.routeshare.common.web.ApiResponse;
-import com.routeshare.location.dto.request.DriverLocationUpdateRequest;
-import com.routeshare.location.dto.response.LocationUpdateResponse;
-import com.routeshare.location.service.LocationService;
+import com.routeshare.location.dto.request.LocationBatchUpdateRequest;
+import com.routeshare.location.dto.response.LocationBatchUpdateResponse;
+import com.routeshare.location.service.LocationPipelineService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 @DriverAccess
 @RequiredArgsConstructor
 public class DriverLocationController {
-  private final LocationService locations;
+  private final LocationPipelineService locations;
 
   @PostMapping
-  ApiResponse<LocationUpdateResponse> ingest(
-      @PathVariable Long tripId, @Valid @RequestBody DriverLocationUpdateRequest request) {
-    return ApiResponse.ok(locations.ingestDriverLocation(tripId, request));
+  ApiResponse<LocationBatchUpdateResponse> ingest(
+      @PathVariable Long tripId, @Valid @RequestBody LocationBatchUpdateRequest request) {
+    return ApiResponse.ok(locations.ingest(tripId, request));
   }
 }

@@ -6,6 +6,40 @@ This file records completed implementation and documentation tasks. Each entry s
 
 ---
 
+## 2026-08-04
+
+### Task: ComiGo slice 12 — real-time location pipeline
+
+Status: `COMPLETED`
+
+Replaced single-fix location handling with batch-idempotent, order-tolerant ingest and typed
+rejections. Added accuracy, implied-speed, route-corridor and monotonic filters; loop-safe PostGIS
+route projection; smoothed progress, dead reckoning and fail-closed confidence; filtered-sample
+arrival detection; five adaptive sampling policies; and 10-second staleness plus daily retention
+jobs.
+
+Added privacy-scoped approach sessions for the next named pickup, with counterparty positions
+available only to the active booking and rider coordinates removed on close. Added one-time
+realtime tokens, per-user WebSocket/SSE delivery, live-session-aware FCM/APNs fallback, and the
+driver/passenger progress, approach and policy contracts. V039 partitions retained location trails
+and adds GiST-indexed progress, dedupe, approach and realtime storage.
+
+Files: rewritten/extended `location/**`, notification priority/fallback integration,
+`V039__realtime_location_pipeline.sql`, six recorded trace fixtures, focused unit/integration/load
+tests, `scripts/simulation/verify-location-pipeline.sh`, mobile OpenAPI/contracts and delivery docs.
+
+Verification: full Maven verify passed 635 tests with zero failures/errors/skips and JaCoCo 85.55%;
+the V001→V039 migration and application startup are green. The permanent runtime gate passed 8/8,
+including the GiST plan, zero Google-cache additions and a 300-row candidate-query p95 of 0.397 ms.
+Mobile OpenAPI lint has zero warnings and the contracts package type-checks.
+
+Maestro: not applicable; this is the backend contract and pipeline. Device location-service,
+cadence and battery evidence remains in the mobile plan.
+
+Next step: slice 13 — live en-route booking.
+
+---
+
 ## 2026-08-03
 
 ### Task: Full ComiGo backend audit through Slice 11

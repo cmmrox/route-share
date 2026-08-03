@@ -1,0 +1,6 @@
+[
+  {"id":"urban-1","seconds":0,"lat":6.90000,"lng":79.80000,"accuracy":45,"fraction":0.10,"offset":35},
+  {"id":"urban-2","seconds":10,"lat":6.90010,"lng":79.80010,"accuracy":48,"fraction":0.18,"offset":55},
+  {"id":"urban-3","seconds":20,"lat":6.90020,"lng":79.80020,"accuracy":49,"fraction":0.17,"offset":45},
+  {"id":"urban-4","seconds":30,"lat":6.90030,"lng":79.80030,"accuracy":46,"fraction":0.27,"offset":50}
+]

@@ -1,0 +1,5 @@
+[
+  {"id":"clear-1","seconds":0,"lat":6.90000,"lng":79.80000,"accuracy":8,"fraction":0.10,"offset":3},
+  {"id":"clear-2","seconds":10,"lat":6.90020,"lng":79.80020,"accuracy":7,"fraction":0.20,"offset":2},
+  {"id":"clear-3","seconds":20,"lat":6.90040,"lng":79.80040,"accuracy":9,"fraction":0.30,"offset":4}
+]

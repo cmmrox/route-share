@@ -60,6 +60,7 @@ public interface PickupWaitRepository extends JpaRepository<PickupWaitEntity, Lo
             FROM location.location_sample ls
             JOIN booking.booking b ON b.booking_id = :bookingId
            WHERE ls.trip_id = :tripId
+             AND ls.accepted = true
              AND ls.device_recorded_at >= :since
            ORDER BY ls.device_recorded_at ASC
           """,

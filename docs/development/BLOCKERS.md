@@ -1,6 +1,6 @@
 # RouteShareApp Blockers
 
-Last Updated: 2026-08-03 (post-slice-11 implementation and runtime audit)
+Last Updated: 2026-08-04 (post-slice-12 implementation and runtime verification)
 
 ## Purpose
 
@@ -18,10 +18,11 @@ Blocker Status Values:
 ## Active Blockers
 
 The resolved entries below retain their original diagnosis for auditability. As of the
-2026-08-03 audit, the remaining release gates relevant to Slices 00–11 are external or
+2026-08-04 audit, the remaining release gates relevant to Slices 00–12 are external or
 device-specific: real Cybersource sandbox evidence, object-storage-backed verification capture,
 Google Maps credentials/device evidence, and the Expo native/prebuild identity decision. They do
-not represent missing Slice 00–11 backend operations.
+not represent missing Slice 00–12 backend operations. Slice 12's device-side foreground service,
+adaptive cadence and battery evidence belongs to the mobile delivery scope.
 
 ### Blocker 016 — Slice 04's card-capture checks have been skipping since they were written
 

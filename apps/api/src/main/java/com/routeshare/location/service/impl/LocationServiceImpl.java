@@ -5,6 +5,7 @@ import com.routeshare.common.security.CurrentUserProvider;
 import com.routeshare.identity.facade.IdentityFacade;
 import com.routeshare.location.cache.LatestLocationCache;
 import com.routeshare.location.cache.LocationSnapshot;
+import com.routeshare.location.domain.LocationConfidence;
 import com.routeshare.location.dto.request.DriverLocationUpdateRequest;
 import com.routeshare.location.dto.request.LocationUpdateRequest;
 import com.routeshare.location.dto.response.AdminLiveTripResponse;
@@ -12,6 +13,7 @@ import com.routeshare.location.dto.response.LocationSnapshotResponse;
 import com.routeshare.location.dto.response.LocationUpdateResponse;
 import com.routeshare.location.dto.response.PassengerLiveTripStateResponse;
 import com.routeshare.location.event.LocationRealtimePublisher;
+import com.routeshare.location.repository.LocationPipelineRepository;
 import com.routeshare.location.repository.LocationSampleRepository;
 import com.routeshare.location.service.LocationService;
 import java.time.Clock;
@@ -19,14 +21,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class LocationServiceImpl implements LocationService {
   private static final Duration MAX_DEVICE_CLOCK_SKEW = Duration.ofMinutes(10);
   private static final double MAX_ACCEPTABLE_ACCURACY_METERS = 100.0;
@@ -41,6 +41,29 @@ public class LocationServiceImpl implements LocationService {
   private final ObjectMapper objectMapper;
   private final Clock clock;
   private final com.routeshare.trip.facade.TripArrivalFacade arrivals;
+  private final LocationPipelineRepository progress;
+
+  @Autowired
+  public LocationServiceImpl(
+      CurrentUserProvider current,
+      IdentityFacade identityFacade,
+      LocationSampleRepository locations,
+      LatestLocationCache latestLocationCache,
+      LocationRealtimePublisher realtimePublisher,
+      ObjectMapper objectMapper,
+      Clock clock,
+      com.routeshare.trip.facade.TripArrivalFacade arrivals,
+      LocationPipelineRepository progress) {
+    this.current = current;
+    this.identityFacade = identityFacade;
+    this.locations = locations;
+    this.latestLocationCache = latestLocationCache;
+    this.realtimePublisher = realtimePublisher;
+    this.objectMapper = objectMapper;
+    this.clock = clock;
+    this.arrivals = arrivals;
+    this.progress = progress;
+  }
 
   public LocationServiceImpl(
       CurrentUserProvider current,
@@ -58,7 +81,8 @@ public class LocationServiceImpl implements LocationService {
         realtimePublisher,
         new ObjectMapper().findAndRegisterModules(),
         clock,
-        arrivals);
+        arrivals,
+        null);
   }
 
   @Override
@@ -111,6 +135,25 @@ public class LocationServiceImpl implements LocationService {
     }
     var row = locations.findPassengerLiveTrip(tripId).orElseThrow();
     var latest = latestResponse(tripId);
+    var progressRow = progress == null ? null : progress.progress(tripId).orElse(null);
+    LocationConfidence confidence =
+        progressRow == null
+            ? latest == null || latest.stale()
+                ? LocationConfidence.STALE
+                : LocationConfidence.MATCHED
+            : LocationConfidence.valueOf(progressRow.getConfidence());
+    long age =
+        progressRow == null || progressRow.getMatchedAt() == null
+            ? latest == null
+                ? 0
+                : Math.max(
+                    0, Duration.between(latest.deviceRecordedAt(), Instant.now(clock)).toSeconds())
+            : Math.max(
+                0, Duration.between(progressRow.getMatchedAt(), Instant.now(clock)).toSeconds());
+    boolean available =
+        latest != null
+            && confidence != LocationConfidence.STALE
+            && confidence != LocationConfidence.OFF_ROUTE;
     return new PassengerLiveTripStateResponse(
         row.getTripId(),
         row.getTripStatus(),
@@ -118,7 +161,9 @@ public class LocationServiceImpl implements LocationService {
         row.getDestinationLabel(),
         row.getDepartureTime(),
         latest,
-        latest != null && !latest.stale());
+        available,
+        confidence,
+        age);
   }
 
   @Override

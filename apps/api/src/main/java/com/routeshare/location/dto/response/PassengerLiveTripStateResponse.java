@@ -1,5 +1,6 @@
 package com.routeshare.location.dto.response;
 
+import com.routeshare.location.domain.LocationConfidence;
 import java.time.Instant;
 
 public record PassengerLiveTripStateResponse(
@@ -9,4 +10,6 @@ public record PassengerLiveTripStateResponse(
     String destinationLabel,
     Instant departureTime,
     LocationSnapshotResponse latestDriverLocation,
-    boolean locationAvailable) {}
+    boolean locationAvailable,
+    LocationConfidence confidence,
+    Long updatedSecondsAgo) {}

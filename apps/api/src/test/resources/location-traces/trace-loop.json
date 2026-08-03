@@ -1,0 +1,5 @@
+[
+  {"id":"loop-1","seconds":0,"lat":6.90000,"lng":79.80000,"accuracy":10,"fraction":0.65,"offset":3},
+  {"id":"loop-2","seconds":10,"lat":6.90010,"lng":79.80010,"accuracy":10,"fraction":0.24,"offset":2},
+  {"id":"loop-3","seconds":20,"lat":6.90020,"lng":79.80020,"accuracy":10,"fraction":0.72,"offset":4}
+]

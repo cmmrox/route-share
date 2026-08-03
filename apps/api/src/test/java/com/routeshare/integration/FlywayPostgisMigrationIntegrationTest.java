@@ -57,7 +57,22 @@ class FlywayPostgisMigrationIntegrationTest {
                   connection,
                   "SELECT 1 FROM information_schema.tables WHERE table_schema = 'routing' AND table_name = 'route_share_link'"))
           .isTrue();
-      assertThat(latestMigrationVersion(connection)).isEqualTo("038");
+      assertThat(
+              exists(
+                  connection,
+                  "SELECT 1 FROM pg_partitioned_table p JOIN pg_class c ON c.oid = p.partrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'location' AND c.relname = 'location_sample'"))
+          .isTrue();
+      assertThat(
+              exists(
+                  connection,
+                  "SELECT 1 FROM pg_indexes WHERE schemaname = 'location' AND indexname = 'idx_trip_progress_position' AND indexdef ILIKE '%gist%'"))
+          .isTrue();
+      assertThat(
+              exists(
+                  connection,
+                  "SELECT 1 FROM information_schema.tables WHERE table_schema = 'location' AND table_name IN ('trip_progress','approach_session','realtime_channel') GROUP BY table_schema HAVING count(*) = 3"))
+          .isTrue();
+      assertThat(latestMigrationVersion(connection)).isEqualTo("039");
     }
   }
 

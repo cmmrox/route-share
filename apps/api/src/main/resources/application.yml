@@ -68,12 +68,29 @@ sentry:
 
 
 routeshare:
+  location:
+    accuracy-max-meters: ${LOCATION_ACCURACY_MAX_METERS:50}
+    max-speed-mps: ${LOCATION_MAX_SPEED_MPS:40}
+    route-corridor-meters: ${ROUTE_CORRIDOR_METERS:80}
+    reversal-tolerance-fraction: ${ROUTE_REVERSAL_TOLERANCE_FRACTION:0.005}
+    extrapolation-max-seconds: ${EXTRAPOLATION_MAX_SECONDS:20}
+    live-fraction-staleness-seconds: ${LIVE_FRACTION_STALENESS_SECONDS:60}
+    off-route-grace-seconds: ${OFF_ROUTE_GRACE_SECONDS:60}
+    approach-radius-meters: ${APPROACH_RADIUS_METERS:500}
+    approach-sample-interval-seconds: ${APPROACH_SAMPLE_INTERVAL_SECONDS:2}
+    speed-smoothing-window-seconds: ${SPEED_SMOOTHING_WINDOW_SECONDS:180}
+    corridor-fallback-speed-kmh: ${CORRIDOR_FALLBACK_SPEED_KMH:22}
+    sample-retention-days: ${ROUTESHARE_LOCATION_SAMPLE_RETENTION_DAYS:90}
+  realtime:
+    enabled: ${ROUTESHARE_REALTIME_ENABLED:true}
+    token-ttl-seconds: ${ROUTESHARE_REALTIME_TOKEN_TTL_SECONDS:300}
+    allowed-origin-patterns: ${ROUTESHARE_REALTIME_ALLOWED_ORIGINS:http://localhost:*,http://127.0.0.1:*}
   # Leader-elected sweeps for every clock in the product. Durations and limits are NOT here — they
   # are product rules and live in platform.policy_setting so they can be corrected without a deploy.
   # Only the cadence and the arrival-detection tuning are properties.
   scheduler:
     enabled: ${ROUTESHARE_SCHEDULER_ENABLED:true}
-    tick-seconds: ${ROUTESHARE_SCHEDULER_TICK_SECONDS:60}
+    tick-seconds: ${ROUTESHARE_SCHEDULER_TICK_SECONDS:10}
   pickup-arrival:
     # A geofence alone lets a drive-past manufacture a no-show, so arrival also requires a dwell.
     geofence-meters: ${ROUTESHARE_PICKUP_ARRIVAL_GEOFENCE_METERS:120}
@@ -148,6 +165,7 @@ routeshare:
     places-details-per-minute: ${ROUTESHARE_RATE_LIMIT_PLACES_DETAILS_PER_MIN:20}
     directions-per-minute: ${ROUTESHARE_RATE_LIMIT_DIRECTIONS_PER_MIN:20}
     ride-search-per-minute: ${ROUTESHARE_RATE_LIMIT_RIDE_SEARCH_PER_MIN:30}
+    location-ingest-per-minute: ${ROUTESHARE_RATE_LIMIT_LOCATION_INGEST_PER_MIN:120}
 
   push:
     enabled: ${PUSH_NOTIFICATIONS_ENABLED:false}

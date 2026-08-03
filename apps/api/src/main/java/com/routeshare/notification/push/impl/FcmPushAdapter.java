@@ -1,5 +1,8 @@
 package com.routeshare.notification.push.impl;
 
+import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.AndroidConfig.Priority;
+import com.google.firebase.messaging.ApnsConfig;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
@@ -37,6 +40,10 @@ public class FcmPushAdapter implements PushNotificationPort {
             .setToken(message.token())
             .setNotification(
                 Notification.builder().setTitle(message.title()).setBody(message.body()).build());
+    if (message.highPriority()) {
+      builder.setAndroidConfig(AndroidConfig.builder().setPriority(Priority.HIGH).build());
+      builder.setApnsConfig(ApnsConfig.builder().putHeader("apns-priority", "10").build());
+    }
     if (message.data() != null) {
       for (Map.Entry<String, String> e : message.data().entrySet()) {
         if (e.getValue() != null) {
