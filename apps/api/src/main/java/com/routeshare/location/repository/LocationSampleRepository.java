@@ -83,10 +83,33 @@ public interface LocationSampleRepository extends JpaRepository<LocationSampleEn
           AND (b.route_occurrence_id = t.route_occurrence_id OR t.route_occurrence_id IS NULL)
         JOIN passenger.passenger_profile p ON p.passenger_profile_id = b.passenger_profile_id
         WHERE t.trip_id = :tripId AND p.app_user_id = :appUserId
+          AND t.status IN ('STARTED', 'ARRIVED_PICKUP', 'PASSENGER_ONBOARD')
+          AND b.status IN ('CONFIRMED', 'COMPLETED')
       )
       """,
       nativeQuery = true)
   boolean passengerCanViewTrip(@Param("tripId") long tripId, @Param("appUserId") long appUserId);
+
+  @Query(
+      value =
+          """
+      SELECT d.app_user_id
+        FROM trip.trip t
+        JOIN routing.route_plan r ON r.route_plan_id = t.route_plan_id
+        JOIN driver.driver_profile d ON d.driver_profile_id = r.driver_profile_id
+       WHERE t.trip_id = :tripId
+         AND t.status IN ('STARTED', 'ARRIVED_PICKUP', 'PASSENGER_ONBOARD')
+      UNION
+      SELECT b.passenger_app_user_id
+        FROM trip.trip t
+        JOIN booking.booking b ON b.route_plan_id = t.route_plan_id
+         AND (b.route_occurrence_id = t.route_occurrence_id OR t.route_occurrence_id IS NULL)
+       WHERE t.trip_id = :tripId
+         AND t.status IN ('STARTED', 'ARRIVED_PICKUP', 'PASSENGER_ONBOARD')
+         AND b.status IN ('CONFIRMED', 'COMPLETED')
+      """,
+      nativeQuery = true)
+  List<Long> authorizedRealtimeAppUserIds(@Param("tripId") long tripId);
 
   @Query(
       value =

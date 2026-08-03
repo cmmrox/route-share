@@ -13,7 +13,8 @@ public record RateLimitProperties(
     Integer placesAutocompletePerMinute,
     Integer placesDetailsPerMinute,
     Integer directionsPerMinute,
-    Integer rideSearchPerMinute) {
+    Integer rideSearchPerMinute,
+    Integer locationIngestPerMinute) {
   @ConstructorBinding
   public RateLimitProperties {
     enabled = enabled == null || enabled;
@@ -29,6 +30,7 @@ public record RateLimitProperties(
     // scan over every published corridor. A human refines a search a few times a minute; a loop
     // does it a few hundred.
     rideSearchPerMinute = positiveOr(rideSearchPerMinute, 30);
+    locationIngestPerMinute = positiveOr(locationIngestPerMinute, 120);
   }
 
   /** Back-compat convenience: pre-maps-limit fields only, maps limits defaulted. */
@@ -47,6 +49,31 @@ public record RateLimitProperties(
         null,
         null,
         null,
+        null,
+        null);
+  }
+
+  /** Back-compat convenience for the pre-location-ingest property set. */
+  public RateLimitProperties(
+      Boolean enabled,
+      Integer otpRequestPerHour,
+      Integer otpVerifyPerHour,
+      Integer paymentIntentPerMinute,
+      Integer sosPerMinute,
+      Integer placesAutocompletePerMinute,
+      Integer placesDetailsPerMinute,
+      Integer directionsPerMinute,
+      Integer rideSearchPerMinute) {
+    this(
+        enabled,
+        otpRequestPerHour,
+        otpVerifyPerHour,
+        paymentIntentPerMinute,
+        sosPerMinute,
+        placesAutocompletePerMinute,
+        placesDetailsPerMinute,
+        directionsPerMinute,
+        rideSearchPerMinute,
         null);
   }
 

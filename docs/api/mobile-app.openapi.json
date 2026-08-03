@@ -1929,14 +1929,14 @@
           "Realtime"
         ],
         "summary": "Server-driven sampling cadence",
-        "x-routeshare-status": "PLANNED_SLICE_12",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/LocationPolicyResponse"
                 }
               }
             }
@@ -4554,14 +4554,14 @@
           "Realtime"
         ],
         "summary": "Approach mode: named point and rider position",
-        "x-routeshare-status": "PLANNED_SLICE_12",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/ApproachResponse"
                 }
               }
             }
@@ -4907,7 +4907,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DriverLocationUpdateRequest"
+                "$ref": "#/components/schemas/LocationBatchUpdateRequest"
               }
             }
           }
@@ -4918,7 +4918,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LocationUpdateResponse"
+                  "$ref": "#/components/schemas/LocationBatchUpdateResponse"
                 }
               }
             }
@@ -5435,14 +5435,14 @@
           "Realtime"
         ],
         "summary": "Route fraction, confidence and derived ETA",
-        "x-routeshare-status": "PLANNED_SLICE_12",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/TripProgressResponse"
                 }
               }
             }
@@ -7664,14 +7664,14 @@
           "Realtime"
         ],
         "summary": "Driver position, ETA, named point, plate",
-        "x-routeshare-status": "PLANNED_SLICE_12",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/ApproachResponse"
                 }
               }
             }
@@ -7702,14 +7702,14 @@
           "Realtime"
         ],
         "summary": "Rider position, open approach session only",
-        "x-routeshare-status": "PLANNED_SLICE_12",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/ApproachResponse"
                 }
               }
             }
@@ -7744,7 +7744,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/ApproachPositionRequest"
               }
             }
           }
@@ -12141,14 +12141,14 @@
           "Realtime"
         ],
         "summary": "Short-lived token for the WS/SSE channel",
-        "x-routeshare-status": "PLANNED_SLICE_12",
+        "x-routeshare-status": "IMPLEMENTED",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "$ref": "#/components/schemas/RealtimeTokenResponse"
                 }
               }
             }
@@ -14562,50 +14562,6 @@
           }
         }
       },
-      "DriverLocationUpdateRequest": {
-        "type": "object",
-        "required": [
-          "latitude",
-          "longitude",
-          "deviceRecordedAt"
-        ],
-        "properties": {
-          "latitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "longitude": {
-            "type": "number",
-            "format": "double"
-          },
-          "accuracyMeters": {
-            "type": "number",
-            "format": "double"
-          },
-          "speedMps": {
-            "type": "number",
-            "format": "double"
-          },
-          "bearingDegrees": {
-            "type": "number",
-            "format": "double"
-          },
-          "deviceRecordedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "devicePlatform": {
-            "type": "string"
-          },
-          "batteryPercent": {
-            "type": "number",
-            "format": "double"
-          },
-          "networkType": {
-            "type": "string"
-          }
-        }
-      },
       "DriverProfile": {
         "type": "object",
         "properties": {
@@ -15425,26 +15381,376 @@
           }
         }
       },
-      "LocationUpdateResponse": {
+      "LocationSampleRequest": {
         "type": "object",
+        "required": [
+          "sampleId",
+          "capturedAt",
+          "latitude",
+          "longitude",
+          "accuracyMeters"
+        ],
+        "properties": {
+          "sampleId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Device-generated idempotency identifier, unique within the trip."
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "minimum": 0
+          },
+          "speedMps": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "bearingDegrees": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 360
+          },
+          "batteryPercent": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100
+          }
+        }
+      },
+      "LocationBatchUpdateRequest": {
+        "type": "object",
+        "required": [
+          "samples"
+        ],
+        "properties": {
+          "samples": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/LocationSampleRequest"
+            }
+          }
+        }
+      },
+      "LocationRejectedSample": {
+        "type": "object",
+        "required": [
+          "sampleId",
+          "reason"
+        ],
+        "properties": {
+          "sampleId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "ACCURACY_TOO_LOW",
+              "IMPLAUSIBLE_SPEED",
+              "OFF_ROUTE",
+              "BACKWARD_PROGRESS",
+              "DUPLICATE",
+              "OUT_OF_ORDER"
+            ]
+          }
+        }
+      },
+      "LocationBatchUpdateResponse": {
+        "type": "object",
+        "required": [
+          "accepted",
+          "rejected",
+          "policy"
+        ],
         "properties": {
           "accepted": {
-            "type": "boolean"
+            "type": "integer",
+            "minimum": 0
           },
+          "rejected": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocationRejectedSample"
+            }
+          },
+          "progress": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TripProgressResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy": {
+            "$ref": "#/components/schemas/LocationPolicyResponse"
+          }
+        }
+      },
+      "TripProgressResponse": {
+        "type": "object",
+        "required": [
+          "tripId",
+          "routeFraction",
+          "confidence",
+          "matchedAt",
+          "updatedSecondsAgo",
+          "offRoute",
+          "remainingDistanceMeters",
+          "etaSeconds"
+        ],
+        "properties": {
           "tripId": {
             "type": "integer",
             "format": "int64"
           },
-          "driverProfileId": {
-            "type": "integer",
-            "format": "int64"
+          "routeFraction": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
           },
-          "serverReceivedAt": {
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "MATCHED",
+              "EXTRAPOLATED",
+              "STALE",
+              "OFF_ROUTE"
+            ]
+          },
+          "matchedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "latestLocation": {
-            "$ref": "#/components/schemas/LocationSnapshotResponse"
+          "updatedSecondsAgo": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "speedMps": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "bearingDegrees": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "offRoute": {
+            "type": "boolean"
+          },
+          "remainingDistanceMeters": {
+            "type": "number",
+            "minimum": 0
+          },
+          "etaSeconds": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "LocationPolicyResponse": {
+        "type": "object",
+        "required": [
+          "intervalSeconds",
+          "priority",
+          "batchSize",
+          "mode",
+          "reason"
+        ],
+        "properties": {
+          "intervalSeconds": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "BALANCED",
+              "HIGH_ACCURACY"
+            ]
+          },
+          "batchSize": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "PUBLISHED",
+              "IN_TRIP",
+              "APPROACH",
+              "LOW_BATTERY"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ApproachPositionRequest": {
+        "type": "object",
+        "required": [
+          "latitude",
+          "longitude",
+          "accuracyMeters"
+        ],
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "accuracyMeters": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 50
+          }
+        }
+      },
+      "ApproachResponse": {
+        "type": "object",
+        "required": [
+          "active"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "pickupPoint": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "sideHint": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "latitude": {
+                "type": "number"
+              },
+              "longitude": {
+                "type": "number"
+              }
+            }
+          },
+          "counterparty": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Visible only inside the open privacy-bounded approach session.",
+            "properties": {
+              "latitude": {
+                "type": "number"
+              },
+              "longitude": {
+                "type": "number"
+              },
+              "updatedSecondsAgo": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "distanceMeters": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "etaSeconds": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "vehicle": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "make": {
+                "type": "string"
+              },
+              "colour": {
+                "type": "string"
+              },
+              "plate": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "RealtimeTokenResponse": {
+        "type": "object",
+        "required": [
+          "token",
+          "expiresAt",
+          "websocketUrl",
+          "sseUrl"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Opaque, one-time, short-lived connection credential."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "websocketUrl": {
+            "type": "string"
+          },
+          "sseUrl": {
+            "type": "string"
           }
         }
       },
@@ -15766,6 +16072,19 @@
           },
           "locationAvailable": {
             "type": "boolean"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "MATCHED",
+              "EXTRAPOLATED",
+              "STALE",
+              "OFF_ROUTE"
+            ]
+          },
+          "updatedSecondsAgo": {
+            "type": "integer",
+            "minimum": 0
           }
         }
       },

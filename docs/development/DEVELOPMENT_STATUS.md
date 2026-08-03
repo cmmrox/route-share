@@ -1,6 +1,39 @@
 # RouteShareApp Development Status
 
-2026-08-03 (post-slice-11 audit complete — backend operations closed; external/mobile gates remain)
+2026-08-04 (Slice 12 complete — realtime location pipeline verified)
+
+## 2026-08-04 — Slice 12 complete: filtered progress, private approach and adaptive realtime
+
+Driver location ingest is now batched, ordered and idempotent, with typed rejection reasons for
+poor accuracy, impossible speed, route-corridor failure, reversal and stale/out-of-order fixes.
+Accepted samples are projected against the driver's published PostGIS route, including
+self-intersecting-loop disambiguation. The durable trip-progress projection carries smoothed speed,
+route fraction and explicit `MATCHED` → `EXTRAPOLATED` → `STALE` / `OFF_ROUTE` confidence; stale
+and off-route states fail closed for rider discovery.
+
+Approach sessions open for the next confirmed named pickup inside 500 m and expose only the active
+booking's counterparty position, pickup instructions and vehicle identity. Rider coordinates are
+removed when the session closes. A server policy supplies five adaptive sampling modes. Per-user
+WebSocket/SSE delivery uses one-time, short-lived tokens and falls back to high-priority Android
+FCM / APNs only when no live channel exists.
+
+`V039__realtime_location_pipeline.sql` partitions the 90-day location trail, provides global sample
+deduplication, GiST-indexed progress, approach sessions and realtime-channel records. The 10-second
+leader sweep demotes confidence and closes stale sessions; the daily maintenance job creates
+partitions and enforces retention. Arrival detection now consumes accepted samples only.
+
+Verification: `./mvnw spotless:apply spotless:check verify` → **BUILD SUCCESS, 635 tests,
+0 failures/errors/skips; JaCoCo 85.55% and all checks met**. The permanent runtime gate passes
+**8/8** against `routeshare_slice11_audit` upgraded to V039, including all six trace families, the
+GiST plan, zero Google-cache additions and a 300-row candidate-query p95 of **0.397 ms**. The
+application health endpoint returned `UP`. Mobile OpenAPI lints with zero warnings and the
+TypeScript contracts type-check.
+
+Boundary: Slice 12 is a backend slice. Device foreground-service, adaptive-cadence and battery
+evidence remains owned by the mobile implementation plan; Maestro is therefore not applicable
+here. Slices 13–15 and external provider/device release gates remain outstanding.
+
+Next: slice 13 — live en-route booking.
 
 ## 2026-08-03 — Full Slice 00–11 implementation audit and closure
 
@@ -920,11 +953,11 @@ This file is the first file to read before continuing RouteShareApp development.
 
 - Implementation Planning Standard: `docs/development/IMPLEMENTATION_PLANNING_STANDARD.md` defines the required `docs/development/implementation/tasks/<feature-plan-name>/` structure and production-ready task-file rules.
 - Current Phase: `PHASE_08_COMIGO_UNIFIED_APP_BACKEND_IN_PROGRESS`
-- Current Milestone: `MILESTONE_SLICE_11_REFERRAL_AND_REWARDS`
-- Current Active Task: `Slices 00–11 complete and runtime-verified; slice 12 — real-time location pipeline — next`
+- Current Milestone: `MILESTONE_SLICE_12_REALTIME_LOCATION_PIPELINE`
+- Current Active Task: `Slices 00–12 complete and runtime-verified; slice 13 — live en-route booking — next`
 - Plan Validation: `16 slices, acyclic dependency graph, V027–V042 contiguous, all task/QA cross-links verified both directions, zero broken links`
-- Status: `SLICE_11_IMMUTABLE_ATTRIBUTION_COMMISSION_FUNDED_SHARED_REWARDS`
-- Repository Git Status: `Slices 00–11 merged to main; migrations V027–V038 added`
+- Status: `SLICE_12_FILTERED_PROGRESS_PRIVATE_APPROACH_ADAPTIVE_REALTIME`
+- Repository Git Status: `Slices 00–12 merged to main locally; migrations V027–V039 added`
 
 ## 2026-07-31 — ComiGo unified-app pivot: backend plan and 15 task files
 

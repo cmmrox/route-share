@@ -1,7 +1,7 @@
 # API Backend Reconciliation — ComiGo Mobile Contract
 
 Generated: 2026-08-01 (slice 00 — repo reset and contract rewrite)
-Last regenerated: 2026-08-03 (post-slice-11 implementation audit)
+Last regenerated: 2026-08-04 (slice 12 real-time location pipeline)
 
 Source of truth: `docs/api/mobile-app.openapi.json`. This document is derived from its
 `x-routeshare-status` extension — regenerate it rather than editing by hand.
@@ -20,14 +20,13 @@ resource ownership and gate state.
 
 | Status | Operations | Meaning |
 | --- | --- | --- |
-| `IMPLEMENTED` | 196 | Live in `apps/api` today |
-| `PLANNED_SLICE_12` | 6 | Specified; built in slice 12 |
+| `IMPLEMENTED` | 202 | Live in `apps/api` today |
 | `PLANNED_SLICE_13` | 8 | Specified; built in slice 13 |
 | `PLANNED_SLICE_14` | 8 | Specified; built in slice 14 |
 | `PLANNED_SLICE_15` | 6 | Specified; built in slice 15 |
 | `INTERNAL_NOT_FOR_CLIENTS` | 7 | Implemented, outside the mobile surface |
 | `CUT` | 2 | Deliberately removed from the product |
-| **Total** | **233** | across 195 paths, 168 schemas |
+| **Total** | **233** | across 195 paths, 177 schemas |
 
 ## 3. Screen coverage
 
@@ -90,6 +89,25 @@ and `{ruleId}`. Harmless at runtime — path parameters are positional — but a
 its argument names from the contract. Left as-is; the contract names are the better ones.
 
 ## 5. New in this slice
+
+**Slice 12 — route-constrained real-time location.** The final six planned operations are now
+`IMPLEMENTED`, typed and ownership-scoped:
+
+- `GET /api/v1/driver/location-policy`
+- `GET /api/v1/driver/trips/{tripId}/progress`
+- `GET /api/v1/driver/trips/{tripId}/approach`
+- `GET /api/v1/passenger/bookings/{bookingId}/approach`
+- `POST /api/v1/passenger/bookings/{bookingId}/approach-position`
+- `GET /api/v1/realtime/token`
+
+The existing driver location mutation is hardened from a single untyped fix to a bounded batch with
+device sample IDs, typed per-sample rejection reasons, current route progress and the adaptive policy
+in the same response. `PassengerLiveTripStateResponse` now carries confidence and honest freshness.
+The contract exposes no trail read: riders receive only the live position for their own active trip,
+and rider coordinates exist only inside an open approach session.
+
+Current inventory: **202 implemented, 22 planned in slices 13–15, 7 internal and 2 cut**, for 233
+operations total.
 
 **Post-Slice-11 audit closure.** The two older planned reads are now implemented and ownership
 scoped:
@@ -182,7 +200,6 @@ Two behaviours worth knowing:
 
 | Slice | Ops | Area |
 | --- | --- | --- |
-| 12 | 6 | Real-time location pipeline |
 | 13 | 8 | Live en-route booking |
 | 14 | 8 | Money operations |
 | 15 | 6 | Ratings v2 |

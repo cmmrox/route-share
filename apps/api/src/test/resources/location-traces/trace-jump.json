@@ -1,0 +1,4 @@
+[
+  {"id":"jump-1","seconds":0,"lat":6.90000,"lng":79.80000,"accuracy":8,"fraction":0.10,"offset":3},
+  {"id":"jump-2","seconds":4,"lat":6.95000,"lng":79.85000,"accuracy":8,"fraction":0.60,"offset":5}
+]

@@ -1,0 +1,6 @@
+[
+  {"id":"detour-1","seconds":0,"lat":6.90000,"lng":79.80000,"accuracy":10,"fraction":0.30,"offset":4},
+  {"id":"detour-2","seconds":30,"lat":6.90020,"lng":79.80020,"accuracy":12,"fraction":0.32,"offset":200},
+  {"id":"detour-3","seconds":70,"lat":6.90040,"lng":79.80040,"accuracy":12,"fraction":0.35,"offset":210},
+  {"id":"detour-4","seconds":80,"lat":6.90060,"lng":79.80060,"accuracy":10,"fraction":0.42,"offset":5}
+]

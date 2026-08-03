@@ -14,7 +14,12 @@ public interface PushNotificationPort {
 
   PushResult send(PushMessage message);
 
-  record PushMessage(String token, String title, String body, Map<String, String> data) {}
+  record PushMessage(
+      String token, String title, String body, Map<String, String> data, boolean highPriority) {
+    public PushMessage(String token, String title, String body, Map<String, String> data) {
+      this(token, title, body, data, false);
+    }
+  }
 
   record PushResult(boolean success, String messageId, String error) {
     public static PushResult ok(String messageId) {
